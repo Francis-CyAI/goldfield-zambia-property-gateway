@@ -216,7 +216,7 @@ const Home = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <Link to="/services" className="flex-1">
+                <Link to="/properties" className="flex-1">
                   <Button className="w-full bg-primary hover:bg-primary/90">
                     <Search className="h-4 w-4 mr-2" />
                     Search Properties
@@ -309,7 +309,7 @@ const Home = () => {
           </div>
 
           <div className="text-center mt-8">
-            <Link to="/services">
+            <Link to="/properties">
               <Button className="bg-primary hover:bg-primary/90">
                 View All Properties
               </Button>

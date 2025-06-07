@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Home, Info, Briefcase, Newspaper, Phone, LogIn } from 'lucide-react';
+import { Menu, X, Home, Info, Briefcase, Building, Newspaper, Phone, LogIn } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 const Header = () => {
@@ -12,6 +12,7 @@ const Header = () => {
     { name: 'Home', href: '/', icon: Home },
     { name: 'About Us', href: '/about', icon: Info },
     { name: 'Services', href: '/services', icon: Briefcase },
+    { name: 'Properties', href: '/properties', icon: Building },
     { name: 'News', href: '/news', icon: Newspaper },
     { name: 'Contact Us', href: '/contact', icon: Phone },
   ];
