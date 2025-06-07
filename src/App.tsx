@@ -10,6 +10,7 @@ import About from "./pages/About";
 import Services from "./pages/Services";
 import Properties from "./pages/Properties";
 import PropertyDetail from "./pages/PropertyDetail";
+import Bookings from "./pages/Bookings";
 import News from "./pages/News";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/services" element={<Layout><Services /></Layout>} />
           <Route path="/properties" element={<Layout><Properties /></Layout>} />
           <Route path="/property/:id" element={<Layout><PropertyDetail /></Layout>} />
+          <Route path="/bookings" element={<Layout><Bookings /></Layout>} />
           <Route path="/news" element={<Layout><News /></Layout>} />
           <Route path="/contact" element={<Layout><Contact /></Layout>} />
           <Route path="*" element={<Layout><NotFound /></Layout>} />

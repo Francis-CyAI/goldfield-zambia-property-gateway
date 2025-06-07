@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -6,8 +5,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BookingCard from '@/components/BookingCard';
 import ReviewCard from '@/components/ReviewCard';
+import AvailabilityCalendar from '@/components/AvailabilityCalendar';
+import MessagingSystem from '@/components/MessagingSystem';
 import { 
   Share, 
   Heart, 
@@ -23,13 +25,15 @@ import {
   Award,
   MessageCircle,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Calendar
 } from 'lucide-react';
 
 const PropertyDetail = () => {
   const { id } = useParams();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [selectedDates, setSelectedDates] = useState<{checkIn?: Date, checkOut?: Date}>({});
 
   // Mock data - in real app, fetch based on id
   const property = {
@@ -167,6 +171,10 @@ const PropertyDetail = () => {
     });
   };
 
+  const handleDateSelect = (checkIn: Date | undefined, checkOut: Date | undefined) => {
+    setSelectedDates({ checkIn, checkOut });
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -291,24 +299,49 @@ const PropertyDetail = () => {
               </div>
             </div>
 
-            {/* Reviews */}
-            <div>
-              <div className="flex items-center space-x-2 mb-6">
-                <Star className="h-6 w-6 fill-yellow-400 text-yellow-400" />
-                <span className="text-xl font-semibold">{property.rating}</span>
-                <span className="text-gray-500">({property.reviewCount} reviews)</span>
-              </div>
+            {/* Enhanced Tabs for Reviews, Calendar, and Messages */}
+            <Tabs defaultValue="reviews" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="reviews">Reviews ({property.reviewCount})</TabsTrigger>
+                <TabsTrigger value="calendar">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Availability
+                </TabsTrigger>
+                <TabsTrigger value="messages">
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Messages
+                </TabsTrigger>
+              </TabsList>
 
-              <div className="space-y-6 mb-6">
-                {reviews.map((review) => (
-                  <ReviewCard key={review.id} review={review} />
-                ))}
-              </div>
+              <TabsContent value="reviews" className="space-y-6 mt-6">
+                <div className="flex items-center space-x-2 mb-6">
+                  <Star className="h-6 w-6 fill-yellow-400 text-yellow-400" />
+                  <span className="text-xl font-semibold">{property.rating}</span>
+                  <span className="text-gray-500">({property.reviewCount} reviews)</span>
+                </div>
 
-              <Button variant="outline" className="w-full">
-                Show all {property.reviewCount} reviews
-              </Button>
-            </div>
+                <div className="space-y-6 mb-6">
+                  {reviews.map((review) => (
+                    <ReviewCard key={review.id} review={review} />
+                  ))}
+                </div>
+
+                <Button variant="outline" className="w-full">
+                  Show all {property.reviewCount} reviews
+                </Button>
+              </TabsContent>
+
+              <TabsContent value="calendar" className="mt-6">
+                <AvailabilityCalendar 
+                  propertyId={property.id}
+                  onDateSelect={handleDateSelect}
+                />
+              </TabsContent>
+
+              <TabsContent value="messages" className="mt-6">
+                <MessagingSystem />
+              </TabsContent>
+            </Tabs>
 
             {/* Host Info */}
             <Card>
