@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Home as HomeIcon, MapPin, Building, DollarSign } from 'lucide-react';
+import { MapPin, Building, DollarSign } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const FeaturedPropertiesSection = () => {
@@ -14,7 +14,7 @@ const FeaturedPropertiesSection = () => {
       location: 'Lusaka',
       type: 'House',
       tier: 'Middle Class',
-      image: '/placeholder.svg'
+      image: 'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=400&h=300&fit=crop'
     },
     {
       id: 2,
@@ -23,7 +23,7 @@ const FeaturedPropertiesSection = () => {
       location: 'Mumbwa',
       type: 'Farm',
       tier: 'Low Class',
-      image: '/placeholder.svg'
+      image: 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop'
     },
     {
       id: 3,
@@ -32,7 +32,7 @@ const FeaturedPropertiesSection = () => {
       location: 'Lusaka',
       type: 'Office',
       tier: 'High Class',
-      image: '/placeholder.svg'
+      image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=300&fit=crop'
     }
   ];
 
@@ -51,8 +51,12 @@ const FeaturedPropertiesSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {featuredProperties.map((property) => (
             <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-              <div className="h-48 bg-gray-200 flex items-center justify-center">
-                <HomeIcon className="h-12 w-12 text-gray-400" />
+              <div className="h-48 bg-gray-200 overflow-hidden">
+                <img 
+                  src={property.image} 
+                  alt={property.title}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                />
               </div>
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-2">

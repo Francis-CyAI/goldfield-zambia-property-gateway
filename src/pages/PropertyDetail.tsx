@@ -35,7 +35,7 @@ const PropertyDetail = () => {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [selectedDates, setSelectedDates] = useState<{checkIn?: Date, checkOut?: Date}>({});
 
-  // Mock data - in real app, fetch based on id
+  // Mock data with real images
   const property = {
     id: id || '1',
     title: 'Beautiful 4-Bedroom House in Kabulonga',
@@ -45,15 +45,15 @@ const PropertyDetail = () => {
     rating: 4.8,
     reviewCount: 127,
     images: [
-      '/placeholder.svg',
-      '/placeholder.svg',
-      '/placeholder.svg',
-      '/placeholder.svg',
-      '/placeholder.svg'
+      'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=1200&h=800&fit=crop',
+      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&h=800&fit=crop',
+      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&h=800&fit=crop',
+      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&h=800&fit=crop',
+      'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=1200&h=800&fit=crop'
     ],
     host: {
       name: 'John Mwamba',
-      avatar: '/placeholder.svg',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
       joinedDate: new Date('2020-03-15'),
       isSuperhost: true,
       responseRate: 98,
@@ -108,7 +108,7 @@ const PropertyDetail = () => {
       id: '1',
       user: {
         name: 'Sarah Johnson',
-        avatar: '/placeholder.svg',
+        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
         location: 'United Kingdom'
       },
       rating: 5,
@@ -127,7 +127,7 @@ const PropertyDetail = () => {
       id: '2',
       user: {
         name: 'Michael Chen',
-        avatar: '/placeholder.svg',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
         location: 'South Africa'
       },
       rating: 4,

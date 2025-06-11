@@ -24,7 +24,7 @@ const Properties = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [wishlistedProperties, setWishlistedProperties] = useState<string[]>([]);
 
-  // Enhanced properties data with more types
+  // Enhanced properties data with real images
   const properties = [
     {
       id: '1',
@@ -34,7 +34,10 @@ const Properties = () => {
       priceType: 'night' as const,
       rating: 4.8,
       reviewCount: 127,
-      images: ['/placeholder.svg', '/placeholder.svg'],
+      images: [
+        'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop'
+      ],
       propertyType: 'House',
       guests: 8,
       bedrooms: 4,
@@ -51,7 +54,11 @@ const Properties = () => {
       priceType: 'night' as const,
       rating: 4.9,
       reviewCount: 156,
-      images: ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg'],
+      images: [
+        'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=600&fit=crop'
+      ],
       propertyType: 'Lodge',
       guests: 6,
       bedrooms: 3,
@@ -68,7 +75,10 @@ const Properties = () => {
       priceType: 'night' as const,
       rating: 4.7,
       reviewCount: 892,
-      images: ['/placeholder.svg', '/placeholder.svg'],
+      images: [
+        'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=600&fit=crop'
+      ],
       propertyType: 'Hotel',
       guests: 2,
       bedrooms: 1,
@@ -85,7 +95,10 @@ const Properties = () => {
       priceType: 'night' as const,
       rating: 4.8,
       reviewCount: 234,
-      images: ['/placeholder.svg', '/placeholder.svg'],
+      images: [
+        'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop'
+      ],
       propertyType: 'Resort',
       guests: 4,
       bedrooms: 2,
@@ -102,7 +115,9 @@ const Properties = () => {
       priceType: 'night' as const,
       rating: 4.3,
       reviewCount: 67,
-      images: ['/placeholder.svg'],
+      images: [
+        'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&h=600&fit=crop'
+      ],
       propertyType: 'Guest House',
       guests: 3,
       bedrooms: 2,
@@ -119,7 +134,10 @@ const Properties = () => {
       priceType: 'sale' as const,
       rating: 4.5,
       reviewCount: 12,
-      images: ['/placeholder.svg', '/placeholder.svg'],
+      images: [
+        'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&h=600&fit=crop',
+        'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=800&h=600&fit=crop'
+      ],
       propertyType: 'Farm',
       guests: 0,
       bedrooms: 0,
@@ -136,7 +154,9 @@ const Properties = () => {
       priceType: 'month' as const,
       rating: 4.4,
       reviewCount: 23,
-      images: ['/placeholder.svg'],
+      images: [
+        'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop'
+      ],
       propertyType: 'Office',
       guests: 0,
       bedrooms: 0,
