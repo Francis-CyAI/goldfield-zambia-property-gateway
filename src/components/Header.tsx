@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Home, Info, Briefcase, Building, Newspaper, Phone, LogIn } from 'lucide-react';
+import { Menu, X, Home, Info, Briefcase, Building, Newspaper, Phone, LogIn, Crown } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 const Header = () => {
@@ -20,17 +20,17 @@ const Header = () => {
   const isActive = (href: string) => location.pathname === href;
 
   return (
-    <header className="bg-white shadow-lg sticky top-0 z-50">
+    <header className="bg-white shadow-xl sticky top-0 z-50 border-b border-luxury-gold/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
-              <Home className="h-6 w-6 text-white" />
+          <Link to="/" className="flex items-center space-x-3">
+            <div className="w-14 h-14 luxury-gradient rounded-xl flex items-center justify-center shadow-lg">
+              <Crown className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-primary">ABS</h1>
-              <p className="text-sm text-secondary">Real Estate</p>
+              <h1 className="text-3xl font-bold luxury-text-gradient font-playfair">ABS</h1>
+              <p className="text-sm text-luxury-charcoal font-medium">Business Solutions</p>
             </div>
           </Link>
 
@@ -40,10 +40,10 @@ const Header = () => {
               <Link
                 key={item.name}
                 to={item.href}
-                className={`flex items-center space-x-1 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
                   isActive(item.href)
-                    ? 'text-primary bg-primary/10'
-                    : 'text-gray-600 hover:text-primary hover:bg-primary/5'
+                    ? 'text-luxury-gold bg-luxury-cream border border-luxury-gold/30 shadow-md'
+                    : 'text-luxury-charcoal hover:text-luxury-gold hover:bg-luxury-cream/50 hover:shadow-sm'
                 }`}
               >
                 <item.icon className="h-4 w-4" />
@@ -52,10 +52,14 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Login Button */}
-          <div className="hidden md:flex items-center space-x-4">
+          {/* Contact Info & Login Button */}
+          <div className="hidden lg:flex items-center space-x-6">
+            <div className="text-right">
+              <p className="text-sm text-luxury-charcoal font-medium">+260 972 333 053</p>
+              <p className="text-xs text-luxury-charcoal/70">appletechbusinesssolutions@gmail.com</p>
+            </div>
             <Link to="/login">
-              <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
+              <Button className="luxury-gradient text-white hover:shadow-lg transition-all duration-300 font-medium">
                 <LogIn className="h-4 w-4 mr-2" />
                 Sign In
               </Button>
@@ -68,6 +72,7 @@ const Header = () => {
               variant="outline"
               size="sm"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="border-luxury-gold text-luxury-gold hover:bg-luxury-gold hover:text-white"
             >
               {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
@@ -76,16 +81,16 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden pb-4">
-            <div className="flex flex-col space-y-2">
+          <div className="md:hidden pb-4 border-t border-luxury-gold/20 mt-4 pt-4">
+            <div className="flex flex-col space-y-3">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
                     isActive(item.href)
-                      ? 'text-primary bg-primary/10'
-                      : 'text-gray-600 hover:text-primary hover:bg-primary/5'
+                      ? 'text-luxury-gold bg-luxury-cream border border-luxury-gold/30'
+                      : 'text-luxury-charcoal hover:text-luxury-gold hover:bg-luxury-cream/50'
                   }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
@@ -93,12 +98,18 @@ const Header = () => {
                   <span>{item.name}</span>
                 </Link>
               ))}
-              <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                <Button variant="outline" className="w-full mt-2 border-primary text-primary hover:bg-primary hover:text-white">
-                  <LogIn className="h-4 w-4 mr-2" />
-                  Sign In
-                </Button>
-              </Link>
+              <div className="border-t border-luxury-gold/20 pt-3 mt-3">
+                <div className="text-center mb-3">
+                  <p className="text-sm text-luxury-charcoal font-medium">+260 972 333 053</p>
+                  <p className="text-xs text-luxury-charcoal/70">appletechbusinesssolutions@gmail.com</p>
+                </div>
+                <Link to="/login" onClick={() => setIsMenuOpen(false)}>
+                  <Button className="w-full luxury-gradient text-white font-medium">
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Sign In
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         )}
