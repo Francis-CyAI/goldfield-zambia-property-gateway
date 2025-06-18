@@ -106,6 +106,53 @@ export type Database = {
           },
         ]
       }
+      bookings: {
+        Row: {
+          check_in: string
+          check_out: string
+          created_at: string | null
+          guest_count: number
+          guest_id: string
+          id: string
+          property_id: string
+          status: string | null
+          total_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          check_in: string
+          check_out: string
+          created_at?: string | null
+          guest_count?: number
+          guest_id: string
+          id?: string
+          property_id: string
+          status?: string | null
+          total_price: number
+          updated_at?: string | null
+        }
+        Update: {
+          check_in?: string
+          check_out?: string
+          created_at?: string | null
+          guest_count?: number
+          guest_id?: string
+          id?: string
+          property_id?: string
+          status?: string | null
+          total_price?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       course_materials: {
         Row: {
           content_type: Database["public"]["Enums"]["content_type"]
@@ -289,6 +336,105 @@ export type Database = {
           },
         ]
       }
+      properties: {
+        Row: {
+          amenities: Json | null
+          bathrooms: number
+          bedrooms: number
+          created_at: string | null
+          description: string | null
+          host_id: string
+          id: string
+          images: Json | null
+          is_active: boolean | null
+          location: string
+          max_guests: number
+          price_per_night: number
+          property_type: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          amenities?: Json | null
+          bathrooms?: number
+          bedrooms?: number
+          created_at?: string | null
+          description?: string | null
+          host_id: string
+          id?: string
+          images?: Json | null
+          is_active?: boolean | null
+          location: string
+          max_guests?: number
+          price_per_night: number
+          property_type?: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          amenities?: Json | null
+          bathrooms?: number
+          bedrooms?: number
+          created_at?: string | null
+          description?: string | null
+          host_id?: string
+          id?: string
+          images?: Json | null
+          is_active?: boolean | null
+          location?: string
+          max_guests?: number
+          price_per_night?: number
+          property_type?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          booking_id: string | null
+          comment: string | null
+          created_at: string | null
+          guest_id: string
+          id: string
+          property_id: string
+          rating: number
+        }
+        Insert: {
+          booking_id?: string | null
+          comment?: string | null
+          created_at?: string | null
+          guest_id: string
+          id?: string
+          property_id: string
+          rating: number
+        }
+        Update: {
+          booking_id?: string | null
+          comment?: string | null
+          created_at?: string | null
+          guest_id?: string
+          id?: string
+          property_id?: string
+          rating?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_enrollments: {
         Row: {
           completed_at: string | null
@@ -336,6 +482,35 @@ export type Database = {
             columns: ["institution_id"]
             isOneToOne: false
             referencedRelation: "institutions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wishlists: {
+        Row: {
+          created_at: string | null
+          id: string
+          property_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          property_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          property_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wishlists_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]

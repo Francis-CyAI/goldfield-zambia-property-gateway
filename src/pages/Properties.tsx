@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import PropertyCard from '@/components/PropertyCard';
 import PropertySearch from '@/components/PropertySearch';
@@ -5,8 +6,18 @@ import PropertyTypeFilter from '@/components/PropertyTypeFilter';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SlidersHorizontal, MapIcon, Filter } from 'lucide-react';
+import { useProperties } from '@/hooks/useProperties';
+import { useWishlist, useToggleWishlist } from '@/hooks/useWishlist';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const Properties = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const { data: properties = [], isLoading, error } = useProperties();
+  const { data: wishlistedPropertyIds = [] } = useWishlist(user?.id);
+  const toggleWishlistMutation = useToggleWishlist();
+
   const [filters, setFilters] = useState({
     location: '',
     checkIn: undefined as Date | undefined,
@@ -22,150 +33,6 @@ const Properties = () => {
   const [sortBy, setSortBy] = useState('recommended');
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [showFilters, setShowFilters] = useState(false);
-  const [wishlistedProperties, setWishlistedProperties] = useState<string[]>([]);
-
-  // Enhanced properties data with real images
-  const properties = [
-    {
-      id: '1',
-      title: 'Beautiful 4-Bedroom House in Kabulonga',
-      location: 'Kabulonga, Lusaka',
-      price: 450,
-      priceType: 'night' as const,
-      rating: 4.8,
-      reviewCount: 127,
-      images: [
-        'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop',
-        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop'
-      ],
-      propertyType: 'House',
-      guests: 8,
-      bedrooms: 4,
-      bathrooms: 3,
-      amenities: ['WiFi', 'Kitchen', 'Parking', 'Pool'],
-      isWishlisted: wishlistedProperties.includes('1'),
-      tier: 'middle' as const
-    },
-    {
-      id: '7',
-      title: 'Luxury Safari Lodge - Kafue National Park',
-      location: 'Kafue National Park',
-      price: 850,
-      priceType: 'night' as const,
-      rating: 4.9,
-      reviewCount: 156,
-      images: [
-        'https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop',
-        'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&h=600&fit=crop',
-        'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=600&fit=crop'
-      ],
-      propertyType: 'Lodge',
-      guests: 6,
-      bedrooms: 3,
-      bathrooms: 2,
-      amenities: ['WiFi', 'Restaurant', 'Game Drives', 'Pool', 'Spa'],
-      isWishlisted: wishlistedProperties.includes('7'),
-      tier: 'high' as const
-    },
-    {
-      id: '8',
-      title: 'InterContinental Lusaka Hotel',
-      location: 'CBD, Lusaka',
-      price: 320,
-      priceType: 'night' as const,
-      rating: 4.7,
-      reviewCount: 892,
-      images: [
-        'https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop',
-        'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=600&fit=crop'
-      ],
-      propertyType: 'Hotel',
-      guests: 2,
-      bedrooms: 1,
-      bathrooms: 1,
-      amenities: ['WiFi', 'Restaurant', 'Gym', 'Business Center', 'Pool'],
-      isWishlisted: wishlistedProperties.includes('8'),
-      tier: 'high' as const
-    },
-    {
-      id: '9',
-      title: 'Lake Kariba Resort & Spa',
-      location: 'Siavonga, Lake Kariba',
-      price: 680,
-      priceType: 'night' as const,
-      rating: 4.8,
-      reviewCount: 234,
-      images: [
-        'https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop',
-        'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop'
-      ],
-      propertyType: 'Resort',
-      guests: 4,
-      bedrooms: 2,
-      bathrooms: 2,
-      amenities: ['WiFi', 'Restaurant', 'Spa', 'Water Sports', 'Pool'],
-      isWishlisted: wishlistedProperties.includes('9'),
-      tier: 'high' as const
-    },
-    {
-      id: '10',
-      title: 'Cozy Guest House - Chilenje',
-      location: 'Chilenje, Lusaka',
-      price: 120,
-      priceType: 'night' as const,
-      rating: 4.3,
-      reviewCount: 67,
-      images: [
-        'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&h=600&fit=crop'
-      ],
-      propertyType: 'Guest House',
-      guests: 3,
-      bedrooms: 2,
-      bathrooms: 1,
-      amenities: ['WiFi', 'Kitchen', 'Parking'],
-      isWishlisted: wishlistedProperties.includes('10'),
-      tier: 'low' as const
-    },
-    {
-      id: '5',
-      title: '50 Hectare Farm in Mumbwa',
-      location: 'Mumbwa',
-      price: 280000,
-      priceType: 'sale' as const,
-      rating: 4.5,
-      reviewCount: 12,
-      images: [
-        'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&h=600&fit=crop',
-        'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=800&h=600&fit=crop'
-      ],
-      propertyType: 'Farm',
-      guests: 0,
-      bedrooms: 0,
-      bathrooms: 0,
-      amenities: ['Water Access', 'Fertile Soil'],
-      isWishlisted: wishlistedProperties.includes('5'),
-      tier: 'low' as const
-    },
-    {
-      id: '6',
-      title: 'Commercial Office Space',
-      location: 'CBD, Lusaka',
-      price: 1200,
-      priceType: 'month' as const,
-      rating: 4.4,
-      reviewCount: 23,
-      images: [
-        'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop'
-      ],
-      propertyType: 'Office',
-      guests: 0,
-      bedrooms: 0,
-      bathrooms: 2,
-      amenities: ['WiFi', 'Parking', 'Security', 'Generator'],
-      isWishlisted: wishlistedProperties.includes('6'),
-      tier: 'middle' as const
-    }
-  ];
 
   const handleSearch = () => {
     console.log('Searching with filters:', filters);
@@ -173,11 +40,21 @@ const Properties = () => {
   };
 
   const handleWishlistToggle = (propertyId: string) => {
-    setWishlistedProperties(prev => 
-      prev.includes(propertyId) 
-        ? prev.filter(id => id !== propertyId)
-        : [...prev, propertyId]
-    );
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'Please log in to save properties to your wishlist.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const isWishlisted = wishlistedPropertyIds.includes(propertyId);
+    toggleWishlistMutation.mutate({
+      userId: user.id,
+      propertyId,
+      isWishlisted,
+    });
   };
 
   const handlePropertyTypeToggle = (type: string) => {
@@ -192,7 +69,6 @@ const Properties = () => {
     { value: 'recommended', label: 'Recommended' },
     { value: 'price-low', label: 'Price: Low to High' },
     { value: 'price-high', label: 'Price: High to Low' },
-    { value: 'rating', label: 'Highest Rated' },
     { value: 'newest', label: 'Newest' }
   ];
 
@@ -203,7 +79,7 @@ const Properties = () => {
     if (selectedPropertyTypes.length > 0) {
       filtered = filtered.filter(property => 
         selectedPropertyTypes.some(type => 
-          property.propertyType.toLowerCase().includes(type.toLowerCase())
+          property.property_type.toLowerCase().includes(type.toLowerCase())
         )
       );
     }
@@ -216,17 +92,52 @@ const Properties = () => {
     
     switch (sortBy) {
       case 'price-low':
-        return sorted.sort((a, b) => a.price - b.price);
+        return sorted.sort((a, b) => a.price_per_night - b.price_per_night);
       case 'price-high':
-        return sorted.sort((a, b) => b.price - a.price);
-      case 'rating':
-        return sorted.sort((a, b) => b.rating - a.rating);
+        return sorted.sort((a, b) => b.price_per_night - a.price_per_night);
+      case 'newest':
+        return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       default:
         return sorted;
     }
   };
 
   const filteredProperties = getSortedProperties();
+
+  // Transform Supabase properties to match existing PropertyCard interface
+  const transformedProperties = filteredProperties.map(property => ({
+    id: property.id,
+    title: property.title,
+    location: property.location,
+    price: property.price_per_night,
+    priceType: 'night' as const,
+    rating: 4.5, // TODO: Calculate from reviews
+    reviewCount: 0, // TODO: Count from reviews
+    images: property.images.length > 0 ? property.images : [
+      'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800&h=600&fit=crop'
+    ],
+    propertyType: property.property_type,
+    guests: property.max_guests,
+    bedrooms: property.bedrooms,
+    bathrooms: property.bathrooms,
+    amenities: property.amenities,
+    isWishlisted: wishlistedPropertyIds.includes(property.id),
+    tier: property.price_per_night > 500 ? 'high' as const : 
+          property.price_per_night > 200 ? 'middle' as const : 'low' as const
+  }));
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Error loading properties</h1>
+            <p className="text-gray-600">Please try again later.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -268,7 +179,7 @@ const Properties = () => {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="text-2xl font-bold">
-                  {filteredProperties.length} properties found
+                  {isLoading ? 'Loading...' : `${filteredProperties.length} properties found`}
                 </h1>
                 <p className="text-gray-600">
                   {filters.location && `in ${filters.location}`}
@@ -304,13 +215,27 @@ const Properties = () => {
             {/* Properties Grid */}
             {viewMode === 'list' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProperties.map((property) => (
-                  <PropertyCard
-                    key={property.id}
-                    property={property}
-                    onWishlistToggle={handleWishlistToggle}
-                  />
-                ))}
+                {isLoading ? (
+                  // Loading skeleton
+                  Array.from({ length: 6 }).map((_, index) => (
+                    <div key={index} className="bg-white rounded-lg shadow-md animate-pulse">
+                      <div className="h-48 bg-gray-200 rounded-t-lg"></div>
+                      <div className="p-4 space-y-2">
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  transformedProperties.map((property) => (
+                    <PropertyCard
+                      key={property.id}
+                      property={property}
+                      onWishlistToggle={handleWishlistToggle}
+                    />
+                  ))
+                )}
               </div>
             ) : (
               <div className="h-96 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -322,11 +247,21 @@ const Properties = () => {
             )}
 
             {/* Load More */}
-            <div className="text-center mt-12">
-              <Button variant="outline" size="lg">
-                Load more properties
-              </Button>
-            </div>
+            {!isLoading && transformedProperties.length > 0 && (
+              <div className="text-center mt-12">
+                <Button variant="outline" size="lg">
+                  Load more properties
+                </Button>
+              </div>
+            )}
+
+            {/* No results message */}
+            {!isLoading && transformedProperties.length === 0 && (
+              <div className="text-center py-12">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No properties found</h3>
+                <p className="text-gray-600">Try adjusting your search criteria or filters.</p>
+              </div>
+            )}
           </div>
         </div>
       </div>

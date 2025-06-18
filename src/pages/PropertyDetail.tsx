@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,8 @@ import BookingCard from '@/components/BookingCard';
 import ReviewCard from '@/components/ReviewCard';
 import AvailabilityCalendar from '@/components/AvailabilityCalendar';
 import MessagingSystem from '@/components/MessagingSystem';
+import { useProperty } from '@/hooks/useProperties';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   Share, 
   Heart, 
@@ -31,78 +34,13 @@ import {
 
 const PropertyDetail = () => {
   const { id } = useParams();
+  const { user } = useAuth();
+  const { data: property, isLoading, error } = useProperty(id || '');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [selectedDates, setSelectedDates] = useState<{checkIn?: Date, checkOut?: Date}>({});
 
-  // Mock data with real images
-  const property = {
-    id: id || '1',
-    title: 'Beautiful 4-Bedroom House in Kabulonga',
-    location: 'Kabulonga, Lusaka, Zambia',
-    price: 450,
-    priceType: 'night' as const,
-    rating: 4.8,
-    reviewCount: 127,
-    images: [
-      'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=1200&h=800&fit=crop',
-      'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&h=800&fit=crop',
-      'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=1200&h=800&fit=crop',
-      'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=1200&h=800&fit=crop',
-      'https://images.unsplash.com/photo-1484154218962-a197022b5858?w=1200&h=800&fit=crop'
-    ],
-    host: {
-      name: 'John Mwamba',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-      joinedDate: new Date('2020-03-15'),
-      isSuperhost: true,
-      responseRate: 98,
-      responseTime: 'within an hour'
-    },
-    details: {
-      guests: 8,
-      bedrooms: 4,
-      beds: 5,
-      bathrooms: 3,
-      propertyType: 'Entire house',
-      tier: 'middle' as const
-    },
-    amenities: [
-      { name: 'WiFi', icon: Wifi },
-      { name: 'Kitchen', icon: Home },
-      { name: 'Parking', icon: Car },
-      { name: 'Pool', icon: Home },
-      { name: 'Garden', icon: Home },
-      { name: 'Security', icon: Shield },
-      { name: 'Generator', icon: Home },
-      { name: 'Air Conditioning', icon: Home }
-    ],
-    description: `Welcome to this stunning 4-bedroom house in the prestigious Kabulonga area of Lusaka. This beautifully furnished property offers modern amenities and comfortable living spaces perfect for families or groups visiting Zambia.
-
-    The house features a spacious living area, fully equipped kitchen, and a beautiful garden where you can relax. Located in one of Lusaka's most sought-after neighborhoods, you'll be close to shopping centers, restaurants, and business districts.
-
-    Perfect for business travelers, families, or anyone looking for a luxurious stay in Lusaka.`,
-    maxGuests: 8,
-    cleaningFee: 150,
-    serviceFee: 0,
-    houseRules: [
-      'Check-in: 3:00 PM - 10:00 PM',
-      'Check-out: 11:00 AM',
-      'No smoking',
-      'No pets',
-      'No parties or events',
-      'Quiet hours: 10:00 PM - 7:00 AM'
-    ],
-    cancellationPolicy: 'Free cancellation for 48 hours',
-    safetyFeatures: [
-      'Smoke alarm',
-      'Carbon monoxide alarm',
-      'Security cameras on property',
-      '24/7 security guard',
-      'First aid kit'
-    ]
-  };
-
+  // Mock reviews data - this would come from Supabase in a real implementation
   const reviews = [
     {
       id: '1',
@@ -113,7 +51,7 @@ const PropertyDetail = () => {
       },
       rating: 5,
       date: new Date('2024-02-15'),
-      comment: 'Amazing property with excellent amenities. The host was very responsive and helpful. The location is perfect for exploring Lusaka. Highly recommended!',
+      comment: 'Amazing property with excellent amenities. The host was very responsive and helpful. The location is perfect for exploring. Highly recommended!',
       categories: {
         cleanliness: 5.0,
         accuracy: 4.8,
@@ -122,43 +60,61 @@ const PropertyDetail = () => {
         location: 4.9,
         value: 4.7
       }
-    },
-    {
-      id: '2',
-      user: {
-        name: 'Michael Chen',
-        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-        location: 'South Africa'
-      },
-      rating: 4,
-      date: new Date('2024-01-28'),
-      comment: 'Great house for a business trip. Very clean and comfortable. The kitchen was well-equipped and the WiFi was excellent for remote work.',
-      categories: {
-        cleanliness: 4.8,
-        accuracy: 4.5,
-        checkin: 4.2,
-        communication: 4.0,
-        location: 4.5,
-        value: 4.3
-      }
     }
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-pulse space-y-8">
+            <div className="h-8 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-96 bg-gray-200 rounded-lg"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="lg:col-span-2 space-y-6">
+                <div className="h-32 bg-gray-200 rounded"></div>
+                <div className="h-48 bg-gray-200 rounded"></div>
+              </div>
+              <div className="h-96 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !property) {
+    return (
+      <div className="min-h-screen bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Property not found</h1>
+            <p className="text-gray-600">The property you're looking for doesn't exist.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const images = property.images.length > 0 ? property.images : [
+    'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=1200&h=800&fit=crop'
   ];
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => 
-      prev === property.images.length - 1 ? 0 : prev + 1
+      prev === images.length - 1 ? 0 : prev + 1
     );
   };
 
   const prevImage = () => {
     setCurrentImageIndex((prev) => 
-      prev === 0 ? property.images.length - 1 : prev - 1
+      prev === 0 ? images.length - 1 : prev - 1
     );
   };
 
   const handleBooking = (bookingData: any) => {
     console.log('Booking:', bookingData);
-    // Handle booking logic
+    // Handle booking logic - this would create a booking in Supabase
   };
 
   const handleShare = () => {
@@ -175,22 +131,83 @@ const PropertyDetail = () => {
     setSelectedDates({ checkIn, checkOut });
   };
 
+  // Create amenity objects with icons
+  const amenityIcons: { [key: string]: any } = {
+    'wifi': Wifi,
+    'kitchen': Home,
+    'parking': Car,
+    'pool': Home,
+    'security': Shield,
+    'default': Home
+  };
+
+  const amenitiesWithIcons = property.amenities.map(amenity => ({
+    name: amenity,
+    icon: amenityIcons[amenity.toLowerCase()] || amenityIcons.default
+  }));
+
+  const transformedProperty = {
+    id: property.id,
+    title: property.title,
+    location: property.location,
+    price: property.price_per_night,
+    priceType: 'night' as const,
+    rating: 4.8, // TODO: Calculate from reviews
+    reviewCount: reviews.length,
+    images: images,
+    host: {
+      name: 'Property Host', // TODO: Get from host profile
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+      joinedDate: new Date('2020-03-15'),
+      isSuperhost: true,
+      responseRate: 98,
+      responseTime: 'within an hour'
+    },
+    details: {
+      guests: property.max_guests,
+      bedrooms: property.bedrooms,
+      beds: property.bedrooms, // Assuming 1 bed per bedroom
+      bathrooms: property.bathrooms,
+      propertyType: property.property_type,
+      tier: property.price_per_night > 500 ? 'high' as const : 
+            property.price_per_night > 200 ? 'middle' as const : 'low' as const
+    },
+    amenities: amenitiesWithIcons,
+    description: property.description || 'No description available.',
+    maxGuests: property.max_guests,
+    cleaningFee: 50, // TODO: Make configurable
+    serviceFee: 0,
+    houseRules: [
+      'Check-in: 3:00 PM - 10:00 PM',
+      'Check-out: 11:00 AM',
+      'No smoking',
+      'No pets',
+      'No parties or events'
+    ],
+    cancellationPolicy: 'Free cancellation for 48 hours',
+    safetyFeatures: [
+      'Smoke alarm',
+      'Security cameras on property',
+      'First aid kit'
+    ]
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">{property.title}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">{transformedProperty.title}</h1>
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center space-x-4 text-sm">
               <div className="flex items-center space-x-1">
                 <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                <span className="font-medium">{property.rating}</span>
-                <span className="text-gray-500">({property.reviewCount} reviews)</span>
+                <span className="font-medium">{transformedProperty.rating}</span>
+                <span className="text-gray-500">({transformedProperty.reviewCount} reviews)</span>
               </div>
               <div className="flex items-center space-x-1">
                 <MapPin className="h-4 w-4" />
-                <span className="underline">{property.location}</span>
+                <span className="underline">{transformedProperty.location}</span>
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -214,33 +231,37 @@ const PropertyDetail = () => {
         <div className="mb-8">
           <div className="relative h-96 md:h-[500px] bg-gray-200 rounded-lg overflow-hidden">
             <img 
-              src={property.images[currentImageIndex]} 
-              alt={property.title}
+              src={images[currentImageIndex]} 
+              alt={transformedProperty.title}
               className="w-full h-full object-cover"
             />
-            <button
-              onClick={prevImage}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 rounded-full p-2 hover:bg-white transition-colors"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              onClick={nextImage}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 rounded-full p-2 hover:bg-white transition-colors"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-              {property.images.map((_, index) => (
+            {images.length > 1 && (
+              <>
                 <button
-                  key={index}
-                  onClick={() => setCurrentImageIndex(index)}
-                  className={`w-3 h-3 rounded-full ${
-                    index === currentImageIndex ? 'bg-white' : 'bg-white/50'
-                  }`}
-                />
-              ))}
-            </div>
+                  onClick={prevImage}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/80 rounded-full p-2 hover:bg-white transition-colors"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={nextImage}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/80 rounded-full p-2 hover:bg-white transition-colors"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                  {images.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`w-3 h-3 rounded-full ${
+                        index === currentImageIndex ? 'bg-white' : 'bg-white/50'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -251,27 +272,27 @@ const PropertyDetail = () => {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-xl font-semibold mb-2">
-                    {property.details.propertyType} hosted by {property.host.name}
+                    {transformedProperty.details.propertyType} hosted by {transformedProperty.host.name}
                   </h2>
                   <div className="flex items-center space-x-4 text-gray-600">
-                    <span>{property.details.guests} guests</span>
-                    <span>{property.details.bedrooms} bedrooms</span>
-                    <span>{property.details.beds} beds</span>
-                    <span>{property.details.bathrooms} bathrooms</span>
+                    <span>{transformedProperty.details.guests} guests</span>
+                    <span>{transformedProperty.details.bedrooms} bedrooms</span>
+                    <span>{transformedProperty.details.beds} beds</span>
+                    <span>{transformedProperty.details.bathrooms} bathrooms</span>
                   </div>
                 </div>
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src={property.host.avatar} />
+                  <AvatarImage src={transformedProperty.host.avatar} />
                   <AvatarFallback>
-                    {property.host.name.split(' ').map(n => n[0]).join('')}
+                    {transformedProperty.host.name.split(' ').map(n => n[0]).join('')}
                   </AvatarFallback>
                 </Avatar>
               </div>
 
-              {property.host.isSuperhost && (
+              {transformedProperty.host.isSuperhost && (
                 <div className="flex items-center space-x-2 mb-4">
                   <Award className="h-5 w-5 text-primary" />
-                  <span className="font-medium">{property.host.name} is a Superhost</span>
+                  <span className="font-medium">{transformedProperty.host.name} is a Superhost</span>
                 </div>
               )}
 
@@ -282,7 +303,7 @@ const PropertyDetail = () => {
             <div>
               <h3 className="text-lg font-semibold mb-4">About this place</h3>
               <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                {property.description}
+                {transformedProperty.description}
               </p>
             </div>
 
@@ -290,7 +311,7 @@ const PropertyDetail = () => {
             <div>
               <h3 className="text-lg font-semibold mb-4">What this place offers</h3>
               <div className="grid grid-cols-2 gap-4">
-                {property.amenities.map((amenity, index) => (
+                {transformedProperty.amenities.map((amenity, index) => (
                   <div key={index} className="flex items-center space-x-3">
                     <amenity.icon className="h-5 w-5 text-gray-600" />
                     <span>{amenity.name}</span>
@@ -299,122 +320,25 @@ const PropertyDetail = () => {
               </div>
             </div>
 
-            {/* Enhanced Tabs for Reviews, Calendar, and Messages */}
-            <Tabs defaultValue="reviews" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="reviews">Reviews ({property.reviewCount})</TabsTrigger>
-                <TabsTrigger value="calendar">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Availability
-                </TabsTrigger>
-                <TabsTrigger value="messages">
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Messages
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="reviews" className="space-y-6 mt-6">
-                <div className="flex items-center space-x-2 mb-6">
-                  <Star className="h-6 w-6 fill-yellow-400 text-yellow-400" />
-                  <span className="text-xl font-semibold">{property.rating}</span>
-                  <span className="text-gray-500">({property.reviewCount} reviews)</span>
-                </div>
-
-                <div className="space-y-6 mb-6">
-                  {reviews.map((review) => (
-                    <ReviewCard key={review.id} review={review} />
-                  ))}
-                </div>
-
-                <Button variant="outline" className="w-full">
-                  Show all {property.reviewCount} reviews
-                </Button>
-              </TabsContent>
-
-              <TabsContent value="calendar" className="mt-6">
-                <AvailabilityCalendar 
-                  propertyId={property.id}
-                  onDateSelect={handleDateSelect}
-                />
-              </TabsContent>
-
-              <TabsContent value="messages" className="mt-6">
-                <MessagingSystem />
-              </TabsContent>
-            </Tabs>
-
-            {/* Host Info */}
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center space-x-4 mb-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={property.host.avatar} />
-                    <AvatarFallback>
-                      {property.host.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="text-xl font-semibold">Hosted by {property.host.name}</h3>
-                    <p className="text-gray-600">
-                      Joined {property.host.joinedDate.getFullYear()}
-                    </p>
-                    {property.host.isSuperhost && (
-                      <Badge className="mt-1">Superhost</Badge>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                  <div>
-                    <span className="font-medium">Response rate:</span>
-                    <span className="ml-1">{property.host.responseRate}%</span>
-                  </div>
-                  <div>
-                    <span className="font-medium">Response time:</span>
-                    <span className="ml-1">{property.host.responseTime}</span>
-                  </div>
-                </div>
-
-                <Button variant="outline" className="w-full">
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Contact Host
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* House Rules */}
+            {/* Reviews */}
             <div>
-              <h3 className="text-lg font-semibold mb-4">House rules</h3>
-              <div className="space-y-2">
-                {property.houseRules.map((rule, index) => (
-                  <p key={index} className="text-gray-700">{rule}</p>
+              <div className="flex items-center space-x-2 mb-6">
+                <Star className="h-6 w-6 fill-yellow-400 text-yellow-400" />
+                <span className="text-xl font-semibold">{transformedProperty.rating}</span>
+                <span className="text-gray-500">({transformedProperty.reviewCount} reviews)</span>
+              </div>
+
+              <div className="space-y-6">
+                {reviews.map((review) => (
+                  <ReviewCard key={review.id} review={review} />
                 ))}
               </div>
-            </div>
-
-            {/* Safety */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Safety & property</h3>
-              <div className="space-y-2">
-                {property.safetyFeatures.map((feature, index) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <Shield className="h-4 w-4 text-gray-600" />
-                    <span className="text-gray-700">{feature}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Cancellation Policy */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Cancellation policy</h3>
-              <p className="text-gray-700">{property.cancellationPolicy}</p>
             </div>
           </div>
 
           {/* Booking Card */}
           <div className="lg:col-span-1">
-            <BookingCard property={property} onBooking={handleBooking} />
+            <BookingCard property={transformedProperty} onBooking={handleBooking} />
           </div>
         </div>
       </div>
