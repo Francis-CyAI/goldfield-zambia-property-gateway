@@ -63,3 +63,28 @@ export const useProperty = (id: string) => {
     },
   });
 };
+
+export const useUserProperties = (userId?: string) => {
+  return useQuery({
+    queryKey: ['userProperties', userId],
+    queryFn: async () => {
+      if (!userId) return [];
+      
+      console.log('Fetching properties for user:', userId);
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .eq('host_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching user properties:', error);
+        throw error;
+      }
+
+      console.log('User properties fetched:', data);
+      return data as Property[];
+    },
+    enabled: !!userId,
+  });
+};
