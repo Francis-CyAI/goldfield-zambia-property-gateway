@@ -8,7 +8,7 @@ export interface UserProfile {
   email: string;
   first_name: string | null;
   last_name: string | null;
-  role: string;
+  role: 'guest' | 'host' | 'admin';
   institution_id: string | null;
   created_at: string;
   updated_at: string;
@@ -46,7 +46,7 @@ export const useUpdateProfile = () => {
   return useMutation({
     mutationFn: async ({ userId, updates }: {
       userId: string;
-      updates: Partial<UserProfile>;
+      updates: Partial<Omit<UserProfile, 'id' | 'created_at' | 'updated_at'>>;
     }) => {
       console.log('Updating profile:', { userId, updates });
       
