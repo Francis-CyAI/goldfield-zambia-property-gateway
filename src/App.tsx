@@ -19,6 +19,7 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import ListProperty from "./pages/ListProperty";
+import Subscription from "./pages/Subscription";
 
 const queryClient = new QueryClient();
 
@@ -92,6 +93,11 @@ const App = () => (
             <Route path="/list-property" element={
               <ProtectedRoute>
                 <Layout><ListProperty /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/subscription" element={
+              <ProtectedRoute>
+                <Layout><Subscription /></Layout>
               </ProtectedRoute>
             } />
             <Route path="/bookings" element={

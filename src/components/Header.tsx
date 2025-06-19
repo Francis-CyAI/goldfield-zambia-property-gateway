@@ -20,9 +20,13 @@ const Header = () => {
     { name: 'Contact Us', href: '/contact', icon: Phone },
   ];
 
-  // Add dashboard link for authenticated users
+  // Add dashboard and subscription links for authenticated users
   const authenticatedNavigation = user 
-    ? [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }, ...navigation]
+    ? [
+        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }, 
+        { name: 'Subscription', href: '/subscription', icon: Crown },
+        ...navigation
+      ]
     : navigation;
 
   const isActive = (href: string) => location.pathname === href;

@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,17 +14,22 @@ import {
   AlertCircle,
   CheckCircle,
   Clock,
-  MessageSquare
+  MessageSquare,
+  Crown,
+  Zap
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useUserProperties } from '@/hooks/useProperties';
+import { useUserSubscription } from '@/hooks/useSubscription';
+import { format } from 'date-fns';
 
 const UserDashboard = () => {
   const { user } = useAuth();
   const { data: profile } = useProfile(user?.id);
   const { data: properties = [], isLoading } = useUserProperties(user?.id);
+  const { data: userSubscription } = useUserSubscription();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -37,6 +41,18 @@ const UserDashboard = () => {
   const displayName = profile?.first_name 
     ? `${profile.first_name} ${profile.last_name || ''}`.trim()
     : user?.email?.split('@')[0] || 'User';
+
+  // Get subscription limits
+  const currentTier = userSubscription?.subscription_tier;
+  const maxProperties = currentTier?.max_properties || 0;
+  const maxBookings = currentTier?.max_bookings || 0;
+  const isTrialActive = userSubscription?.trial_ends_at && new Date(userSubscription.trial_ends_at) > new Date();
+  const trialDaysLeft = isTrialActive 
+    ? Math.ceil((new Date(userSubscription.trial_ends_at!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+
+  // Check if user can add more properties
+  const canAddProperty = maxProperties === -1 || properties.length < maxProperties;
 
   // Mock data for demonstration
   const dashboardStats = {
@@ -102,15 +118,76 @@ const UserDashboard = () => {
                 <MapPin className="h-3 w-3 mr-1" />
                 Obama, Lusaka
               </Badge>
-              <Link to="/list-property">
-                <Button className="luxury-gradient text-white">
-                  <Plus className="h-4 w-4 mr-2" />
-                  List New Property
-                </Button>
-              </Link>
+              {canAddProperty ? (
+                <Link to="/list-property">
+                  <Button className="luxury-gradient text-white">
+                    <Plus className="h-4 w-4 mr-2" />
+                    List New Property
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/subscription">
+                  <Button variant="outline" className="border-amber-500 text-amber-600 hover:bg-amber-50">
+                    <Crown className="h-4 w-4 mr-2" />
+                    Upgrade Plan
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Subscription Status Alert */}
+        {isTrialActive && (
+          <Card className="mb-6 border-amber-200 bg-amber-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Crown className="h-5 w-5 text-amber-600" />
+                  <div>
+                    <p className="font-medium text-amber-800">
+                      Free Trial Active - {trialDaysLeft} days remaining
+                    </p>
+                    <p className="text-sm text-amber-600">
+                      Trial expires on {format(new Date(userSubscription.trial_ends_at!), 'MMM dd, yyyy')}
+                    </p>
+                  </div>
+                </div>
+                <Link to="/subscription">
+                  <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white">
+                    View Plans
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Property Limit Warning */}
+        {!canAddProperty && (
+          <Card className="mb-6 border-red-200 bg-red-50">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <AlertCircle className="h-5 w-5 text-red-600" />
+                  <div>
+                    <p className="font-medium text-red-800">
+                      Property Limit Reached
+                    </p>
+                    <p className="text-sm text-red-600">
+                      You've reached your limit of {maxProperties} properties. Upgrade to add more.
+                    </p>
+                  </div>
+                </div>
+                <Link to="/subscription">
+                  <Button size="sm" variant="destructive">
+                    Upgrade Now
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -122,7 +199,7 @@ const UserDashboard = () => {
             <CardContent>
               <div className="text-2xl font-bold">{dashboardStats.totalProperties}</div>
               <p className="text-xs text-muted-foreground">
-                +2 from last month
+                {maxProperties === -1 ? 'Unlimited' : `${dashboardStats.totalProperties} of ${maxProperties} used`}
               </p>
             </CardContent>
           </Card>
@@ -135,7 +212,7 @@ const UserDashboard = () => {
             <CardContent>
               <div className="text-2xl font-bold">{dashboardStats.activeBookings}</div>
               <p className="text-xs text-muted-foreground">
-                +12% from last week
+                {maxBookings === -1 ? 'Unlimited' : `${dashboardStats.activeBookings} of ${maxBookings} monthly limit`}
               </p>
             </CardContent>
           </Card>
@@ -169,10 +246,11 @@ const UserDashboard = () => {
 
         {/* Main Content Tabs */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="properties">My Properties</TabsTrigger>
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
+            <TabsTrigger value="subscription">Subscription</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
@@ -209,11 +287,42 @@ const UserDashboard = () => {
                 </Card>
               </div>
 
-              {/* Performance Summary */}
+              {/* Performance Summary & Quick Actions */}
               <div className="space-y-6">
+                {/* Current Plan */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Performance Overview</CardTitle>
+                    <CardTitle className="text-base flex items-center">
+                      {currentTier?.name === 'Pro' ? <Crown className="h-4 w-4 mr-2 text-purple-600" /> : 
+                       currentTier?.name === 'Standard' ? <Zap className="h-4 w-4 mr-2 text-blue-600" /> : 
+                       <Crown className="h-4 w-4 mr-2 text-gray-600" />}
+                      Current Plan: {currentTier?.name || 'Free Trial'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="text-2xl font-bold">
+                      {currentTier?.price === 0 ? 'Free' : `$${currentTier?.price}/month`}
+                    </div>
+                    {isTrialActive && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Trial Progress</span>
+                          <span>{30 - trialDaysLeft} of 30 days</span>
+                        </div>
+                        <Progress value={((30 - trialDaysLeft) / 30) * 100} className="h-2" />
+                      </div>
+                    )}
+                    <Link to="/subscription" className="block">
+                      <Button variant="outline" className="w-full">
+                        {isTrialActive ? 'Choose Plan' : 'Manage Subscription'}
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base">Performance Overview</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
@@ -247,12 +356,21 @@ const UserDashboard = () => {
                     <CardTitle className="text-base">Quick Actions</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <Link to="/list-property" className="block">
-                      <Button variant="outline" className="w-full justify-start">
-                        <Plus className="h-4 w-4 mr-2" />
-                        List New Property
-                      </Button>
-                    </Link>
+                    {canAddProperty ? (
+                      <Link to="/list-property" className="block">
+                        <Button variant="outline" className="w-full justify-start">
+                          <Plus className="h-4 w-4 mr-2" />
+                          List New Property
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link to="/subscription" className="block">
+                        <Button variant="outline" className="w-full justify-start border-amber-500 text-amber-600 hover:bg-amber-50">
+                          <Crown className="h-4 w-4 mr-2" />
+                          Upgrade to Add More
+                        </Button>
+                      </Link>
+                    )}
                     <Button variant="outline" className="w-full justify-start">
                       <MessageSquare className="h-4 w-4 mr-2" />
                       View Messages
@@ -337,14 +455,56 @@ const UserDashboard = () => {
             </Card>
           </TabsContent>
 
+          <TabsContent value="subscription" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Subscription Management</CardTitle>
+                <CardDescription>
+                  Manage your subscription plan and billing
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8">
+                  <Crown className="h-12 w-12 text-luxury-gold mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Subscription Settings</h3>
+                  <p className="text-gray-600 mb-6">
+                    View and manage your subscription plan
+                  </p>
+                  <Link to="/subscription">
+                    <Button className="luxury-gradient text-white">
+                      Manage Subscription
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="analytics">
             <Card>
               <CardContent className="text-center py-12">
-                <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Analytics Dashboard</h3>
-                <p className="text-gray-600">
-                  Detailed analytics and insights will be available here
-                </p>
+                {currentTier?.analytics_access ? (
+                  <>
+                    <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Analytics Dashboard</h3>
+                    <p className="text-gray-600">
+                      Detailed analytics and insights will be available here
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Crown className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">Analytics Available with Premium Plans</h3>
+                    <p className="text-gray-600 mb-6">
+                      Upgrade your plan to access detailed analytics and insights
+                    </p>
+                    <Link to="/subscription">
+                      <Button className="luxury-gradient text-white">
+                        Upgrade Plan
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
