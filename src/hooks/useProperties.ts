@@ -37,7 +37,12 @@ export const useProperties = () => {
       }
 
       console.log('Properties fetched:', data);
-      return data as Property[];
+      // Transform the data to ensure arrays are properly handled
+      return data.map(property => ({
+        ...property,
+        amenities: Array.isArray(property.amenities) ? property.amenities : [],
+        images: Array.isArray(property.images) ? property.images : []
+      })) as Property[];
     },
   });
 };
@@ -59,7 +64,12 @@ export const useProperty = (id: string) => {
       }
 
       console.log('Property fetched:', data);
-      return data as Property;
+      // Transform the data to ensure arrays are properly handled
+      return {
+        ...data,
+        amenities: Array.isArray(data.amenities) ? data.amenities : [],
+        images: Array.isArray(data.images) ? data.images : []
+      } as Property;
     },
   });
 };
@@ -83,7 +93,12 @@ export const useUserProperties = (userId?: string) => {
       }
 
       console.log('User properties fetched:', data);
-      return data as Property[];
+      // Transform the data to ensure arrays are properly handled
+      return data.map(property => ({
+        ...property,
+        amenities: Array.isArray(property.amenities) ? property.amenities : [],
+        images: Array.isArray(property.images) ? property.images : []
+      })) as Property[];
     },
     enabled: !!userId,
   });

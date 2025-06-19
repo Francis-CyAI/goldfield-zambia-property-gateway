@@ -52,9 +52,9 @@ const AuthButton = () => {
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'host':
+      case 'institution_admin':
         return 'bg-blue-100 text-blue-800';
-      case 'admin':
+      case 'super_admin':
         return 'bg-purple-100 text-purple-800';
       default:
         return 'bg-green-100 text-green-800';
@@ -63,12 +63,12 @@ const AuthButton = () => {
 
   const getRoleDisplayName = (role: string) => {
     switch (role) {
-      case 'host':
-        return 'Host';
-      case 'admin':
+      case 'institution_admin':
         return 'Admin';
+      case 'super_admin':
+        return 'Super Admin';
       default:
-        return 'Guest';
+        return 'Student';
     }
   };
 
@@ -111,11 +111,11 @@ const AuthButton = () => {
           </Link>
         </DropdownMenuItem>
         
-        {profile?.role === 'host' && (
+        {(profile?.role === 'institution_admin' || profile?.role === 'super_admin') && (
           <DropdownMenuItem asChild>
-            <Link to="/host/properties" className="flex items-center w-full">
+            <Link to="/admin/properties" className="flex items-center w-full">
               <Building className="h-4 w-4 mr-2" />
-              My Properties
+              Manage Properties
             </Link>
           </DropdownMenuItem>
         )}
