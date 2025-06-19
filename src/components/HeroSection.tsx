@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +15,10 @@ const HeroSection = () => {
   const purposes = [
     { value: 'buy', label: 'Buy a Property' },
     { value: 'sell', label: 'Sell Your Property' },
-    { value: 'rent', label: 'List for Rent' }
+    { value: 'rent', label: 'List for Rent' },
+    { value: 'book', label: 'Book Short-term Stay' },
+    { value: 'rent-long', label: 'Rent Long-term Property' },
+    { value: 'rent-room', label: 'Rent a Room' }
   ];
 
   const tiers = [
@@ -55,7 +57,9 @@ const HeroSection = () => {
     { value: 'boarding', label: 'Boarding House' },
     { value: 'furnished', label: 'Furnished Apartment' },
     { value: 'warehouses', label: 'Warehouses' },
-    { value: 'offices', label: 'Office Space / Shops' }
+    { value: 'offices', label: 'Office Space / Shops' },
+    { value: 'rooms', label: 'Single Rooms' },
+    { value: 'vacation-rentals', label: 'Vacation Rentals' }
   ];
 
   return (
@@ -66,7 +70,7 @@ const HeroSection = () => {
             Invest in Zambia with Confidence
           </h1>
           <p className="text-xl md:text-2xl mb-8 opacity-90">
-            Land, Homes, and Commercial Property Available Across Major Cities
+            Buy, Sell, Rent, or Book Properties Across Major Cities
           </p>
           <div className="flex flex-wrap justify-center gap-4 mb-8">
             <Badge variant="secondary" className="px-4 py-2 text-sm">
@@ -78,6 +82,9 @@ const HeroSection = () => {
             <Badge variant="secondary" className="px-4 py-2 text-sm">
               Foreign Investors
             </Badge>
+            <Badge variant="secondary" className="px-4 py-2 text-sm">
+              Short & Long-term Rentals
+            </Badge>
           </div>
         </div>
 
@@ -86,7 +93,7 @@ const HeroSection = () => {
           <CardHeader>
             <CardTitle className="text-center text-gray-900">Find Your Perfect Property</CardTitle>
             <CardDescription className="text-center">
-              Discover properties in Lusaka, Ndola, Kitwe, Livingstone and beyond
+              Buy, rent, or book properties in Lusaka, Ndola, Kitwe, Livingstone and beyond
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -159,7 +166,9 @@ const HeroSection = () => {
               <Link to="/properties" className="flex-1">
                 <Button className="w-full bg-primary hover:bg-primary/90">
                   <Search className="h-4 w-4 mr-2" />
-                  Search Properties
+                  {purpose === 'book' ? 'Search Accommodations' : 
+                   purpose === 'rent-long' || purpose === 'rent-room' ? 'Search Rentals' : 
+                   'Search Properties'}
                 </Button>
               </Link>
               <Link to="/contact">
