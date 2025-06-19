@@ -10,7 +10,7 @@ const FeaturedPropertiesSection = () => {
     {
       id: 1,
       title: 'Luxury 4-Bedroom Villa in Kabulonga',
-      price: 'K450,000',
+      price: 'ZMW 450,000',
       location: 'Lusaka',
       type: 'House',
       tier: 'Premium',
@@ -20,7 +20,7 @@ const FeaturedPropertiesSection = () => {
     {
       id: 2,
       title: 'Elite 50 Hectare Farm in Mumbwa',
-      price: 'K280,000',
+      price: 'ZMW 280,000',
       location: 'Mumbwa',
       type: 'Farm',
       tier: 'Executive',
@@ -30,7 +30,7 @@ const FeaturedPropertiesSection = () => {
     {
       id: 3,
       title: 'Presidential Office Space in CBD',
-      price: 'K800,000',
+      price: 'ZMW 800,000',
       location: 'Lusaka',
       type: 'Office',
       tier: 'Platinum',

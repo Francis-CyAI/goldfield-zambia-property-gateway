@@ -149,7 +149,7 @@ const SubscriptionManagement = () => {
                   <CardTitle className="text-xl">{tier.name}</CardTitle>
                   <div className="space-y-1">
                     <div className="text-3xl font-bold">
-                      {tier.price === 0 ? 'Free' : `$${tier.price}`}
+                      {tier.price === 0 ? 'Free' : `ZMW ${tier.price}`}
                     </div>
                     {tier.price > 0 && (
                       <div className="text-sm text-gray-500">per month</div>

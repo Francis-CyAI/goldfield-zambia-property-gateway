@@ -112,7 +112,7 @@ const BookingCard = ({ property, onBooking }: BookingCardProps) => {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div>
-            <span className="text-2xl font-bold">K{property.price.toLocaleString()}</span>
+            <span className="text-2xl font-bold">ZMW {property.price.toLocaleString()}</span>
             <span className="text-gray-600 text-base font-normal"> per night</span>
           </div>
           <div className="flex items-center space-x-1">
@@ -174,26 +174,26 @@ const BookingCard = ({ property, onBooking }: BookingCardProps) => {
             <Separator />
             <div className="space-y-2">
               <div className="flex justify-between">
-                <span>K{property.price.toLocaleString()} × {nights} night{nights > 1 ? 's' : ''}</span>
-                <span>K{basePrice.toLocaleString()}</span>
+                <span>ZMW {property.price.toLocaleString()} × {nights} night{nights > 1 ? 's' : ''}</span>
+                <span>ZMW {basePrice.toLocaleString()}</span>
               </div>
               {cleaningFee > 0 && (
                 <div className="flex justify-between">
                   <span>Cleaning fee</span>
-                  <span>K{cleaningFee.toLocaleString()}</span>
+                  <span>ZMW {cleaningFee.toLocaleString()}</span>
                 </div>
               )}
               {serviceFee > 0 && (
                 <div className="flex justify-between">
                   <span>Service fee</span>
-                  <span>K{serviceFee.toLocaleString()}</span>
+                  <span>ZMW {serviceFee.toLocaleString()}</span>
                 </div>
               )}
             </div>
             <Separator />
             <div className="flex justify-between font-semibold text-lg">
               <span>Total</span>
-              <span>K{totalPrice.toLocaleString()}</span>
+              <span>ZMW {totalPrice.toLocaleString()}</span>
             </div>
           </div>
         )}

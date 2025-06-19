@@ -163,7 +163,7 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
         <div className="flex items-center justify-between">
           <div>
             <span className="text-xl font-bold text-primary">
-              K{property.price.toLocaleString()}
+              ZMW {property.price.toLocaleString()}
             </span>
             <span className="text-sm text-gray-600">
               {property.priceType === 'night' && ' / night'}
