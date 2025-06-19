@@ -16,6 +16,8 @@ import News from "./pages/News";
 import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import Dashboard from "./pages/Dashboard";
+import ListProperty from "./pages/ListProperty";
 
 const queryClient = new QueryClient();
 
@@ -57,7 +59,7 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (user) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
@@ -81,6 +83,16 @@ const App = () => (
             <Route path="/services" element={<Layout><Services /></Layout>} />
             <Route path="/properties" element={<Layout><Properties /></Layout>} />
             <Route path="/property/:id" element={<Layout><PropertyDetail /></Layout>} />
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Layout><Dashboard /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/list-property" element={
+              <ProtectedRoute>
+                <Layout><ListProperty /></Layout>
+              </ProtectedRoute>
+            } />
             <Route path="/bookings" element={
               <ProtectedRoute>
                 <Layout><Bookings /></Layout>

@@ -1,12 +1,15 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Home, Info, Briefcase, Building, Newspaper, Phone, LogIn, Crown } from 'lucide-react';
+import { Menu, X, Home, Info, Briefcase, Building, Newspaper, Phone, LogIn, Crown, LayoutDashboard } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import AuthButton from './AuthButton';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
+  const { user } = useAuth();
 
   const navigation = [
     { name: 'Home', href: '/', icon: Home },
@@ -16,6 +19,11 @@ const Header = () => {
     { name: 'News', href: '/news', icon: Newspaper },
     { name: 'Contact Us', href: '/contact', icon: Phone },
   ];
+
+  // Add dashboard link for authenticated users
+  const authenticatedNavigation = user 
+    ? [{ name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }, ...navigation]
+    : navigation;
 
   const isActive = (href: string) => location.pathname === href;
 
@@ -30,13 +38,13 @@ const Header = () => {
             </div>
             <div>
               <h1 className="text-3xl font-bold luxury-text-gradient font-playfair">ABS</h1>
-              <p className="text-sm text-luxury-charcoal font-medium">Business Solutions</p>
+              <p className="text-sm text-luxury-charcoal font-medium">Obama, Lusaka</p>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex space-x-8">
-            {navigation.map((item) => (
+            {authenticatedNavigation.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
@@ -52,18 +60,13 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Contact Info & Login Button */}
+          {/* Contact Info & Auth Button */}
           <div className="hidden lg:flex items-center space-x-6">
             <div className="text-right">
               <p className="text-sm text-luxury-charcoal font-medium">+260 972 333 053</p>
-              <p className="text-xs text-luxury-charcoal/70">appletechbusinesssolutions@gmail.com</p>
+              <p className="text-xs text-luxury-charcoal/70">Obama, Lusaka, Zambia</p>
             </div>
-            <Link to="/login">
-              <Button className="luxury-gradient text-white hover:shadow-lg transition-all duration-300 font-medium">
-                <LogIn className="h-4 w-4 mr-2" />
-                Sign In
-              </Button>
-            </Link>
+            <AuthButton />
           </div>
 
           {/* Mobile menu button */}
@@ -83,7 +86,7 @@ const Header = () => {
         {isMenuOpen && (
           <div className="md:hidden pb-4 border-t border-luxury-gold/20 mt-4 pt-4">
             <div className="flex flex-col space-y-3">
-              {navigation.map((item) => (
+              {authenticatedNavigation.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
@@ -101,14 +104,11 @@ const Header = () => {
               <div className="border-t border-luxury-gold/20 pt-3 mt-3">
                 <div className="text-center mb-3">
                   <p className="text-sm text-luxury-charcoal font-medium">+260 972 333 053</p>
-                  <p className="text-xs text-luxury-charcoal/70">appletechbusinesssolutions@gmail.com</p>
+                  <p className="text-xs text-luxury-charcoal/70">Obama, Lusaka, Zambia</p>
                 </div>
-                <Link to="/login" onClick={() => setIsMenuOpen(false)}>
-                  <Button className="w-full luxury-gradient text-white font-medium">
-                    <LogIn className="h-4 w-4 mr-2" />
-                    Sign In
-                  </Button>
-                </Link>
+                <div className="px-4">
+                  <AuthButton />
+                </div>
               </div>
             </div>
           </div>
