@@ -48,7 +48,8 @@ const PropertySearch = ({ filters, onFiltersChange, onSearch }: PropertySearchPr
 
   const locations = [
     'Lusaka', 'Ndola', 'Kitwe', 'Livingstone', 'Kabwe',
-    'Mumbwa', 'Kafue', 'Chongwe', 'Chibombo', 'Mazabuka'
+    'Mumbwa', 'Kafue', 'Chongwe', 'Chibombo', 'Mazabuka',
+    'Solwezi', 'Kasama', 'Chipata', 'Mongu', 'Choma'
   ];
 
   const updateFilters = (key: keyof SearchFilters, value: any) => {

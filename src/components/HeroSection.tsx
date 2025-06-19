@@ -25,12 +25,13 @@ const HeroSection = () => {
     { value: 'high', label: 'High Class - Premium & Luxury' }
   ];
 
-  const cities = [
+  const majorCities = [
     { value: 'lusaka', label: 'Lusaka' },
     { value: 'ndola', label: 'Ndola' },
     { value: 'kitwe', label: 'Kitwe' },
     { value: 'livingstone', label: 'Livingstone' },
-    { value: 'kabwe', label: 'Kabwe' }
+    { value: 'kabwe', label: 'Kabwe' },
+    { value: 'solwezi', label: 'Solwezi' }
   ];
 
   const farmingAreas = [
@@ -40,7 +41,11 @@ const HeroSection = () => {
     { value: 'chibombo', label: 'Chibombo' },
     { value: 'mazabuka', label: 'Mazabuka' },
     { value: 'mpongwe', label: 'Mpongwe' },
-    { value: 'mkushi', label: 'Mkushi' }
+    { value: 'mkushi', label: 'Mkushi' },
+    { value: 'kasama', label: 'Kasama' },
+    { value: 'chipata', label: 'Chipata' },
+    { value: 'mongu', label: 'Mongu' },
+    { value: 'choma', label: 'Choma' }
   ];
 
   const propertyTypes = [
@@ -61,7 +66,7 @@ const HeroSection = () => {
             Invest in Zambia with Confidence
           </h1>
           <p className="text-xl md:text-2xl mb-8 opacity-90">
-            Land, Homes, and Commercial Property Available
+            Land, Homes, and Commercial Property Available Across Major Cities
           </p>
           <div className="flex flex-wrap justify-center gap-4 mb-8">
             <Badge variant="secondary" className="px-4 py-2 text-sm">
@@ -81,7 +86,7 @@ const HeroSection = () => {
           <CardHeader>
             <CardTitle className="text-center text-gray-900">Find Your Perfect Property</CardTitle>
             <CardDescription className="text-center">
-              Use our advanced filters to discover properties that match your needs
+              Discover properties in Lusaka, Ndola, Kitwe, Livingstone and beyond
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -120,13 +125,13 @@ const HeroSection = () => {
                   <SelectItem value="cities" disabled className="font-semibold">
                     Major Cities
                   </SelectItem>
-                  {cities.map((city) => (
+                  {majorCities.map((city) => (
                     <SelectItem key={city.value} value={city.value}>
                       {city.label}
                     </SelectItem>
                   ))}
                   <SelectItem value="farming" disabled className="font-semibold">
-                    Farming & Plot Areas
+                    Farming & Development Areas
                   </SelectItem>
                   {farmingAreas.map((area) => (
                     <SelectItem key={area.value} value={area.value}>
