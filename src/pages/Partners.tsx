@@ -1,10 +1,18 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Building2, Leaf, Phone, Mail, Globe, MapPin, Star } from 'lucide-react';
+import { Building2, Leaf, Phone, Mail, Globe, MapPin, Star, Plus } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { usePartnerSubscription } from '@/hooks/usePartnerSubscription';
+import PartnerSubscriptionForm from '@/components/PartnerSubscriptionForm';
+import PartnerDashboard from '@/components/PartnerDashboard';
+import { useState } from 'react';
 
 const Partners = () => {
+  const { user } = useAuth();
+  const { data: subscriptionData, isLoading } = usePartnerSubscription();
+  const [showSubscriptionForm, setShowSubscriptionForm] = useState(false);
+
   const partners = [
     {
       id: 1,
@@ -84,18 +92,44 @@ const Partners = () => {
     }
   ];
 
+  // Show subscription form if user wants to become a partner
+  if (showSubscriptionForm) {
+    return <PartnerSubscriptionForm />;
+  }
+
+  // Show partner dashboard if user has an active subscription
+  if (user && subscriptionData?.hasActiveSubscription) {
+    return <PartnerDashboard />;
+  }
+
   return (
     <div className="min-h-screen py-12 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Our Trusted Partners
-          </h1>
+          <div className="flex items-center justify-center gap-4 mb-6">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900">
+              Our Trusted Partners
+            </h1>
+            {user && (
+              <Button 
+                onClick={() => setShowSubscriptionForm(true)}
+                className="flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" />
+                Become a Partner
+              </Button>
+            )}
+          </div>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
             Discover quality services and products from our verified business partners. 
             From technology solutions to agricultural services, find what you need from trusted providers.
           </p>
+          {!user && (
+            <p className="text-sm text-gray-500 mt-4">
+              <a href="/auth" className="text-primary hover:underline">Sign in</a> to become a partner
+            </p>
+          )}
         </div>
 
         {/* Partner Cards */}
@@ -195,9 +229,25 @@ const Partners = () => {
               across Zambia through our platform.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="secondary" size="lg" className="bg-white text-primary hover:bg-gray-100">
-                Partner Application
-              </Button>
+              {user ? (
+                <Button 
+                  variant="secondary" 
+                  size="lg" 
+                  className="bg-white text-primary hover:bg-gray-100"
+                  onClick={() => setShowSubscriptionForm(true)}
+                >
+                  Start Partnership
+                </Button>
+              ) : (
+                <Button 
+                  variant="secondary" 
+                  size="lg" 
+                  className="bg-white text-primary hover:bg-gray-100"
+                  onClick={() => window.location.href = '/auth'}
+                >
+                  Sign In to Partner
+                </Button>
+              )}
               <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-primary">
                 Learn More
               </Button>

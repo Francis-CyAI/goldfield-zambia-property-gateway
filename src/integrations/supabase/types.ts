@@ -302,6 +302,87 @@ export type Database = {
         }
         Relationships: []
       }
+      partner_subscription_tiers: {
+        Row: {
+          created_at: string
+          featured_placement: boolean | null
+          features: string[]
+          id: string
+          max_listings: number | null
+          monthly_price: number
+          name: string
+          priority_support: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          featured_placement?: boolean | null
+          features?: string[]
+          id?: string
+          max_listings?: number | null
+          monthly_price: number
+          name: string
+          priority_support?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          featured_placement?: boolean | null
+          features?: string[]
+          id?: string
+          max_listings?: number | null
+          monthly_price?: number
+          name?: string
+          priority_support?: boolean | null
+        }
+        Relationships: []
+      }
+      partner_subscriptions: {
+        Row: {
+          business_type: string
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          monthly_fee: number
+          partner_name: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_tier: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          business_type: string
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          monthly_fee?: number
+          partner_name: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_tier?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          business_type?: string
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          monthly_fee?: number
+          partner_name?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_tier?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
