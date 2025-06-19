@@ -13,6 +13,7 @@ import Properties from "./pages/Properties";
 import PropertyDetail from "./pages/PropertyDetail";
 import Bookings from "./pages/Bookings";
 import News from "./pages/News";
+import Partners from "./pages/Partners";
 import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -99,6 +100,7 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/news" element={<Layout><News /></Layout>} />
+            <Route path="/partners" element={<Layout><Partners /></Layout>} />
             <Route path="/contact" element={<Layout><Contact /></Layout>} />
             <Route path="*" element={<Layout><NotFound /></Layout>} />
           </Routes>
