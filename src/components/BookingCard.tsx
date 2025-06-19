@@ -2,216 +2,216 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { 
-  CalendarIcon, 
-  Users, 
-  Star, 
-  Shield,
-  CreditCard
-} from 'lucide-react';
-import { format, differenceInDays } from 'date-fns';
+import { Calendar, Users, CreditCard, Star } from 'lucide-react';
+import { format, differenceInDays, addDays } from 'date-fns';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCreateBooking } from '@/hooks/useBookings';
+import { useToast } from '@/hooks/use-toast';
+
+interface Property {
+  id: string;
+  title: string;
+  price: number;
+  rating: number;
+  reviewCount: number;
+  maxGuests: number;
+  cleaningFee?: number;
+  serviceFee?: number;
+}
 
 interface BookingCardProps {
-  property: {
-    id: string;
-    price: number;
-    priceType: 'night' | 'month' | 'sale';
-    rating: number;
-    reviewCount: number;
-    maxGuests: number;
-    cleaningFee?: number;
-    serviceFee?: number;
-  };
-  onBooking: (bookingData: any) => void;
+  property: Property;
+  onBooking?: (bookingData: any) => void;
 }
 
 const BookingCard = ({ property, onBooking }: BookingCardProps) => {
-  const [checkIn, setCheckIn] = useState<Date | undefined>(undefined);
-  const [checkOut, setCheckOut] = useState<Date | undefined>(undefined);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const createBooking = useCreateBooking();
+  
+  const [checkIn, setCheckIn] = useState('');
+  const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState(1);
-  const [showCalendar, setShowCalendar] = useState<'checkin' | 'checkout' | null>(null);
+  const [isBooking, setIsBooking] = useState(false);
 
-  const nights = checkIn && checkOut ? differenceInDays(checkOut, checkIn) : 0;
-  const subtotal = nights * property.price;
-  const cleaningFee = property.cleaningFee || 0;
-  const serviceFee = property.serviceFee || Math.round(subtotal * 0.14);
-  const total = subtotal + cleaningFee + serviceFee;
+  const nights = checkIn && checkOut ? differenceInDays(new Date(checkOut), new Date(checkIn)) : 0;
+  const basePrice = nights * property.price;
+  const cleaningFee = property.cleaningFee || 50;
+  const serviceFee = property.serviceFee || 0;
+  const totalPrice = basePrice + cleaningFee + serviceFee;
 
-  const handleBooking = () => {
-    if (!checkIn || !checkOut) return;
-    
-    const bookingData = {
-      propertyId: property.id,
-      checkIn,
-      checkOut,
-      guests,
-      nights,
-      subtotal,
-      cleaningFee,
-      serviceFee,
-      total
-    };
-    
-    onBooking(bookingData);
+  const handleBooking = async () => {
+    if (!user) {
+      toast({
+        title: 'Authentication required',
+        description: 'Please log in to make a booking.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!checkIn || !checkOut) {
+      toast({
+        title: 'Please select dates',
+        description: 'Check-in and check-out dates are required.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (guests > property.maxGuests) {
+      toast({
+        title: 'Too many guests',
+        description: `This property can accommodate up to ${property.maxGuests} guests.`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsBooking(true);
+
+    try {
+      await createBooking.mutateAsync({
+        property_id: property.id,
+        check_in: checkIn,
+        check_out: checkOut,
+        guest_count: guests,
+        total_price: totalPrice,
+      });
+
+      // Call the callback if provided
+      if (onBooking) {
+        onBooking({
+          property_id: property.id,
+          check_in: checkIn,
+          check_out: checkOut,
+          guest_count: guests,
+          total_price: totalPrice,
+        });
+      }
+
+      // Reset form
+      setCheckIn('');
+      setCheckOut('');
+      setGuests(1);
+    } catch (error) {
+      console.error('Booking error:', error);
+    } finally {
+      setIsBooking(false);
+    }
   };
 
-  const canBook = checkIn && checkOut && nights > 0;
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd');
 
   return (
-    <Card className="sticky top-4">
+    <Card className="sticky top-8">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
+        <CardTitle className="flex items-center justify-between">
+          <div>
             <span className="text-2xl font-bold">K{property.price.toLocaleString()}</span>
-            <span className="text-gray-600">
-              {property.priceType === 'night' && '/ night'}
-              {property.priceType === 'month' && '/ month'}
-            </span>
+            <span className="text-gray-600 text-base font-normal"> per night</span>
           </div>
           <div className="flex items-center space-x-1">
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
             <span className="font-medium">{property.rating}</span>
             <span className="text-gray-500">({property.reviewCount})</span>
           </div>
-        </div>
+        </CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-4">
-        {property.priceType !== 'sale' && (
-          <>
-            {/* Date Selection */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-sm font-medium mb-1">CHECK-IN</label>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left"
-                  onClick={() => setShowCalendar('checkin')}
-                >
-                  <CalendarIcon className="h-4 w-4 mr-2" />
-                  {checkIn ? format(checkIn, 'MM/dd/yyyy') : 'Add date'}
-                </Button>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">CHECK-OUT</label>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left"
-                  onClick={() => setShowCalendar('checkout')}
-                >
-                  <CalendarIcon className="h-4 w-4 mr-2" />
-                  {checkOut ? format(checkOut, 'MM/dd/yyyy') : 'Add date'}
-                </Button>
-              </div>
-            </div>
+        {/* Date Selection */}
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <Label htmlFor="checkin">Check-in</Label>
+            <Input
+              id="checkin"
+              type="date"
+              value={checkIn}
+              onChange={(e) => setCheckIn(e.target.value)}
+              min={today}
+            />
+          </div>
+          <div>
+            <Label htmlFor="checkout">Check-out</Label>
+            <Input
+              id="checkout"
+              type="date"
+              value={checkOut}
+              onChange={(e) => setCheckOut(e.target.value)}
+              min={checkIn || tomorrow}
+            />
+          </div>
+        </div>
 
-            {/* Calendar Popup */}
-            {showCalendar && (
-              <div className="border rounded-lg p-4 bg-white shadow-lg">
-                <Calendar
-                  mode="single"
-                  selected={showCalendar === 'checkin' ? checkIn : checkOut}
-                  onSelect={(date) => {
-                    if (showCalendar === 'checkin') {
-                      setCheckIn(date);
-                      if (date && checkOut && date >= checkOut) {
-                        setCheckOut(undefined);
-                      }
-                    } else {
-                      setCheckOut(date);
-                    }
-                    setShowCalendar(null);
-                  }}
-                  disabled={(date) => {
-                    if (date < new Date()) return true;
-                    if (showCalendar === 'checkout' && checkIn) {
-                      return date <= checkIn;
-                    }
-                    return false;
-                  }}
-                />
+        {/* Guest Selection */}
+        <div>
+          <Label htmlFor="guests">Guests</Label>
+          <div className="flex items-center space-x-2">
+            <Users className="h-4 w-4 text-gray-400" />
+            <Input
+              id="guests"
+              type="number"
+              value={guests}
+              onChange={(e) => setGuests(parseInt(e.target.value) || 1)}
+              min={1}
+              max={property.maxGuests}
+              className="flex-1"
+            />
+          </div>
+          <p className="text-sm text-gray-500 mt-1">
+            Maximum {property.maxGuests} guests
+          </p>
+        </div>
+
+        {/* Price Breakdown */}
+        {nights > 0 && (
+          <div className="space-y-3">
+            <Separator />
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>K{property.price.toLocaleString()} × {nights} night{nights > 1 ? 's' : ''}</span>
+                <span>K{basePrice.toLocaleString()}</span>
               </div>
-            )}
-
-            {/* Guests Selection */}
-            <div>
-              <label className="block text-sm font-medium mb-1">GUESTS</label>
-              <Select value={guests.toString()} onValueChange={(value) => setGuests(parseInt(value))}>
-                <SelectTrigger>
-                  <Users className="h-4 w-4 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Array.from({ length: property.maxGuests }, (_, i) => i + 1).map((num) => (
-                    <SelectItem key={num} value={num.toString()}>
-                      {num} guest{num > 1 ? 's' : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Price Breakdown */}
-            {canBook && (
-              <div className="space-y-3">
-                <Separator />
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>K{property.price.toLocaleString()} x {nights} nights</span>
-                    <span>K{subtotal.toLocaleString()}</span>
-                  </div>
-                  {cleaningFee > 0 && (
-                    <div className="flex justify-between">
-                      <span>Cleaning fee</span>
-                      <span>K{cleaningFee.toLocaleString()}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span>Service fee</span>
-                    <span>K{serviceFee.toLocaleString()}</span>
-                  </div>
+              {cleaningFee > 0 && (
+                <div className="flex justify-between">
+                  <span>Cleaning fee</span>
+                  <span>K{cleaningFee.toLocaleString()}</span>
                 </div>
-                <Separator />
-                <div className="flex justify-between font-semibold text-lg">
-                  <span>Total</span>
-                  <span>K{total.toLocaleString()}</span>
+              )}
+              {serviceFee > 0 && (
+                <div className="flex justify-between">
+                  <span>Service fee</span>
+                  <span>K{serviceFee.toLocaleString()}</span>
                 </div>
-              </div>
-            )}
-          </>
+              )}
+            </div>
+            <Separator />
+            <div className="flex justify-between font-semibold text-lg">
+              <span>Total</span>
+              <span>K{totalPrice.toLocaleString()}</span>
+            </div>
+          </div>
         )}
 
         {/* Booking Button */}
         <Button 
-          className="w-full bg-primary hover:bg-primary/90" 
-          size="lg"
-          disabled={property.priceType !== 'sale' && !canBook}
           onClick={handleBooking}
+          disabled={!checkIn || !checkOut || nights <= 0 || isBooking || createBooking.isPending}
+          className="w-full"
+          size="lg"
         >
           <CreditCard className="h-4 w-4 mr-2" />
-          {property.priceType === 'sale' ? 'Make Offer' : 'Reserve'}
+          {isBooking || createBooking.isPending ? 'Processing...' : 'Reserve'}
         </Button>
 
-        {property.priceType !== 'sale' && (
-          <p className="text-center text-sm text-gray-600">
-            You won't be charged yet
-          </p>
-        )}
-
-        {/* Trust Badges */}
-        <div className="flex items-center justify-center space-x-4 pt-4">
-          <div className="flex items-center space-x-1 text-sm text-gray-600">
-            <Shield className="h-4 w-4" />
-            <span>Secure booking</span>
-          </div>
-          <Badge variant="outline" className="text-xs">
-            Instant confirmation
-          </Badge>
-        </div>
+        <p className="text-sm text-gray-500 text-center">
+          You won't be charged yet
+        </p>
       </CardContent>
     </Card>
   );
