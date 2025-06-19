@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Users, Award, Globe, Heart } from 'lucide-react';
@@ -13,13 +12,13 @@ const About = () => {
 
   const team = [
     {
-      name: 'Abraham Banda',
+      name: 'Ntanga Junior Isaac',
       role: 'CEO & Founder',
       description: 'Leading real estate professional with over 15 years of experience in Zambian property market.',
       speciality: 'Commercial Properties'
     },
     {
-      name: 'Sarah Mwanza',
+      name: 'Mukonchi Brian',
       role: 'Head of Sales',
       description: 'Expert in residential properties with a passion for helping families find their dream homes.',
       speciality: 'Residential Sales'
@@ -31,7 +30,7 @@ const About = () => {
       speciality: 'Agricultural Land'
     },
     {
-      name: 'Grace Tembo',
+      name: 'Siame Ndakala',
       role: 'Diaspora Relations Manager',
       description: 'Dedicated to serving Zambians abroad with virtual tours and remote transactions.',
       speciality: 'International Clients'
@@ -113,7 +112,7 @@ const About = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
               <div>
                 <p className="text-gray-700 mb-4">
-                  ABS Real Estate was founded in 2014 by Abraham Banda, a visionary entrepreneur who 
+                  ABS Real Estate was founded in 2014 by Ntanga Junior Isaac, a visionary entrepreneur who 
                   recognized the need for a professional, trustworthy real estate company in Zambia. 
                   Starting with a small office in Lusaka, we had a simple mission: to help people 
                   find their perfect properties while maintaining transparency and integrity.
