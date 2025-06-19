@@ -1,16 +1,18 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Search } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const HeroSection = () => {
   const [purpose, setPurpose] = useState('');
   const [propertyTier, setPropertyTier] = useState('');
   const [location, setLocation] = useState('');
   const [propertyType, setPropertyType] = useState('');
+  const navigate = useNavigate();
 
   const purposes = [
     { value: 'buy', label: 'Buy a Property' },
@@ -62,6 +64,38 @@ const HeroSection = () => {
     { value: 'vacation-rentals', label: 'Vacation Rentals' }
   ];
 
+  // Check if user can proceed to search based on purpose
+  const canProceedToSearch = () => {
+    if (purpose === 'book' || purpose === 'hotel-lodge') {
+      // For booking hotels/lodges, only need tier and location
+      return propertyTier && location;
+    }
+    // For other purposes, need all fields
+    return purpose && propertyTier && location && propertyType;
+  };
+
+  const handleSearch = () => {
+    if (canProceedToSearch()) {
+      // Build search parameters
+      const searchParams = new URLSearchParams();
+      searchParams.set('purpose', purpose);
+      searchParams.set('tier', propertyTier);
+      searchParams.set('location', location);
+      
+      // For booking purposes, set appropriate property types
+      if (purpose === 'book' || purpose === 'hotel-lodge') {
+        searchParams.set('types', 'hotel,lodge,resort,guesthouse,bnb,villa');
+      } else if (propertyType) {
+        searchParams.set('type', propertyType);
+      }
+      
+      navigate(`/properties?${searchParams.toString()}`);
+    }
+  };
+
+  // Determine if property type selection should be shown
+  const shouldShowPropertyType = purpose && purpose !== 'book' && purpose !== 'hotel-lodge';
+
   return (
     <section className="bg-gradient-to-r from-primary to-secondary text-white py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -97,7 +131,7 @@ const HeroSection = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${shouldShowPropertyType ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
               <Select value={purpose} onValueChange={setPurpose}>
                 <SelectTrigger>
                   <SelectValue placeholder="What would you like to do?" />
@@ -148,29 +182,41 @@ const HeroSection = () => {
                 </SelectContent>
               </Select>
 
-              <Select value={propertyType} onValueChange={setPropertyType}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Property Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {propertyTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {shouldShowPropertyType && (
+                <Select value={propertyType} onValueChange={setPropertyType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Property Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {propertyTypes.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
+            {/* Show helpful message for booking flow */}
+            {(purpose === 'book' || purpose === 'hotel-lodge') && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-blue-800 text-sm">
+                <p className="font-medium">Quick Booking Mode</p>
+                <p>Select your preferred tier and location to search hotels, lodges, and accommodations.</p>
+              </div>
+            )}
+
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Link to="/properties" className="flex-1">
-                <Button className="w-full bg-primary hover:bg-primary/90">
-                  <Search className="h-4 w-4 mr-2" />
-                  {purpose === 'book' ? 'Search Accommodations' : 
-                   purpose === 'rent-long' || purpose === 'hotel-lodge' ? 'Search Rentals' : 
-                   'Search Properties'}
-                </Button>
-              </Link>
+              <Button 
+                className={`flex-1 bg-primary hover:bg-primary/90 ${!canProceedToSearch() ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={handleSearch}
+                disabled={!canProceedToSearch()}
+              >
+                <Search className="h-4 w-4 mr-2" />
+                {purpose === 'book' || purpose === 'hotel-lodge' ? 'Search Accommodations' : 
+                 purpose === 'rent-long' ? 'Search Rentals' : 
+                 'Search Properties'}
+              </Button>
               <Link to="/contact">
                 <Button variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary hover:text-white">
                   Talk to an Agent

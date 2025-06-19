@@ -68,7 +68,7 @@ export const usePropertyAnalytics = (propertyId: string) => {
 export const useTrackPropertyView = () => {
   return useMutation({
     mutationFn: async ({ propertyId, userId }: { propertyId: string; userId?: string }) => {
-      const viewData: Partial<PropertyView> = {
+      const viewData = {
         property_id: propertyId,
         user_id: userId,
         user_agent: navigator.userAgent,
