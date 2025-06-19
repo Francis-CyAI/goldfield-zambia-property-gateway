@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +14,8 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTrackPropertyView } from '@/hooks/usePropertyViews';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PropertyCardProps {
   property: {
@@ -38,7 +39,21 @@ interface PropertyCardProps {
 }
 
 const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
+  const { user } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const trackView = useTrackPropertyView();
+
+  useEffect(() => {
+    // Track property view when card is rendered
+    const timer = setTimeout(() => {
+      trackView.mutate({
+        propertyId: property.id,
+        userId: user?.id,
+      });
+    }, 1000); // Delay to ensure it's a meaningful view
+
+    return () => clearTimeout(timer);
+  }, [property.id, user?.id, trackView]);
 
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
