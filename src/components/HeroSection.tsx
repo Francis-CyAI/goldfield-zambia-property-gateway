@@ -18,7 +18,7 @@ const HeroSection = () => {
     { value: 'rent', label: 'List for Rent' },
     { value: 'book', label: 'Book Short-term Stay' },
     { value: 'rent-long', label: 'Rent Long-term Property' },
-    { value: 'rent-room', label: 'Rent a Room' }
+    { value: 'hotel-lodge', label: 'Hotel & Lodge Services' }
   ];
 
   const tiers = [
@@ -167,7 +167,7 @@ const HeroSection = () => {
                 <Button className="w-full bg-primary hover:bg-primary/90">
                   <Search className="h-4 w-4 mr-2" />
                   {purpose === 'book' ? 'Search Accommodations' : 
-                   purpose === 'rent-long' || purpose === 'rent-room' ? 'Search Rentals' : 
+                   purpose === 'rent-long' || purpose === 'hotel-lodge' ? 'Search Rentals' : 
                    'Search Properties'}
                 </Button>
               </Link>
