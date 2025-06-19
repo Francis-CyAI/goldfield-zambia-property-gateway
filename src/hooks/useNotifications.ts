@@ -1,7 +1,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 export interface Notification {
   id: string;
@@ -18,10 +17,12 @@ export const useNotifications = (userId?: string) => {
   return useQuery({
     queryKey: ['notifications', userId],
     queryFn: async () => {
+      if (!userId) return [];
+      
       const { data, error } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', userId!)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;

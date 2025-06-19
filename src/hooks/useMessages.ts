@@ -19,10 +19,12 @@ export const useMessages = (userId?: string) => {
   return useQuery({
     queryKey: ['messages', userId],
     queryFn: async () => {
+      if (!userId) return [];
+      
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .or(`sender_id.eq.${userId!},recipient_id.eq.${userId!}`)
+        .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -44,11 +46,14 @@ export const useSendMessage = () => {
       subject?: string;
       content: string;
     }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
       const { data, error } = await supabase
         .from('messages')
         .insert([{
           ...messageData,
-          sender_id: (await supabase.auth.getUser()).data.user?.id,
+          sender_id: user.id,
         }])
         .select()
         .single();
