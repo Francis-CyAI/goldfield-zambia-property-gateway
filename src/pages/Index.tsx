@@ -1,15 +1,25 @@
 
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import HeroSection from '@/components/HeroSection';
+import FeaturedPropertiesSection from '@/components/FeaturedPropertiesSection';
+import ServicesNavigation from '@/components/ServicesNavigation';
+import PopularDestinations from '@/components/PopularDestinations';
+import FeaturesSection from '@/components/FeaturesSection';
+import TrustFeatures from '@/components/TrustFeatures';
+import CTASection from '@/components/CTASection';
 
 const Index = () => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    navigate('/');
-  }, [navigate]);
-
-  return null;
+  return (
+    <div className="min-h-screen">
+      <HeroSection />
+      <ServicesNavigation />
+      <FeaturedPropertiesSection />
+      <PopularDestinations />
+      <FeaturesSection />
+      <TrustFeatures />
+      <CTASection />
+    </div>
+  );
 };
 
 export default Index;
