@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { LocalizationProvider } from "./contexts/LocalizationContext";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import About from "./pages/About";
@@ -71,53 +72,55 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/auth" element={
-              <PublicRoute>
-                <Auth />
-              </PublicRoute>
-            } />
-            <Route path="/" element={<Layout><Home /></Layout>} />
-            <Route path="/about" element={<Layout><About /></Layout>} />
-            <Route path="/services" element={<Layout><Services /></Layout>} />
-            <Route path="/properties" element={<Layout><Properties /></Layout>} />
-            <Route path="/property/:id" element={<Layout><PropertyDetail /></Layout>} />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <Layout><Dashboard /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/property-owner-dashboard" element={
-              <ProtectedRoute>
-                <Layout><PropertyOwnerDashboard /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/list-property" element={
-              <ProtectedRoute>
-                <Layout><ListProperty /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/subscription" element={
-              <ProtectedRoute>
-                <Layout><Subscription /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/bookings" element={
-              <ProtectedRoute>
-                <Layout><Bookings /></Layout>
-              </ProtectedRoute>
-            } />
-            <Route path="/news" element={<Layout><News /></Layout>} />
-            <Route path="/partners" element={<Layout><Partners /></Layout>} />
-            <Route path="/contact" element={<Layout><Contact /></Layout>} />
-            <Route path="*" element={<Layout><NotFound /></Layout>} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <LocalizationProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/auth" element={
+                <PublicRoute>
+                  <Auth />
+                </PublicRoute>
+              } />
+              <Route path="/" element={<Layout><Home /></Layout>} />
+              <Route path="/about" element={<Layout><About /></Layout>} />
+              <Route path="/services" element={<Layout><Services /></Layout>} />
+              <Route path="/properties" element={<Layout><Properties /></Layout>} />
+              <Route path="/property/:id" element={<Layout><PropertyDetail /></Layout>} />
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <Layout><Dashboard /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/property-owner-dashboard" element={
+                <ProtectedRoute>
+                  <Layout><PropertyOwnerDashboard /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/list-property" element={
+                <ProtectedRoute>
+                  <Layout><ListProperty /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/subscription" element={
+                <ProtectedRoute>
+                  <Layout><Subscription /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/bookings" element={
+                <ProtectedRoute>
+                  <Layout><Bookings /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/news" element={<Layout><News /></Layout>} />
+              <Route path="/partners" element={<Layout><Partners /></Layout>} />
+              <Route path="/contact" element={<Layout><Contact /></Layout>} />
+              <Route path="*" element={<Layout><NotFound /></Layout>} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </LocalizationProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
