@@ -27,7 +27,8 @@ const mockProperties: Property[] = [
     cleaningFee: 50,
     serviceFee: 25,
     property_type: 'villa',
-    amenities: ['WiFi', 'Pool', 'Garden', 'Parking']
+    amenities: ['WiFi', 'Pool', 'Garden', 'Parking'],
+    listing_type: 'rental'
   },
   {
     id: '2',
@@ -43,7 +44,8 @@ const mockProperties: Property[] = [
     cleaningFee: 30,
     serviceFee: 15,
     property_type: 'apartment',
-    amenities: ['WiFi', 'Kitchen', 'Balcony']
+    amenities: ['WiFi', 'Kitchen', 'Balcony'],
+    listing_type: 'rental'
   },
   // Student Accommodation
   {
@@ -60,7 +62,8 @@ const mockProperties: Property[] = [
     cleaningFee: 10,
     serviceFee: 5,
     property_type: 'student_room',
-    amenities: ['WiFi', 'Study Desk', 'Shared Kitchen', 'Security']
+    amenities: ['WiFi', 'Study Desk', 'Shared Kitchen', 'Security'],
+    listing_type: 'rental'
   },
   {
     id: '4',
@@ -76,7 +79,8 @@ const mockProperties: Property[] = [
     cleaningFee: 10,
     serviceFee: 5,
     property_type: 'student_room',
-    amenities: ['WiFi', 'Study Area', 'Laundry', 'Transport Links']
+    amenities: ['WiFi', 'Study Area', 'Laundry', 'Transport Links'],
+    listing_type: 'rental'
   },
   // Commercial Properties
   {
@@ -93,7 +97,8 @@ const mockProperties: Property[] = [
     cleaningFee: 50,
     serviceFee: 30,
     property_type: 'office',
-    amenities: ['High-Speed Internet', 'Meeting Rooms', 'Parking', 'Security', 'AC']
+    amenities: ['High-Speed Internet', 'Meeting Rooms', 'Parking', 'Security', 'AC'],
+    listing_type: 'rental'
   },
   {
     id: '6',
@@ -109,42 +114,41 @@ const mockProperties: Property[] = [
     cleaningFee: 100,
     serviceFee: 50,
     property_type: 'warehouse',
-    amenities: ['Loading Bay', 'Forklift Access', 'Security', '24/7 Access', 'Office Space']
+    amenities: ['Loading Bay', 'Forklift Access', 'Security', '24/7 Access', 'Office Space'],
+    listing_type: 'rental'
   },
-  // Agricultural Properties
+  // Agricultural Properties (Sale Only)
   {
     id: '7',
     title: 'Productive Farm - Mkushi',
     location: 'Mkushi Farming Block',
-    price_per_night: 800,
-    max_guests: 10,
+    sale_price: 2500000, // ZMW 2.5M
+    size_acres: 150,
     bedrooms: 3,
     bathrooms: 2,
     images: ['https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&h=600&fit=crop'],
     rating: 4.9,
     reviewCount: 6,
-    cleaningFee: 80,
-    serviceFee: 40,
     property_type: 'farm',
-    amenities: ['Irrigation System', 'Farm Equipment', 'Storage Facilities', 'Worker Housing']
+    amenities: ['Irrigation System', 'Farm Equipment', 'Storage Facilities', 'Worker Housing'],
+    listing_type: 'sale'
   },
   {
     id: '8',
     title: 'Prime Farmland - Chisamba',
     location: 'Chisamba District',
-    price_per_night: 600,
-    max_guests: 0,
+    sale_price: 1800000, // ZMW 1.8M
+    size_acres: 200,
     bedrooms: 0,
     bathrooms: 0,
     images: ['https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800&h=600&fit=crop'],
     rating: 4.7,
     reviewCount: 4,
-    cleaningFee: 0,
-    serviceFee: 30,
     property_type: 'farmland',
-    amenities: ['Fertile Soil', 'Water Access', 'Road Access', 'Title Deed']
+    amenities: ['Fertile Soil', 'Water Access', 'Road Access', 'Title Deed'],
+    listing_type: 'sale'
   },
-  // Hospitality
+  // Mixed Properties
   {
     id: '9',
     title: 'Safari Lodge Experience',
@@ -159,7 +163,8 @@ const mockProperties: Property[] = [
     cleaningFee: 75,
     serviceFee: 35,
     property_type: 'lodge',
-    amenities: ['Full Board', 'Game Drives', 'Pool', 'Spa']
+    amenities: ['Full Board', 'Game Drives', 'Pool', 'Spa'],
+    listing_type: 'rental'
   },
   {
     id: '10',
@@ -175,7 +180,24 @@ const mockProperties: Property[] = [
     cleaningFee: 40,
     serviceFee: 20,
     property_type: 'retail',
-    amenities: ['High Foot Traffic', 'Parking', 'Security', 'Display Windows']
+    amenities: ['High Foot Traffic', 'Parking', 'Security', 'Display Windows'],
+    listing_type: 'rental'
+  },
+  // Additional Sale Properties
+  {
+    id: '11',
+    title: 'Commercial Ranch - Southern Province',
+    location: 'Mazabuka District',
+    sale_price: 3200000, // ZMW 3.2M
+    size_acres: 300,
+    bedrooms: 2,
+    bathrooms: 1,
+    images: ['https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&h=600&fit=crop'],
+    rating: 4.8,
+    reviewCount: 3,
+    property_type: 'ranch',
+    amenities: ['Cattle Facilities', 'Water Boreholes', 'Fencing', 'Staff Quarters'],
+    listing_type: 'sale'
   }
 ];
 
@@ -185,6 +207,7 @@ const Properties = () => {
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState('all');
+  const [listingTypeFilter, setListingTypeFilter] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [wishlistedProperties, setWishlistedProperties] = useState<string[]>([]);
 
@@ -208,12 +231,23 @@ const Properties = () => {
     const searchRegex = new RegExp(searchTerm, 'i');
     const locationMatch = selectedLocation === 'all' || property.location.toLowerCase().includes(selectedLocation.toLowerCase());
     const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(property.property_type || '');
-    const priceMatch = priceRange === 'all' ||
-      (priceRange === '0-200' && property.price_per_night <= 200) ||
-      (priceRange === '200-400' && property.price_per_night > 200 && property.price_per_night <= 400) ||
-      (priceRange === '400+' && property.price_per_night > 400);
+    const listingTypeMatch = listingTypeFilter === 'all' || property.listing_type === listingTypeFilter;
+    
+    let priceMatch = true;
+    if (priceRange !== 'all') {
+      const price = property.listing_type === 'sale' ? property.sale_price : property.price_per_night;
+      if (property.listing_type === 'sale') {
+        priceMatch = (priceRange === '0-1000000' && price <= 1000000) ||
+                    (priceRange === '1000000-3000000' && price > 1000000 && price <= 3000000) ||
+                    (priceRange === '3000000+' && price > 3000000);
+      } else {
+        priceMatch = (priceRange === '0-200' && price <= 200) ||
+                    (priceRange === '200-400' && price > 200 && price <= 400) ||
+                    (priceRange === '400+' && price > 400);
+      }
+    }
 
-    return searchRegex.test(property.title) && locationMatch && typeMatch && priceMatch;
+    return searchRegex.test(property.title) && locationMatch && typeMatch && priceMatch && listingTypeMatch;
   });
 
   return (
@@ -235,7 +269,7 @@ const Properties = () => {
 
         {/* Search and Basic Filters */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
             <div className="md:col-span-2">
               <Input
                 type="text"
@@ -263,6 +297,19 @@ const Properties = () => {
                   </Select>
                 </div>
 
+                <div className="md:col-span-1">
+                  <Select value={listingTypeFilter} onValueChange={setListingTypeFilter}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Listing Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="rental">For Rent</SelectItem>
+                      <SelectItem value="sale">For Sale</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="md:col-span-2">
                   <Select value={priceRange} onValueChange={setPriceRange}>
                     <SelectTrigger className="w-full">
@@ -270,9 +317,19 @@ const Properties = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Any Price</SelectItem>
-                      <SelectItem value="0-200">ZMW 0 - 200 per night</SelectItem>
-                      <SelectItem value="200-400">ZMW 200 - 400 per night</SelectItem>
-                      <SelectItem value="400+">ZMW 400+ per night</SelectItem>
+                      {listingTypeFilter === 'sale' || listingTypeFilter === 'all' ? (
+                        <>
+                          <SelectItem value="0-1000000">ZMW 0 - 1M (Sale)</SelectItem>
+                          <SelectItem value="1000000-3000000">ZMW 1M - 3M (Sale)</SelectItem>
+                          <SelectItem value="3000000+">ZMW 3M+ (Sale)</SelectItem>
+                        </>
+                      ) : (
+                        <>
+                          <SelectItem value="0-200">ZMW 0 - 200 per night</SelectItem>
+                          <SelectItem value="200-400">ZMW 200 - 400 per night</SelectItem>
+                          <SelectItem value="400+">ZMW 400+ per night</SelectItem>
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

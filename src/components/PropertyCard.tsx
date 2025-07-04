@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Heart, Star, MapPin, Users, Bed, Bath } from 'lucide-react';
+import { Heart, Star, MapPin, Users, Bed, Bath, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import BookingFlow from './BookingFlow';
 
@@ -11,8 +11,9 @@ interface Property {
   id: string;
   title: string;
   location: string;
-  price_per_night: number;
-  max_guests: number;
+  price_per_night?: number;
+  sale_price?: number;
+  max_guests?: number;
   bedrooms: number;
   bathrooms: number;
   images: string[];
@@ -21,6 +22,8 @@ interface Property {
   isWishlisted?: boolean;
   cleaningFee?: number;
   serviceFee?: number;
+  listing_type?: 'rental' | 'sale';
+  size_acres?: number;
 }
 
 interface PropertyCardProps {
@@ -40,7 +43,15 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
 
   const handleBookNow = (e: React.MouseEvent) => {
     e.preventDefault();
-    setShowBookingFlow(true);
+    if (property.listing_type === 'rental') {
+      setShowBookingFlow(true);
+    }
+  };
+
+  const handleInquiry = (e: React.MouseEvent) => {
+    e.preventDefault();
+    // Handle inquiry for sale properties
+    console.log('Inquiry for property:', property.id);
   };
 
   return (
@@ -74,6 +85,13 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
               </Badge>
             </div>
           )}
+
+          {/* Listing Type Badge */}
+          <div className="absolute top-3 left-3">
+            <Badge variant={property.listing_type === 'sale' ? 'default' : 'secondary'}>
+              {property.listing_type === 'sale' ? 'For Sale' : 'For Rent'}
+            </Badge>
+          </div>
         </div>
 
         <CardContent className="p-4">
@@ -92,34 +110,66 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
 
             <div className="flex items-center justify-between text-sm text-gray-600">
               <div className="flex items-center space-x-4">
-                <div className="flex items-center">
-                  <Users className="h-4 w-4 mr-1" />
-                  <span>{property.max_guests} guests</span>
-                </div>
-                <div className="flex items-center">
-                  <Bed className="h-4 w-4 mr-1" />
-                  <span>{property.bedrooms} bed</span>
-                </div>
-                <div className="flex items-center">
-                  <Bath className="h-4 w-4 mr-1" />
-                  <span>{property.bathrooms} bath</span>
-                </div>
+                {property.listing_type === 'rental' && property.max_guests && (
+                  <div className="flex items-center">
+                    <Users className="h-4 w-4 mr-1" />
+                    <span>{property.max_guests} guests</span>
+                  </div>
+                )}
+                {property.bedrooms > 0 && (
+                  <div className="flex items-center">
+                    <Bed className="h-4 w-4 mr-1" />
+                    <span>{property.bedrooms} bed</span>
+                  </div>
+                )}
+                {property.bathrooms > 0 && (
+                  <div className="flex items-center">
+                    <Bath className="h-4 w-4 mr-1" />
+                    <span>{property.bathrooms} bath</span>
+                  </div>
+                )}
+                {property.size_acres && (
+                  <div className="flex items-center">
+                    <Home className="h-4 w-4 mr-1" />
+                    <span>{property.size_acres} acres</span>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-xl font-bold">ZMW {property.price_per_night.toLocaleString()}</span>
-                <span className="text-gray-600 text-sm"> / night</span>
+                {property.listing_type === 'sale' ? (
+                  <>
+                    <span className="text-xl font-bold">ZMW {property.sale_price?.toLocaleString()}</span>
+                    <span className="text-gray-600 text-sm block">Sale Price</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-xl font-bold">ZMW {property.price_per_night?.toLocaleString()}</span>
+                    <span className="text-gray-600 text-sm"> / night</span>
+                  </>
+                )}
               </div>
               
-              <Button 
-                onClick={handleBookNow}
-                size="sm"
-                className="bg-primary hover:bg-primary/90"
-              >
-                Book Now
-              </Button>
+              {property.listing_type === 'sale' ? (
+                <Button 
+                  onClick={handleInquiry}
+                  size="sm"
+                  variant="outline"
+                  className="hover:bg-primary hover:text-white"
+                >
+                  Inquire
+                </Button>
+              ) : (
+                <Button 
+                  onClick={handleBookNow}
+                  size="sm"
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  Book Now
+                </Button>
+              )}
             </div>
 
             {property.reviewCount && (
@@ -131,7 +181,7 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
         </CardContent>
       </Card>
 
-      {showBookingFlow && (
+      {showBookingFlow && property.listing_type === 'rental' && (
         <BookingFlow 
           property={property} 
           onClose={() => setShowBookingFlow(false)} 

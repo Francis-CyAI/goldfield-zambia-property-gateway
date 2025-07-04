@@ -2,23 +2,24 @@
 export interface Property {
   id: string;
   title: string;
+  description?: string;
   location: string;
-  price_per_night: number;
-  max_guests: number;
+  price_per_night?: number;
+  sale_price?: number;
+  property_type: string;
+  max_guests?: number;
   bedrooms: number;
   bathrooms: number;
+  amenities: string[];
   images: string[];
-  rating?: number;
-  reviewCount?: number;
-  isWishlisted?: boolean;
-  cleaningFee?: number;
-  serviceFee?: number;
-  property_type?: string;
-  amenities?: string[];
-  tier?: 'high' | 'middle' | 'low';
   is_active?: boolean;
   host_id?: string;
-  description?: string;
   created_at?: string;
   updated_at?: string;
+  rating?: number;
+  reviewCount?: number;
+  cleaningFee?: number;
+  serviceFee?: number;
+  listing_type?: 'rental' | 'sale';
+  size_acres?: number;
 }
