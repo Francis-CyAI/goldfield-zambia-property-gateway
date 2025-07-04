@@ -8,8 +8,8 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BookingCard from '@/components/BookingCard';
+import QuickBookingCard from '@/components/QuickBookingCard';
 import ReviewCard from '@/components/ReviewCard';
-import AvailabilityCalendar from '@/components/AvailabilityCalendar';
 import MessagingSystem from '@/components/MessagingSystem';
 import { useProperty } from '@/hooks/useProperties';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,7 +29,8 @@ import {
   MessageCircle,
   ChevronLeft,
   ChevronRight,
-  Calendar
+  Calendar,
+  Zap
 } from 'lucide-react';
 
 const PropertyDetail = () => {
@@ -38,7 +39,6 @@ const PropertyDetail = () => {
   const { data: property, isLoading, error } = useProperty(id || '');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const [selectedDates, setSelectedDates] = useState<{checkIn?: Date, checkOut?: Date}>({});
 
   // Mock reviews data - this would come from Supabase in a real implementation
   const reviews = [
@@ -112,11 +112,6 @@ const PropertyDetail = () => {
     );
   };
 
-  const handleBooking = (bookingData: any) => {
-    console.log('Booking:', bookingData);
-    // Handle booking logic - this would create a booking in Supabase
-  };
-
   const handleShare = () => {
     navigator.share?.({
       title: property.title,
@@ -125,10 +120,6 @@ const PropertyDetail = () => {
       // Fallback to copying to clipboard
       navigator.clipboard.writeText(window.location.href);
     });
-  };
-
-  const handleDateSelect = (checkIn: Date | undefined, checkOut: Date | undefined) => {
-    setSelectedDates({ checkIn, checkOut });
   };
 
   // Create amenity objects with icons
@@ -150,8 +141,7 @@ const PropertyDetail = () => {
     id: property.id,
     title: property.title,
     location: property.location,
-    price: property.price_per_night,
-    priceType: 'night' as const,
+    price_per_night: property.price_per_night,
     rating: 4.8, // TODO: Calculate from reviews
     reviewCount: reviews.length,
     images: images,
@@ -169,27 +159,12 @@ const PropertyDetail = () => {
       beds: property.bedrooms, // Assuming 1 bed per bedroom
       bathrooms: property.bathrooms,
       propertyType: property.property_type,
-      tier: property.price_per_night > 500 ? 'high' as const : 
-            property.price_per_night > 200 ? 'middle' as const : 'low' as const
     },
     amenities: amenitiesWithIcons,
     description: property.description || 'No description available.',
-    maxGuests: property.max_guests,
+    max_guests: property.max_guests,
     cleaningFee: 50, // TODO: Make configurable
-    serviceFee: 0,
-    houseRules: [
-      'Check-in: 3:00 PM - 10:00 PM',
-      'Check-out: 11:00 AM',
-      'No smoking',
-      'No pets',
-      'No parties or events'
-    ],
-    cancellationPolicy: 'Free cancellation for 48 hours',
-    safetyFeatures: [
-      'Smoke alarm',
-      'Security cameras on property',
-      'First aid kit'
-    ]
+    serviceFee: 0
   };
 
   return (
@@ -197,7 +172,13 @@ const PropertyDetail = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold mb-2">{transformedProperty.title}</h1>
+          <div className="flex items-center space-x-2 mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold">{transformedProperty.title}</h1>
+            <Badge className="bg-green-100 text-green-800 space-x-1">
+              <Zap className="h-3 w-3" />
+              <span>Instant Book</span>
+            </Badge>
+          </div>
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center space-x-4 text-sm">
               <div className="flex items-center space-x-1">
@@ -338,7 +319,7 @@ const PropertyDetail = () => {
 
           {/* Booking Card */}
           <div className="lg:col-span-1">
-            <BookingCard property={transformedProperty} onBooking={handleBooking} />
+            <QuickBookingCard property={transformedProperty} />
           </div>
         </div>
       </div>

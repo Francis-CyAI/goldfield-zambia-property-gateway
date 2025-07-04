@@ -10,7 +10,8 @@ import {
   DollarSign,
   Users,
   MapPin,
-  MoreHorizontal
+  MoreHorizontal,
+  Home
 } from 'lucide-react';
 import {
   DropdownMenu,

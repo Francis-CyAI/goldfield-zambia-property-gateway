@@ -1,199 +1,143 @@
-import { useState, useEffect } from 'react';
+
+import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Heart, 
-  Star, 
-  MapPin, 
-  Users, 
-  Bed, 
-  Bath, 
-  Home,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
+import { Heart, Star, MapPin, Users, Bed, Bath } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useTrackPropertyView } from '@/hooks/usePropertyViews';
-import { useAuth } from '@/contexts/AuthContext';
+import BookingFlow from './BookingFlow';
+
+interface Property {
+  id: string;
+  title: string;
+  location: string;
+  price_per_night: number;
+  max_guests: number;
+  bedrooms: number;
+  bathrooms: number;
+  images: string[];
+  rating?: number;
+  reviewCount?: number;
+  isWishlisted?: boolean;
+  cleaningFee?: number;
+  serviceFee?: number;
+}
 
 interface PropertyCardProps {
-  property: {
-    id: string;
-    title: string;
-    location: string;
-    price: number;
-    priceType: 'night' | 'month' | 'sale';
-    rating: number;
-    reviewCount: number;
-    images: string[];
-    propertyType: string;
-    guests: number;
-    bedrooms: number;
-    bathrooms: number;
-    amenities: string[];
-    isWishlisted: boolean;
-    tier: 'low' | 'middle' | 'high';
-  };
-  onWishlistToggle: (id: string) => void;
+  property: Property;
+  onWishlistToggle?: (propertyId: string) => void;
 }
 
 const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
-  const { user } = useAuth();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const trackView = useTrackPropertyView();
+  const [showBookingFlow, setShowBookingFlow] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(property.isWishlisted || false);
 
-  useEffect(() => {
-    // Track property view when card is rendered
-    const timer = setTimeout(() => {
-      trackView.mutate({
-        propertyId: property.id,
-        userId: user?.id,
-      });
-    }, 1000); // Delay to ensure it's a meaningful view
-
-    return () => clearTimeout(timer);
-  }, [property.id, user?.id, trackView]);
-
-  const nextImage = (e: React.MouseEvent) => {
+  const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
-    setCurrentImageIndex((prev) => 
-      prev === property.images.length - 1 ? 0 : prev + 1
-    );
+    setIsWishlisted(!isWishlisted);
+    onWishlistToggle?.(property.id);
   };
 
-  const prevImage = (e: React.MouseEvent) => {
+  const handleBookNow = (e: React.MouseEvent) => {
     e.preventDefault();
-    setCurrentImageIndex((prev) => 
-      prev === 0 ? property.images.length - 1 : prev - 1
-    );
-  };
-
-  const handleWishlist = (e: React.MouseEvent) => {
-    e.preventDefault();
-    onWishlistToggle(property.id);
-  };
-
-  const tierColors = {
-    low: 'bg-green-100 text-green-800',
-    middle: 'bg-blue-100 text-blue-800',
-    high: 'bg-purple-100 text-purple-800'
+    setShowBookingFlow(true);
   };
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-300">
-      <Link to={`/property/${property.id}`}>
-        <div className="relative h-64 bg-gray-200 group">
-          {property.images.length > 0 ? (
-            <>
-              <img 
-                src={property.images[currentImageIndex]} 
-                alt={property.title}
-                className="w-full h-full object-cover"
-              />
-              {property.images.length > 1 && (
-                <>
-                  <button
-                    onClick={prevImage}
-                    className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/80 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={nextImage}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/80 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
-                    {property.images.map((_, index) => (
-                      <div
-                        key={index}
-                        className={`w-2 h-2 rounded-full ${
-                          index === currentImageIndex ? 'bg-white' : 'bg-white/50'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-            </>
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <Home className="h-12 w-12 text-gray-400" />
-            </div>
-          )}
+    <>
+      <Card className="group hover:shadow-lg transition-shadow duration-200 overflow-hidden">
+        <div className="relative">
+          <div className="aspect-[4/3] overflow-hidden">
+            <img
+              src={property.images[0] || '/placeholder.svg'}
+              alt={property.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+            />
+          </div>
           
           <button
-            onClick={handleWishlist}
+            onClick={handleWishlistToggle}
             className="absolute top-3 right-3 p-2 rounded-full bg-white/80 hover:bg-white transition-colors"
           >
             <Heart 
               className={`h-4 w-4 ${
-                property.isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'
+                isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'
               }`} 
             />
           </button>
 
-          <Badge className={`absolute top-3 left-3 ${tierColors[property.tier]}`}>
-            {property.tier === 'low' && 'Budget'}
-            {property.tier === 'middle' && 'Standard'}
-            {property.tier === 'high' && 'Luxury'}
-          </Badge>
-        </div>
-      </Link>
-
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-1">
-            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span className="text-sm font-medium">{property.rating}</span>
-            <span className="text-sm text-gray-500">({property.reviewCount})</span>
-          </div>
-          <Badge variant="outline">{property.propertyType}</Badge>
+          {property.rating && (
+            <div className="absolute bottom-3 left-3">
+              <Badge className="bg-white/90 text-gray-800 space-x-1">
+                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                <span>{property.rating}</span>
+              </Badge>
+            </div>
+          )}
         </div>
 
-        <h3 className="font-semibold text-lg mb-2 line-clamp-1">{property.title}</h3>
-        
-        <div className="flex items-center space-x-1 text-gray-600 mb-3">
-          <MapPin className="h-4 w-4" />
-          <span className="text-sm">{property.location}</span>
-        </div>
+        <CardContent className="p-4">
+          <div className="space-y-3">
+            <div>
+              <Link to={`/property/${property.id}`}>
+                <h3 className="font-semibold text-lg hover:text-primary transition-colors line-clamp-2">
+                  {property.title}
+                </h3>
+              </Link>
+              <div className="flex items-center text-gray-600 text-sm mt-1">
+                <MapPin className="h-4 w-4 mr-1" />
+                <span>{property.location}</span>
+              </div>
+            </div>
 
-        <div className="flex items-center space-x-4 text-sm text-gray-600 mb-3">
-          <div className="flex items-center space-x-1">
-            <Users className="h-4 w-4" />
-            <span>{property.guests} guests</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <Bed className="h-4 w-4" />
-            <span>{property.bedrooms} bed</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <Bath className="h-4 w-4" />
-            <span>{property.bathrooms} bath</span>
-          </div>
-        </div>
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center">
+                  <Users className="h-4 w-4 mr-1" />
+                  <span>{property.max_guests} guests</span>
+                </div>
+                <div className="flex items-center">
+                  <Bed className="h-4 w-4 mr-1" />
+                  <span>{property.bedrooms} bed</span>
+                </div>
+                <div className="flex items-center">
+                  <Bath className="h-4 w-4 mr-1" />
+                  <span>{property.bathrooms} bath</span>
+                </div>
+              </div>
+            </div>
 
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-xl font-bold text-primary">
-              ZMW {property.price.toLocaleString()}
-            </span>
-            <span className="text-sm text-gray-600">
-              {property.priceType === 'night' && ' / night'}
-              {property.priceType === 'month' && ' / month'}
-              {property.priceType === 'sale' && ''}
-            </span>
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xl font-bold">ZMW {property.price_per_night.toLocaleString()}</span>
+                <span className="text-gray-600 text-sm"> / night</span>
+              </div>
+              
+              <Button 
+                onClick={handleBookNow}
+                size="sm"
+                className="bg-primary hover:bg-primary/90"
+              >
+                Book Now
+              </Button>
+            </div>
+
+            {property.reviewCount && (
+              <div className="text-sm text-gray-500">
+                {property.reviewCount} review{property.reviewCount > 1 ? 's' : ''}
+              </div>
+            )}
           </div>
-          <Link to={`/property/${property.id}`}>
-            <Button size="sm">
-              {property.priceType === 'sale' ? 'View Details' : 'Book Now'}
-            </Button>
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {showBookingFlow && (
+        <BookingFlow 
+          property={property} 
+          onClose={() => setShowBookingFlow(false)} 
+        />
+      )}
+    </>
   );
 };
 
