@@ -25,6 +25,7 @@ import GuestInquiries from '../components/GuestInquiries';
 import AvailabilityCalendar from '../components/AvailabilityCalendar';
 import SafetyGuidelinesCard from '../components/reviews/SafetyGuidelinesCard';
 import { useAuth } from '@/contexts/AuthContext';
+import { Property } from '@/types/property';
 
 const PropertyOwnerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -40,11 +41,44 @@ const PropertyOwnerDashboard = () => {
     totalViews: 1250
   };
 
-  // Mock property data for components that need it
-  const mockProperties = [
-    { id: '1', title: 'Sample Property 1' },
-    { id: '2', title: 'Sample Property 2' },
-    { id: '3', title: 'Sample Property 3' }
+  // Mock property data with complete Property interface
+  const mockProperties: Property[] = [
+    { 
+      id: '1', 
+      title: 'Sample Property 1',
+      location: 'Lusaka, Zambia',
+      price_per_night: 200,
+      max_guests: 4,
+      bedrooms: 2,
+      bathrooms: 1,
+      property_type: 'apartment',
+      images: [],
+      amenities: []
+    },
+    { 
+      id: '2', 
+      title: 'Sample Property 2',
+      location: 'Ndola, Zambia',
+      price_per_night: 150,
+      max_guests: 2,
+      bedrooms: 1,
+      bathrooms: 1,
+      property_type: 'studio',
+      images: [],
+      amenities: []
+    },
+    { 
+      id: '3', 
+      title: 'Sample Property 3',
+      location: 'Kitwe, Zambia',
+      price_per_night: 300,
+      max_guests: 6,
+      bedrooms: 3,
+      bathrooms: 2,
+      property_type: 'house',
+      images: [],
+      amenities: []
+    }
   ];
 
   return (

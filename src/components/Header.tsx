@@ -1,122 +1,246 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Home, Info, Briefcase, Building, Newspaper, Phone, LogIn, Crown, LayoutDashboard } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from '@/components/ui/navigation-menu';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Menu, Bell, Search, User, Building, Home, Users, Globe, DollarSign } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import AuthButton from './AuthButton';
+import CountrySelector from './CountrySelector';
+import { useLocalization } from '@/contexts/LocalizationContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { cn } from '@/lib/utils';
 
 const Header = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const location = useLocation();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const { t } = useLocalization();
   const { user } = useAuth();
+  const location = useLocation();
 
-  const navigation = [
-    { name: 'Home', href: '/', icon: Home },
-    { name: 'About Us', href: '/about', icon: Info },
-    { name: 'Services', href: '/services', icon: Briefcase },
-    { name: 'Properties', href: '/properties', icon: Building },
-    { name: 'News', href: '/news', icon: Newspaper },
-    { name: 'Contact Us', href: '/contact', icon: Phone },
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const dashboardMenuItems = [
+    {
+      title: 'User Dashboard',
+      description: 'Manage your bookings and preferences',
+      href: '/user-dashboard',
+      icon: User,
+    },
+    {
+      title: 'Property Owner',
+      description: 'Manage your property listings',
+      href: '/property-owner-dashboard',
+      icon: Building,
+    },
+    {
+      title: 'Real Estate Services',
+      description: 'Sales, rentals, and diaspora services',
+      href: '/real-estate-services',
+      icon: Home,
+    },
   ];
 
-  // Add dashboard and subscription links for authenticated users
-  const authenticatedNavigation = user 
-    ? [
-        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }, 
-        { name: 'Subscription', href: '/subscription', icon: Crown },
-        ...navigation
-      ]
-    : navigation;
-
-  const isActive = (href: string) => location.pathname === href;
+  const servicesMenuItems = [
+    {
+      title: 'Buy Properties',
+      description: 'Find and purchase your dream property',
+      href: '/properties?type=buy',
+      icon: Home,
+    },
+    {
+      title: 'Rent Properties',
+      description: 'Short and long-term rental properties',
+      href: '/properties?type=rent',
+      icon: Building,
+    },
+    {
+      title: 'Diaspora Services',
+      description: 'Special services for Zambians abroad',
+      href: '/services#diaspora',
+      icon: Globe,
+    },
+    {
+      title: 'Property Management',
+      description: 'Professional property management services',
+      href: '/services#management',
+      icon: Users,
+    },
+  ];
 
   return (
-    <header className="bg-white shadow-xl sticky top-0 z-50 border-b border-luxury-gold/20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-4">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-3">
-            <div className="w-14 h-14 luxury-gradient rounded-xl flex items-center justify-center shadow-lg">
-              <Crown className="h-8 w-8 text-white" />
+    <header
+      className={cn(
+        'sticky top-0 z-50 w-full border-b transition-all duration-200',
+        isScrolled ? 'bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60' : 'bg-white'
+      )}
+    >
+      <div className="container flex h-16 items-center justify-between">
+        <div className="flex items-center space-x-6">
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="h-8 w-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">KS</span>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold luxury-text-gradient font-playfair">ABS</h1>
-              <p className="text-sm text-luxury-charcoal font-medium">Obama, Lusaka</p>
-            </div>
+            <span className="font-bold text-xl hidden sm:inline-block">Kamanga Stays</span>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
-            {authenticatedNavigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                  isActive(item.href)
-                    ? 'text-luxury-gold bg-luxury-cream border border-luxury-gold/30 shadow-md'
-                    : 'text-luxury-charcoal hover:text-luxury-gold hover:bg-luxury-cream/50 hover:shadow-sm'
-                }`}
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.name}</span>
-              </Link>
-            ))}
-          </nav>
+          <NavigationMenu className="hidden lg:flex">
+            <NavigationMenuList>
+              <NavigationMenuItem>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                  <Link to="/home">{t('home')}</Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
 
-          {/* Contact Info & Auth Button */}
-          <div className="hidden lg:flex items-center space-x-6">
-            <div className="text-right">
-              <p className="text-sm text-luxury-charcoal font-medium">+260 972 333 053</p>
-              <p className="text-xs text-luxury-charcoal/70">Obama, Lusaka, Zambia</p>
-            </div>
-            <AuthButton />
-          </div>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger>Services</NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+                    {servicesMenuItems.map((item) => (
+                      <li key={item.title}>
+                        <NavigationMenuLink asChild>
+                          <Link
+                            to={item.href}
+                            className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <item.icon className="h-4 w-4" />
+                              <div className="text-sm font-medium leading-none">{item.title}</div>
+                            </div>
+                            <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                              {item.description}
+                            </p>
+                          </Link>
+                        </NavigationMenuLink>
+                      </li>
+                    ))}
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="border-luxury-gold text-luxury-gold hover:bg-luxury-gold hover:text-white"
-            >
-              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
-          </div>
+              <NavigationMenuItem>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                  <Link to="/properties">{t('properties')}</Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+
+              <NavigationMenuItem>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                  <Link to="/about">{t('about')}</Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+
+              <NavigationMenuItem>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                  <Link to="/contact">{t('contact')}</Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+
+              {user && (
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger>Dashboard</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-1 lg:w-[600px]">
+                      {dashboardMenuItems.map((item) => (
+                        <li key={item.title}>
+                          <NavigationMenuLink asChild>
+                            <Link
+                              to={item.href}
+                              className="block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                            >
+                              <div className="flex items-center space-x-2">
+                                <item.icon className="h-4 w-4" />
+                                <div className="text-sm font-medium leading-none">{item.title}</div>
+                              </div>
+                              <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                {item.description}
+                              </p>
+                            </Link>
+                          </NavigationMenuLink>
+                        </li>
+                      ))}
+                    </ul>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+              )}
+            </NavigationMenuList>
+          </NavigationMenu>
         </div>
 
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <div className="md:hidden pb-4 border-t border-luxury-gold/20 mt-4 pt-4">
-            <div className="flex flex-col space-y-3">
-              {authenticatedNavigation.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300 ${
-                    isActive(item.href)
-                      ? 'text-luxury-gold bg-luxury-cream border border-luxury-gold/30'
-                      : 'text-luxury-charcoal hover:text-luxury-gold hover:bg-luxury-cream/50'
-                  }`}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.name}</span>
+        {/* Right side actions */}
+        <div className="flex items-center space-x-4">
+          <CountrySelector />
+          
+          {user && (
+            <Button variant="ghost" size="icon" className="relative">
+              <Bell className="h-4 w-4" />
+              <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                3
+              </Badge>
+            </Button>
+          )}
+
+          <AuthButton />
+
+          {/* Mobile menu */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon" className="lg:hidden">
+                <Menu className="h-4 w-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+              <nav className="flex flex-col space-y-4 mt-6">
+                <Link to="/home" className="block px-2 py-1 text-lg font-medium hover:text-primary">
+                  {t('home')}
                 </Link>
-              ))}
-              <div className="border-t border-luxury-gold/20 pt-3 mt-3">
-                <div className="text-center mb-3">
-                  <p className="text-sm text-luxury-charcoal font-medium">+260 972 333 053</p>
-                  <p className="text-xs text-luxury-charcoal/70">Obama, Lusaka, Zambia</p>
-                </div>
-                <div className="px-4">
-                  <AuthButton />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+                <Link to="/services" className="block px-2 py-1 text-lg font-medium hover:text-primary">
+                  Services
+                </Link>
+                <Link to="/properties" className="block px-2 py-1 text-lg font-medium hover:text-primary">
+                  {t('properties')}
+                </Link>
+                <Link to="/about" className="block px-2 py-1 text-lg font-medium hover:text-primary">
+                  {t('about')}
+                </Link>
+                <Link to="/contact" className="block px-2 py-1 text-lg font-medium hover:text-primary">
+                  {t('contact')}
+                </Link>
+                {user && (
+                  <>
+                    <div className="border-t pt-4">
+                      <p className="px-2 text-sm font-medium text-gray-500 mb-2">Dashboards</p>
+                      <Link to="/user-dashboard" className="block px-2 py-1 text-lg font-medium hover:text-primary">
+                        User Dashboard
+                      </Link>
+                      <Link to="/property-owner-dashboard" className="block px-2 py-1 text-lg font-medium hover:text-primary">
+                        Property Owner
+                      </Link>
+                      <Link to="/real-estate-services" className="block px-2 py-1 text-lg font-medium hover:text-primary">
+                        Real Estate Services
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </nav>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </header>
   );

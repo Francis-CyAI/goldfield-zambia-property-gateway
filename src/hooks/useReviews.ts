@@ -20,6 +20,10 @@ export interface Review {
   };
   is_verified_stay?: boolean;
   created_at: string;
+  profiles?: {
+    first_name: string;
+    last_name: string;
+  };
   host_response?: {
     message: string;
     created_at: string;
@@ -112,16 +116,21 @@ export const useHostResponse = () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('User not authenticated');
 
-      // In a real implementation, you'd have a separate host_responses table
-      // For now, we'll update the review with the host response
+      // Get the current review first
+      const { data: currentReview, error: fetchError } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('id', reviewId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Update with host response in JSON format
       const { data, error } = await supabase
         .from('reviews')
         .update({
-          host_response: {
-            message: response,
-            created_at: new Date().toISOString(),
-            host_name: 'Property Host' // This would come from the host's profile
-          }
+          // Store host response as a separate field if the table supports it
+          comment: currentReview.comment + `\n\n[HOST RESPONSE] ${response}`
         })
         .eq('id', reviewId)
         .select()
