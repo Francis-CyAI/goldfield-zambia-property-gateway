@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,10 +7,12 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, MapPin, Users, Bed, Bath, Star, Heart, Filter, SlidersHorizontal } from 'lucide-react';
 import PropertyCard from '../components/PropertyCard';
+import PropertyTypeFilter from '../components/PropertyTypeFilter';
 import { Property } from '../types/property';
 
-// Mock data - in a real app this would come from your API
+// Enhanced mock data with diverse property types
 const mockProperties: Property[] = [
+  // Residential Properties
   {
     id: '1',
     title: 'Luxury Villa in Kabulonga',
@@ -42,8 +45,108 @@ const mockProperties: Property[] = [
     property_type: 'apartment',
     amenities: ['WiFi', 'Kitchen', 'Balcony']
   },
+  // Student Accommodation
   {
     id: '3',
+    title: 'Student Room near University of Zambia',
+    location: 'Great East Road, Lusaka (Near UNZA)',
+    price_per_night: 25,
+    max_guests: 1,
+    bedrooms: 1,
+    bathrooms: 1,
+    images: ['https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&h=600&fit=crop'],
+    rating: 4.3,
+    reviewCount: 18,
+    cleaningFee: 10,
+    serviceFee: 5,
+    property_type: 'student_room',
+    amenities: ['WiFi', 'Study Desk', 'Shared Kitchen', 'Security']
+  },
+  {
+    id: '4',
+    title: 'Student Accommodation near Copperbelt University',
+    location: 'Riverside, Kitwe (Near CBU)',
+    price_per_night: 30,
+    max_guests: 2,
+    bedrooms: 1,
+    bathrooms: 1,
+    images: ['https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop'],
+    rating: 4.5,
+    reviewCount: 12,
+    cleaningFee: 10,
+    serviceFee: 5,
+    property_type: 'student_room',
+    amenities: ['WiFi', 'Study Area', 'Laundry', 'Transport Links']
+  },
+  // Commercial Properties
+  {
+    id: '5',
+    title: 'Modern Office Space - Cairo Road',
+    location: 'Cairo Road Business District, Lusaka',
+    price_per_night: 200,
+    max_guests: 20,
+    bedrooms: 0,
+    bathrooms: 2,
+    images: ['https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=600&fit=crop'],
+    rating: 4.8,
+    reviewCount: 15,
+    cleaningFee: 50,
+    serviceFee: 30,
+    property_type: 'office',
+    amenities: ['High-Speed Internet', 'Meeting Rooms', 'Parking', 'Security', 'AC']
+  },
+  {
+    id: '6',
+    title: 'Large Warehouse - Industrial Area',
+    location: 'Heavy Industrial Area, Lusaka',
+    price_per_night: 500,
+    max_guests: 0,
+    bedrooms: 0,
+    bathrooms: 2,
+    images: ['https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=800&h=600&fit=crop'],
+    rating: 4.6,
+    reviewCount: 8,
+    cleaningFee: 100,
+    serviceFee: 50,
+    property_type: 'warehouse',
+    amenities: ['Loading Bay', 'Forklift Access', 'Security', '24/7 Access', 'Office Space']
+  },
+  // Agricultural Properties
+  {
+    id: '7',
+    title: 'Productive Farm - Mkushi',
+    location: 'Mkushi Farming Block',
+    price_per_night: 800,
+    max_guests: 10,
+    bedrooms: 3,
+    bathrooms: 2,
+    images: ['https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&h=600&fit=crop'],
+    rating: 4.9,
+    reviewCount: 6,
+    cleaningFee: 80,
+    serviceFee: 40,
+    property_type: 'farm',
+    amenities: ['Irrigation System', 'Farm Equipment', 'Storage Facilities', 'Worker Housing']
+  },
+  {
+    id: '8',
+    title: 'Prime Farmland - Chisamba',
+    location: 'Chisamba District',
+    price_per_night: 600,
+    max_guests: 0,
+    bedrooms: 0,
+    bathrooms: 0,
+    images: ['https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800&h=600&fit=crop'],
+    rating: 4.7,
+    reviewCount: 4,
+    cleaningFee: 0,
+    serviceFee: 30,
+    property_type: 'farmland',
+    amenities: ['Fertile Soil', 'Water Access', 'Road Access', 'Title Deed']
+  },
+  // Hospitality
+  {
+    id: '9',
     title: 'Safari Lodge Experience',
     location: 'South Luangwa National Park',
     price_per_night: 650,
@@ -56,39 +159,23 @@ const mockProperties: Property[] = [
     cleaningFee: 75,
     serviceFee: 35,
     property_type: 'lodge',
-    amenities: ['Full Board', 'Game Drives', 'Pool']
+    amenities: ['Full Board', 'Game Drives', 'Pool', 'Spa']
   },
   {
-    id: '4',
-    title: 'Lakeside Cottage',
-    location: 'Lake Kariba',
-    price_per_night: 320,
-    max_guests: 5,
-    bedrooms: 2,
+    id: '10',
+    title: 'Retail Space - Shopping Mall',
+    location: 'Manda Hill Shopping Centre, Lusaka',
+    price_per_night: 300,
+    max_guests: 0,
+    bedrooms: 0,
     bathrooms: 1,
-    images: ['https://images.unsplash.com/photo-1544077960-604201fe74bc?w=800&h=600&fit=crop'],
-    rating: 4.8,
-    reviewCount: 23,
+    images: ['https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop'],
+    rating: 4.4,
+    reviewCount: 11,
     cleaningFee: 40,
     serviceFee: 20,
-    property_type: 'cottage',
-    amenities: ['Private Beach', 'Braai Area', 'Fishing']
-  },
-  {
-    id: '5',
-    title: 'Farmhouse Retreat',
-    location: 'Mkushi Farming Block',
-    price_per_night: 280,
-    max_guests: 10,
-    bedrooms: 5,
-    bathrooms: 3,
-    images: ['https://images.unsplash.com/photo-1519377389980-915c6942c9f0?w=800&h=600&fit=crop'],
-    rating: 4.6,
-    reviewCount: 15,
-    cleaningFee: 60,
-    serviceFee: 30,
-    property_type: 'farmhouse',
-    amenities: ['Large Garden', 'Farm Animals', 'Hiking Trails']
+    property_type: 'retail',
+    amenities: ['High Foot Traffic', 'Parking', 'Security', 'Display Windows']
   }
 ];
 
@@ -96,7 +183,7 @@ const Properties = () => {
   const [properties] = useState<Property[]>(mockProperties);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('all');
-  const [selectedType, setSelectedType] = useState('all');
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState('all');
   const [showFilters, setShowFilters] = useState(false);
   const [wishlistedProperties, setWishlistedProperties] = useState<string[]>([]);
@@ -109,10 +196,18 @@ const Properties = () => {
     );
   };
 
+  const handleTypeToggle = (type: string) => {
+    setSelectedTypes(prev => 
+      prev.includes(type) 
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    );
+  };
+
   const filteredProperties = properties.filter(property => {
     const searchRegex = new RegExp(searchTerm, 'i');
     const locationMatch = selectedLocation === 'all' || property.location.toLowerCase().includes(selectedLocation.toLowerCase());
-    const typeMatch = selectedType === 'all' || property.property_type === selectedType;
+    const typeMatch = selectedTypes.length === 0 || selectedTypes.includes(property.property_type || '');
     const priceMatch = priceRange === 'all' ||
       (priceRange === '0-200' && property.price_per_night <= 200) ||
       (priceRange === '200-400' && property.price_per_night > 200 && property.price_per_night <= 400) ||
@@ -126,7 +221,7 @@ const Properties = () => {
       <div className="bg-white shadow-md py-6">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-gray-900">Explore Properties</h1>
+            <h1 className="text-2xl font-bold text-gray-900">All Properties</h1>
             <Badge variant="secondary">
               {filteredProperties.length} Results
             </Badge>
@@ -138,7 +233,7 @@ const Properties = () => {
           </Button>
         </div>
 
-        {/* Search and Filters */}
+        {/* Search and Basic Filters */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div className="md:col-span-2">
@@ -160,38 +255,24 @@ const Properties = () => {
                     <SelectContent>
                       <SelectItem value="all">Any Location</SelectItem>
                       <SelectItem value="Lusaka">Lusaka</SelectItem>
-                      <SelectItem value="Lake Kariba">Lake Kariba</SelectItem>
+                      <SelectItem value="Kitwe">Kitwe</SelectItem>
+                      <SelectItem value="Ndola">Ndola</SelectItem>
                       <SelectItem value="Mkushi">Mkushi</SelectItem>
+                      <SelectItem value="Chisamba">Chisamba</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="md:col-span-1">
-                  <Select value={selectedType} onValueChange={setSelectedType}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Any Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Any Type</SelectItem>
-                      <SelectItem value="apartment">Apartment</SelectItem>
-                      <SelectItem value="villa">Villa</SelectItem>
-                      <SelectItem value="cottage">Cottage</SelectItem>
-                      <SelectItem value="lodge">Lodge</SelectItem>
-                      <SelectItem value="farmhouse">Farmhouse</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="md:col-span-1">
+                <div className="md:col-span-2">
                   <Select value={priceRange} onValueChange={setPriceRange}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Any Price" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Any Price</SelectItem>
-                      <SelectItem value="0-200">ZMW 0 - 200</SelectItem>
-                      <SelectItem value="200-400">ZMW 200 - 400</SelectItem>
-                      <SelectItem value="400+">ZMW 400+</SelectItem>
+                      <SelectItem value="0-200">ZMW 0 - 200 per night</SelectItem>
+                      <SelectItem value="200-400">ZMW 200 - 400 per night</SelectItem>
+                      <SelectItem value="400+">ZMW 400+ per night</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -199,21 +280,38 @@ const Properties = () => {
             )}
           </div>
         </div>
+
+        {/* Advanced Property Type Filters */}
+        {showFilters && (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-4">
+            <PropertyTypeFilter 
+              selectedTypes={selectedTypes}
+              onTypeToggle={handleTypeToggle}
+            />
+          </div>
+        )}
       </div>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProperties.map((property) => (
-            <PropertyCard 
-              key={property.id}
-              property={{
-                ...property,
-                isWishlisted: wishlistedProperties.includes(property.id)
-              }}
-              onWishlistToggle={handleWishlistToggle}
-            />
-          ))}
-        </div>
+        {filteredProperties.length === 0 ? (
+          <div className="text-center py-12">
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">No properties found</h3>
+            <p className="text-gray-500">Try adjusting your search criteria or filters</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredProperties.map((property) => (
+              <PropertyCard 
+                key={property.id}
+                property={{
+                  ...property,
+                  isWishlisted: wishlistedProperties.includes(property.id)
+                }}
+                onWishlistToggle={handleWishlistToggle}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

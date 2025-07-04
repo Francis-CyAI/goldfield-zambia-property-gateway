@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -16,7 +17,10 @@ import {
   Building2,
   Bed,
   Coffee,
-  Plane
+  Plane,
+  GraduationCap,
+  Store,
+  Factory
 } from 'lucide-react';
 
 interface PropertyTypeFilterProps {
@@ -40,30 +44,37 @@ const PropertyTypeFilter = ({ selectedTypes, onTypeToggle }: PropertyTypeFilterP
     { id: 'safari', label: 'Safari Camps', icon: Tent, category: 'accommodation' },
     { id: 'castle', label: 'Castles', icon: Castle, category: 'accommodation' },
     { id: 'island', label: 'Private Islands', icon: Palmtree, category: 'accommodation' },
+    { id: 'airport', label: 'Airport Hotels', icon: Plane, category: 'accommodation' },
     
     // Residential Types
     { id: 'house', label: 'Houses', icon: Home, category: 'residential' },
     { id: 'apartment', label: 'Apartments', icon: Building, category: 'residential' },
     { id: 'condo', label: 'Condos', icon: Building2, category: 'residential' },
+    { id: 'student_room', label: 'Student Rooms', icon: GraduationCap, category: 'residential' },
     
     // Commercial Types
     { id: 'office', label: 'Offices', icon: Briefcase, category: 'commercial' },
-    { id: 'warehouse', label: 'Warehouses', icon: Building, category: 'commercial' },
-    { id: 'retail', label: 'Retail Space', icon: Building2, category: 'commercial' },
+    { id: 'warehouse', label: 'Warehouses', icon: Factory, category: 'commercial' },
+    { id: 'retail', label: 'Retail Space', icon: Store, category: 'commercial' },
     { id: 'restaurant', label: 'Restaurants', icon: Coffee, category: 'commercial' },
+    { id: 'shopping_center', label: 'Shopping Centers', icon: Building2, category: 'commercial' },
+    { id: 'industrial', label: 'Industrial Space', icon: Factory, category: 'commercial' },
     
-    // Other Types
-    { id: 'farm', label: 'Farms', icon: Tractor, category: 'other' },
-    { id: 'parking', label: 'Parking', icon: Car, category: 'other' },
+    // Agricultural & Other Types
+    { id: 'farm', label: 'Farms', icon: Tractor, category: 'agricultural' },
+    { id: 'farmland', label: 'Farmland', icon: TreePine, category: 'agricultural' },
+    { id: 'ranch', label: 'Ranches', icon: Tractor, category: 'agricultural' },
+    { id: 'parking', label: 'Parking Spaces', icon: Car, category: 'other' },
     { id: 'event', label: 'Event Venues', icon: Building2, category: 'other' },
-    { id: 'airport', label: 'Airport Hotels', icon: Plane, category: 'accommodation' }
+    { id: 'storage', label: 'Storage Units', icon: Building, category: 'other' }
   ];
 
   const categories = [
-    { id: 'accommodation', label: 'Accommodation', color: 'bg-blue-50 border-blue-200' },
-    { id: 'residential', label: 'Residential', color: 'bg-green-50 border-green-200' },
-    { id: 'commercial', label: 'Commercial', color: 'bg-purple-50 border-purple-200' },
-    { id: 'other', label: 'Other', color: 'bg-gray-50 border-gray-200' }
+    { id: 'accommodation', label: 'Accommodation & Tourism', color: 'bg-blue-50 border-blue-200' },
+    { id: 'residential', label: 'Residential Properties', color: 'bg-green-50 border-green-200' },
+    { id: 'commercial', label: 'Commercial Properties', color: 'bg-purple-50 border-purple-200' },
+    { id: 'agricultural', label: 'Agricultural Properties', color: 'bg-yellow-50 border-yellow-200' },
+    { id: 'other', label: 'Other Properties', color: 'bg-gray-50 border-gray-200' }
   ];
 
   return (
