@@ -6,28 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Heart, Star, MapPin, Users, Bed, Bath, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import BookingFlow from './BookingFlow';
-
-interface Property {
-  id: string;
-  title: string;
-  location: string;
-  price_per_night?: number;
-  sale_price?: number;
-  max_guests?: number;
-  bedrooms: number;
-  bathrooms: number;
-  images: string[];
-  rating?: number;
-  reviewCount?: number;
-  isWishlisted?: boolean;
-  cleaningFee?: number;
-  serviceFee?: number;
-  listing_type?: 'rental' | 'sale';
-  size_acres?: number;
-}
+import { Property } from '@/types/property';
 
 interface PropertyCardProps {
-  property: Property;
+  property: Property & { isWishlisted?: boolean };
   onWishlistToggle?: (propertyId: string) => void;
 }
 
