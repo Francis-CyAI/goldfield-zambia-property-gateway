@@ -4,224 +4,239 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Search, MapPin, Calendar as CalendarIcon, Users, Shield, Zap, Star, Heart } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 
 const HeroSection = () => {
-  const [purpose, setPurpose] = useState('');
-  const [propertyTier, setPropertyTier] = useState('');
   const [location, setLocation] = useState('');
-  const [propertyType, setPropertyType] = useState('');
+  const [checkIn, setCheckIn] = useState<Date>();
+  const [checkOut, setCheckOut] = useState<Date>();
+  const [guests, setGuests] = useState(1);
   const navigate = useNavigate();
 
-  const purposes = [
-    { value: 'buy', label: 'Buy a Property' },
-    { value: 'sell', label: 'Sell Your Property' },
-    { value: 'rent', label: 'List for Rent' },
-    { value: 'book', label: 'Book Short-term Stay' },
-    { value: 'rent-long', label: 'Rent Long-term Property' },
-    { value: 'hotel-lodge', label: 'Hotel & Lodge Services' }
+  const zambianCities = [
+    { value: 'lusaka', label: 'Lusaka - Capital City' },
+    { value: 'livingstone', label: 'Livingstone - Victoria Falls' },
+    { value: 'ndola', label: 'Ndola - Copperbelt' },
+    { value: 'kitwe', label: 'Kitwe - Mining Hub' },
+    { value: 'kabwe', label: 'Kabwe - Central Province' },
+    { value: 'solwezi', label: 'Solwezi - North Western' },
+    { value: 'kasama', label: 'Kasama - Northern Province' },
+    { value: 'chipata', label: 'Chipata - Eastern Province' },
+    { value: 'mongu', label: 'Mongu - Western Province' },
+    { value: 'choma', label: 'Choma - Southern Province' }
   ];
-
-  const tiers = [
-    { value: 'low', label: 'Low Class - Basic & Affordable' },
-    { value: 'middle', label: 'Middle Class - Standard Quality' },
-    { value: 'high', label: 'High Class - Premium & Luxury' }
-  ];
-
-  const majorCities = [
-    { value: 'lusaka', label: 'Lusaka' },
-    { value: 'ndola', label: 'Ndola' },
-    { value: 'kitwe', label: 'Kitwe' },
-    { value: 'livingstone', label: 'Livingstone' },
-    { value: 'kabwe', label: 'Kabwe' },
-    { value: 'solwezi', label: 'Solwezi' }
-  ];
-
-  const farmingAreas = [
-    { value: 'mumbwa', label: 'Mumbwa' },
-    { value: 'kafue', label: 'Kafue' },
-    { value: 'chongwe', label: 'Chongwe' },
-    { value: 'chibombo', label: 'Chibombo' },
-    { value: 'mazabuka', label: 'Mazabuka' },
-    { value: 'mpongwe', label: 'Mpongwe' },
-    { value: 'mkushi', label: 'Mkushi' },
-    { value: 'kasama', label: 'Kasama' },
-    { value: 'chipata', label: 'Chipata' },
-    { value: 'mongu', label: 'Mongu' },
-    { value: 'choma', label: 'Choma' }
-  ];
-
-  const propertyTypes = [
-    { value: 'farms', label: 'Farms' },
-    { value: 'plots', label: 'Plots' },
-    { value: 'houses', label: 'Houses' },
-    { value: 'boarding', label: 'Boarding House' },
-    { value: 'furnished', label: 'Furnished Apartment' },
-    { value: 'warehouses', label: 'Warehouses' },
-    { value: 'offices', label: 'Office Space / Shops' },
-    { value: 'rooms', label: 'Single Rooms' },
-    { value: 'vacation-rentals', label: 'Vacation Rentals' }
-  ];
-
-  // Check if user can proceed to search based on purpose
-  const canProceedToSearch = () => {
-    if (purpose === 'book' || purpose === 'hotel-lodge') {
-      // For booking hotels/lodges, only need tier and location
-      return propertyTier && location;
-    }
-    // For other purposes, need all fields
-    return purpose && propertyTier && location && propertyType;
-  };
 
   const handleSearch = () => {
-    if (canProceedToSearch()) {
-      // Build search parameters
-      const searchParams = new URLSearchParams();
-      searchParams.set('purpose', purpose);
-      searchParams.set('tier', propertyTier);
-      searchParams.set('location', location);
-      
-      // For booking purposes, set appropriate property types
-      if (purpose === 'book' || purpose === 'hotel-lodge') {
-        searchParams.set('types', 'hotel,lodge,resort,guesthouse,bnb,villa');
-      } else if (propertyType) {
-        searchParams.set('type', propertyType);
-      }
-      
-      navigate(`/properties?${searchParams.toString()}`);
-    }
+    const searchParams = new URLSearchParams();
+    if (location) searchParams.set('location', location);
+    if (checkIn) searchParams.set('checkin', format(checkIn, 'yyyy-MM-dd'));
+    if (checkOut) searchParams.set('checkout', format(checkOut, 'yyyy-MM-dd'));
+    searchParams.set('guests', guests.toString());
+    
+    navigate(`/properties?${searchParams.toString()}`);
   };
 
-  // Determine if property type selection should be shown
-  const shouldShowPropertyType = purpose && purpose !== 'book' && purpose !== 'hotel-lodge';
+  const isSearchEnabled = location && checkIn && checkOut;
 
   return (
-    <section className="bg-gradient-to-r from-primary to-secondary text-white py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 animate-fade-in">
-            Invest in Zambia with Confidence
+    <section className="relative bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50 overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-orange-500 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-10 w-40 h-40 bg-red-500 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-yellow-500 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div className="text-center mb-16">
+          <div className="flex items-center justify-center space-x-2 mb-6">
+            <div className="flex items-center space-x-1">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+            </div>
+            <span className="text-sm font-medium text-gray-600">Proudly Zambian</span>
+          </div>
+          
+          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
+            Discover Amazing
+            <br />
+            <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+              Zambian Stays
+            </span>
           </h1>
-          <p className="text-xl md:text-2xl mb-8 opacity-90">
-            Buy, Sell, Rent, or Book Properties Across Major Cities
+          
+          <p className="text-xl md:text-2xl text-gray-700 mb-8 max-w-3xl mx-auto leading-relaxed">
+            From luxury lodges near Victoria Falls to cozy homes in Lusaka. 
+            Experience authentic Zambian hospitality with verified hosts and instant booking.
           </p>
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            <Badge variant="secondary" className="px-4 py-2 text-sm">
-              For Local Buyers
+
+          {/* Key Features */}
+          <div className="flex flex-wrap justify-center gap-4 mb-12">
+            <Badge variant="secondary" className="px-6 py-3 text-base bg-white/80 backdrop-blur-sm border border-orange-200 hover:bg-orange-50 transition-colors">
+              <Zap className="h-5 w-5 mr-2 text-orange-600" />
+              Book Instantly
             </Badge>
-            <Badge variant="secondary" className="px-4 py-2 text-sm">
-              Diaspora Investors
+            <Badge variant="secondary" className="px-6 py-3 text-base bg-white/80 backdrop-blur-sm border border-green-200 hover:bg-green-50 transition-colors">
+              <Shield className="h-5 w-5 mr-2 text-green-600" />
+              Verified Hosts
             </Badge>
-            <Badge variant="secondary" className="px-4 py-2 text-sm">
-              Foreign Investors
+            <Badge variant="secondary" className="px-6 py-3 text-base bg-white/80 backdrop-blur-sm border border-blue-200 hover:bg-blue-50 transition-colors">
+              <Star className="h-5 w-5 mr-2 text-blue-600" />
+              Local Experiences
             </Badge>
-            <Badge variant="secondary" className="px-4 py-2 text-sm">
-              Short & Long-term Rentals
+            <Badge variant="secondary" className="px-6 py-3 text-base bg-white/80 backdrop-blur-sm border border-purple-200 hover:bg-purple-50 transition-colors">
+              <Heart className="h-5 w-5 mr-2 text-purple-600" />
+              Trusted Community
             </Badge>
           </div>
         </div>
 
-        {/* Property Search Filter */}
-        <Card className="max-w-4xl mx-auto bg-white/95 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-center text-gray-900">Find Your Perfect Property</CardTitle>
-            <CardDescription className="text-center">
-              Buy, rent, or book properties in Lusaka, Ndola, Kitwe, Livingstone and beyond
+        {/* Search Card */}
+        <Card className="max-w-5xl mx-auto bg-white/95 backdrop-blur-sm shadow-2xl border-0 rounded-2xl overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-8">
+            <CardTitle className="text-2xl font-bold text-center">Find Your Perfect Zambian Getaway</CardTitle>
+            <CardDescription className="text-center text-orange-100 text-lg">
+              Discover unique stays from Livingstone to Lusaka
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 ${shouldShowPropertyType ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}>
-              <Select value={purpose} onValueChange={setPurpose}>
-                <SelectTrigger>
-                  <SelectValue placeholder="What would you like to do?" />
-                </SelectTrigger>
-                <SelectContent>
-                  {purposes.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={propertyTier} onValueChange={setPropertyTier}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Property Tier" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tiers.map((tier) => (
-                    <SelectItem key={tier.value} value={tier.value}>
-                      {tier.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Select value={location} onValueChange={setLocation}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="cities" disabled className="font-semibold">
-                    Major Cities
-                  </SelectItem>
-                  {majorCities.map((city) => (
-                    <SelectItem key={city.value} value={city.value}>
-                      {city.label}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="farming" disabled className="font-semibold">
-                    Farming & Development Areas
-                  </SelectItem>
-                  {farmingAreas.map((area) => (
-                    <SelectItem key={area.value} value={area.value}>
-                      {area.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {shouldShowPropertyType && (
-                <Select value={propertyType} onValueChange={setPropertyType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Property Type" />
+          
+          <CardContent className="p-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {/* Location */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 flex items-center">
+                  <MapPin className="h-4 w-4 mr-2 text-orange-500" />
+                  Where to?
+                </label>
+                <Select value={location} onValueChange={setLocation}>
+                  <SelectTrigger className="h-14 border-2 border-gray-200 hover:border-orange-300 focus:border-orange-500 transition-colors">
+                    <SelectValue placeholder="Choose destination" />
                   </SelectTrigger>
                   <SelectContent>
-                    {propertyTypes.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
+                    {zambianCities.map((city) => (
+                      <SelectItem key={city.value} value={city.value} className="py-3">
+                        {city.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              )}
+              </div>
+
+              {/* Check-in */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 flex items-center">
+                  <CalendarIcon className="h-4 w-4 mr-2 text-orange-500" />
+                  Check in
+                </label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="h-14 w-full justify-start border-2 border-gray-200 hover:border-orange-300 focus:border-orange-500 transition-colors">
+                      {checkIn ? format(checkIn, 'MMM dd, yyyy') : 'Add dates'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={checkIn}
+                      onSelect={setCheckIn}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Check-out */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 flex items-center">
+                  <CalendarIcon className="h-4 w-4 mr-2 text-orange-500" />
+                  Check out
+                </label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="h-14 w-full justify-start border-2 border-gray-200 hover:border-orange-300 focus:border-orange-500 transition-colors">
+                      {checkOut ? format(checkOut, 'MMM dd, yyyy') : 'Add dates'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={checkOut}
+                      onSelect={setCheckOut}
+                      disabled={(date) => date < new Date() || (checkIn && date <= checkIn)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Guests */}
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 flex items-center">
+                  <Users className="h-4 w-4 mr-2 text-orange-500" />
+                  Guests
+                </label>
+                <Select value={guests.toString()} onValueChange={(value) => setGuests(parseInt(value))}>
+                  <SelectTrigger className="h-14 border-2 border-gray-200 hover:border-orange-300 focus:border-orange-500 transition-colors">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 16].map((num) => (
+                      <SelectItem key={num} value={num.toString()}>
+                        {num} guest{num > 1 ? 's' : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* Show helpful message for booking flow */}
-            {(purpose === 'book' || purpose === 'hotel-lodge') && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-blue-800 text-sm">
-                <p className="font-medium">Quick Booking Mode</p>
-                <p>Select your preferred tier and location to search hotels, lodges, and accommodations.</p>
-              </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            {/* Search Button */}
+            <div className="flex flex-col sm:flex-row gap-4">
               <Button 
-                className={`flex-1 bg-primary hover:bg-primary/90 ${!canProceedToSearch() ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={handleSearch}
-                disabled={!canProceedToSearch()}
+                disabled={!isSearchEnabled}
+                className={`flex-1 h-16 text-lg font-semibold rounded-xl transition-all duration-300 ${
+                  isSearchEnabled 
+                    ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg hover:shadow-xl' 
+                    : 'bg-gray-300 cursor-not-allowed'
+                }`}
               >
-                <Search className="h-4 w-4 mr-2" />
-                {purpose === 'book' || purpose === 'hotel-lodge' ? 'Search Accommodations' : 
-                 purpose === 'rent-long' ? 'Search Rentals' : 
-                 'Search Properties'}
+                <Search className="h-6 w-6 mr-3" />
+                Search Amazing Stays
               </Button>
+              
               <Link to="/contact">
-                <Button variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary hover:text-white">
-                  Talk to an Agent
+                <Button variant="outline" className="h-16 px-8 text-lg font-semibold border-2 border-gray-300 hover:border-orange-500 hover:text-orange-600 rounded-xl transition-colors">
+                  Need Help?
                 </Button>
               </Link>
+            </div>
+
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-8 border-t border-gray-200">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600">500+</div>
+                <div className="text-sm text-gray-600">Properties</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">98%</div>
+                <div className="text-sm text-gray-600">Verified Hosts</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">4.8★</div>
+                <div className="text-sm text-gray-600">Average Rating</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">24/7</div>
+                <div className="text-sm text-gray-600">Support</div>
+              </div>
             </div>
           </CardContent>
         </Card>
