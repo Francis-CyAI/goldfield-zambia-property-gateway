@@ -343,6 +343,96 @@ export type Database = {
           },
         ]
       }
+      guest_inquiries: {
+        Row: {
+          check_in_date: string | null
+          check_out_date: string | null
+          created_at: string
+          guest_count: number | null
+          guest_id: string
+          host_id: string
+          id: string
+          inquiry_type: string
+          message: string
+          property_id: string
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          check_in_date?: string | null
+          check_out_date?: string | null
+          created_at?: string
+          guest_count?: number | null
+          guest_id: string
+          host_id: string
+          id?: string
+          inquiry_type?: string
+          message: string
+          property_id: string
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          check_in_date?: string | null
+          check_out_date?: string | null
+          created_at?: string
+          guest_count?: number | null
+          guest_id?: string
+          host_id?: string
+          id?: string
+          inquiry_type?: string
+          message?: string
+          property_id?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      host_earnings: {
+        Row: {
+          average_rate_kwacha: number
+          created_at: string
+          host_id: string
+          id: string
+          month: number
+          occupancy_rate: number
+          total_bookings: number
+          total_earnings_kwacha: number
+          total_earnings_usd: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          average_rate_kwacha?: number
+          created_at?: string
+          host_id: string
+          id?: string
+          month: number
+          occupancy_rate?: number
+          total_bookings?: number
+          total_earnings_kwacha?: number
+          total_earnings_usd?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          average_rate_kwacha?: number
+          created_at?: string
+          host_id?: string
+          id?: string
+          month?: number
+          occupancy_rate?: number
+          total_bookings?: number
+          total_earnings_kwacha?: number
+          total_earnings_usd?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
+      }
       institutions: {
         Row: {
           address: string | null
@@ -781,6 +871,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      property_payouts: {
+        Row: {
+          amount_kwacha: number
+          amount_usd: number
+          booking_id: string
+          created_at: string
+          exchange_rate: number
+          host_id: string
+          id: string
+          payout_date: string
+          payout_method: string
+          property_id: string
+          status: string
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_kwacha: number
+          amount_usd: number
+          booking_id: string
+          created_at?: string
+          exchange_rate: number
+          host_id: string
+          id?: string
+          payout_date: string
+          payout_method?: string
+          property_id: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_kwacha?: number
+          amount_usd?: number
+          booking_id?: string
+          created_at?: string
+          exchange_rate?: number
+          host_id?: string
+          id?: string
+          payout_date?: string
+          payout_method?: string
+          property_id?: string
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       property_views: {
         Row: {

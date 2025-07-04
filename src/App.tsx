@@ -20,6 +20,7 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import ListProperty from "./pages/ListProperty";
 import Subscription from "./pages/Subscription";
+import PropertyOwnerDashboard from "./pages/PropertyOwnerDashboard";
 
 const queryClient = new QueryClient();
 
@@ -88,6 +89,11 @@ const App = () => (
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Layout><Dashboard /></Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/property-owner-dashboard" element={
+              <ProtectedRoute>
+                <Layout><PropertyOwnerDashboard /></Layout>
               </ProtectedRoute>
             } />
             <Route path="/list-property" element={
