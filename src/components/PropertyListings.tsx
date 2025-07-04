@@ -19,19 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-
-interface Property {
-  id: string;
-  title: string;
-  location: string;
-  price_per_night: number;
-  max_guests: number;
-  bedrooms: number;
-  bathrooms: number;
-  images: string[];
-  is_active: boolean;
-  property_type: string;
-}
+import { Property } from '@/types/property';
 
 interface PropertyListingsProps {
   properties: Property[];

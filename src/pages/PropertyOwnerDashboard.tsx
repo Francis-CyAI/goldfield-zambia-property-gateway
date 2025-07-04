@@ -53,7 +53,8 @@ const PropertyOwnerDashboard = () => {
       bathrooms: 1,
       property_type: 'apartment',
       images: [],
-      amenities: []
+      amenities: [],
+      is_active: true
     },
     { 
       id: '2', 
@@ -65,7 +66,8 @@ const PropertyOwnerDashboard = () => {
       bathrooms: 1,
       property_type: 'studio',
       images: [],
-      amenities: []
+      amenities: [],
+      is_active: true
     },
     { 
       id: '3', 
@@ -77,7 +79,8 @@ const PropertyOwnerDashboard = () => {
       bathrooms: 2,
       property_type: 'house',
       images: [],
-      amenities: []
+      amenities: [],
+      is_active: false
     }
   ];
 
