@@ -2,7 +2,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Star } from 'lucide-react';
+import { Star, Shield } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface ReviewCardProps {
@@ -16,6 +16,7 @@ interface ReviewCardProps {
     rating: number;
     date: Date;
     comment: string;
+    isVerifiedStay?: boolean;
     categories?: {
       cleanliness: number;
       accuracy: number;
@@ -53,7 +54,15 @@ const ReviewCard = ({ review }: ReviewCardProps) => {
           <div className="flex-1 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-semibold">{review.user.name}</h4>
+                <div className="flex items-center space-x-2 mb-1">
+                  <h4 className="font-semibold">{review.user.name}</h4>
+                  {review.isVerifiedStay && (
+                    <Badge className="bg-green-100 text-green-800 space-x-1">
+                      <Shield className="h-3 w-3" />
+                      <span>Verified Stay</span>
+                    </Badge>
+                  )}
+                </div>
                 {review.user.location && (
                   <p className="text-sm text-gray-600">{review.user.location}</p>
                 )}

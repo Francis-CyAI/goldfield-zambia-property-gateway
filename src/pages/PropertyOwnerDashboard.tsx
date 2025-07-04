@@ -23,9 +23,12 @@ import EarningsOverview from '../components/EarningsOverview';
 import PropertyAnalyticsDashboard from '../components/PropertyAnalyticsDashboard';
 import GuestInquiries from '../components/GuestInquiries';
 import AvailabilityCalendar from '../components/AvailabilityCalendar';
+import SafetyGuidelinesCard from '../components/reviews/SafetyGuidelinesCard';
+import { useAuth } from '@/contexts/AuthContext';
 
 const PropertyOwnerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const { user } = useAuth();
 
   // Mock data - in real app this would come from API
   const stats = {
@@ -36,6 +39,13 @@ const PropertyOwnerDashboard = () => {
     averageRating: 4.8,
     totalViews: 1250
   };
+
+  // Mock property data for components that need it
+  const mockProperties = [
+    { id: '1', title: 'Sample Property 1' },
+    { id: '2', title: 'Sample Property 2' },
+    { id: '3', title: 'Sample Property 3' }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -123,24 +133,25 @@ const PropertyOwnerDashboard = () => {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-7">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="properties">Properties</TabsTrigger>
             <TabsTrigger value="bookings">Bookings</TabsTrigger>
             <TabsTrigger value="earnings">Earnings</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="inquiries">Inquiries</TabsTrigger>
+            <TabsTrigger value="safety">Safety</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6 mt-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <EarningsOverview />
-              <AvailabilityCalendar />
+              <AvailabilityCalendar propertyId="sample-property-id" />
             </div>
           </TabsContent>
 
           <TabsContent value="properties" className="space-y-6 mt-6">
-            <PropertyListings />
+            <PropertyListings properties={mockProperties} />
           </TabsContent>
 
           <TabsContent value="bookings" className="space-y-6 mt-6">
@@ -152,11 +163,15 @@ const PropertyOwnerDashboard = () => {
           </TabsContent>
 
           <TabsContent value="analytics" className="space-y-6 mt-6">
-            <PropertyAnalyticsDashboard />
+            <PropertyAnalyticsDashboard propertyId="sample-property-id" />
           </TabsContent>
 
           <TabsContent value="inquiries" className="space-y-6 mt-6">
             <GuestInquiries />
+          </TabsContent>
+
+          <TabsContent value="safety" className="space-y-6 mt-6">
+            <SafetyGuidelinesCard />
           </TabsContent>
         </Tabs>
       </div>

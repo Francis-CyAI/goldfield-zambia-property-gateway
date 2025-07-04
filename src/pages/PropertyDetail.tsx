@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,9 +8,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import BookingCard from '@/components/BookingCard';
 import QuickBookingCard from '@/components/QuickBookingCard';
-import ReviewCard from '@/components/ReviewCard';
+import EnhancedReviewCard from '@/components/reviews/EnhancedReviewCard';
+import ReviewSubmissionForm from '@/components/reviews/ReviewSubmissionForm';
+import SafetyGuidelinesCard from '@/components/reviews/SafetyGuidelinesCard';
 import MessagingSystem from '@/components/MessagingSystem';
 import { useProperty } from '@/hooks/useProperties';
+import { usePropertyReviews, useHostResponse } from '@/hooks/useReviews';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   Share, 
@@ -37,31 +39,11 @@ const PropertyDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const { data: property, isLoading, error } = useProperty(id || '');
+  const { data: reviews = [], isLoading: reviewsLoading } = usePropertyReviews(id || '');
+  const hostResponse = useHostResponse();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
-
-  // Mock reviews data - this would come from Supabase in a real implementation
-  const reviews = [
-    {
-      id: '1',
-      user: {
-        name: 'Sarah Johnson',
-        avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
-        location: 'United Kingdom'
-      },
-      rating: 5,
-      date: new Date('2024-02-15'),
-      comment: 'Amazing property with excellent amenities. The host was very responsive and helpful. The location is perfect for exploring. Highly recommended!',
-      categories: {
-        cleanliness: 5.0,
-        accuracy: 4.8,
-        checkin: 5.0,
-        communication: 5.0,
-        location: 4.9,
-        value: 4.7
-      }
-    }
-  ];
+  const [showReviewForm, setShowReviewForm] = useState(false);
 
   if (isLoading) {
     return (
@@ -117,9 +99,12 @@ const PropertyDetail = () => {
       title: property.title,
       url: window.location.href
     }).catch(() => {
-      // Fallback to copying to clipboard
       navigator.clipboard.writeText(window.location.href);
     });
+  };
+
+  const handleHostResponse = async (reviewId: string, response: string) => {
+    await hostResponse.mutateAsync({ reviewId, response });
   };
 
   // Create amenity objects with icons
@@ -142,11 +127,11 @@ const PropertyDetail = () => {
     title: property.title,
     location: property.location,
     price_per_night: property.price_per_night,
-    rating: 4.8, // TODO: Calculate from reviews
+    rating: 4.8,
     reviewCount: reviews.length,
     images: images,
     host: {
-      name: 'Property Host', // TODO: Get from host profile
+      name: 'Property Host',
       avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
       joinedDate: new Date('2020-03-15'),
       isSuperhost: true,
@@ -156,16 +141,38 @@ const PropertyDetail = () => {
     details: {
       guests: property.max_guests,
       bedrooms: property.bedrooms,
-      beds: property.bedrooms, // Assuming 1 bed per bedroom
+      beds: property.bedrooms,
       bathrooms: property.bathrooms,
       propertyType: property.property_type,
     },
     amenities: amenitiesWithIcons,
     description: property.description || 'No description available.',
     max_guests: property.max_guests,
-    cleaningFee: 50, // TODO: Make configurable
+    cleaningFee: 50,
     serviceFee: 0
   };
+
+  // Transform reviews for display
+  const transformedReviews = reviews.map(review => ({
+    id: review.id,
+    user: {
+      name: `${review.profiles?.first_name || 'Anonymous'} ${review.profiles?.last_name || 'User'}`,
+      avatar: '',
+      location: 'Guest'
+    },
+    rating: review.rating,
+    date: new Date(review.created_at),
+    comment: review.comment || '',
+    isVerifiedStay: review.is_verified_stay || false,
+    categories: review.category_ratings,
+    hostResponse: review.host_response ? {
+      message: review.host_response.message,
+      date: new Date(review.host_response.created_at),
+      hostName: review.host_response.host_name
+    } : undefined
+  }));
+
+  const isHost = property.host_id === user?.id;
 
   return (
     <div className="min-h-screen bg-white">
@@ -301,20 +308,63 @@ const PropertyDetail = () => {
               </div>
             </div>
 
-            {/* Reviews */}
+            {/* Enhanced Reviews Section */}
             <div>
-              <div className="flex items-center space-x-2 mb-6">
-                <Star className="h-6 w-6 fill-yellow-400 text-yellow-400" />
-                <span className="text-xl font-semibold">{transformedProperty.rating}</span>
-                <span className="text-gray-500">({transformedProperty.reviewCount} reviews)</span>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-2">
+                  <Star className="h-6 w-6 fill-yellow-400 text-yellow-400" />
+                  <span className="text-xl font-semibold">{transformedProperty.rating}</span>
+                  <span className="text-gray-500">({transformedProperty.reviewCount} reviews)</span>
+                </div>
+                
+                {user && !isHost && (
+                  <Button 
+                    onClick={() => setShowReviewForm(!showReviewForm)}
+                    variant="outline"
+                  >
+                    Write a Review
+                  </Button>
+                )}
               </div>
 
+              {showReviewForm && user && !isHost && (
+                <div className="mb-6">
+                  <ReviewSubmissionForm
+                    propertyId={property.id}
+                    isVerifiedStay={true} // This would be determined by booking status
+                    onSuccess={() => setShowReviewForm(false)}
+                  />
+                </div>
+              )}
+
               <div className="space-y-6">
-                {reviews.map((review) => (
-                  <ReviewCard key={review.id} review={review} />
-                ))}
+                {reviewsLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  </div>
+                ) : transformedReviews.length > 0 ? (
+                  transformedReviews.map((review) => (
+                    <EnhancedReviewCard 
+                      key={review.id} 
+                      review={review} 
+                      isHost={isHost}
+                      onHostResponse={handleHostResponse}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No reviews yet. Be the first to leave a review!
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* Safety Guidelines for Hosts */}
+            {isHost && (
+              <div>
+                <SafetyGuidelinesCard />
+              </div>
+            )}
           </div>
 
           {/* Booking Card */}
