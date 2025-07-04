@@ -16,4 +16,9 @@ export interface Property {
   property_type?: string;
   amenities?: string[];
   tier?: 'high' | 'middle' | 'low';
+  is_active?: boolean;
+  host_id?: string;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
 }
