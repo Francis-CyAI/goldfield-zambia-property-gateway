@@ -14,11 +14,14 @@ const featuredProperties = [
     max_guests: 8,
     bedrooms: 4,
     bathrooms: 3,
+    property_type: 'villa',
+    amenities: ['WiFi', 'Pool', 'Garden', 'Parking'],
     images: ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop'],
     rating: 4.9,
     reviewCount: 47,
     cleaningFee: 50,
-    serviceFee: 25
+    serviceFee: 25,
+    listing_type: 'rental' as const
   },
   {
     id: '2',
@@ -28,11 +31,14 @@ const featuredProperties = [
     max_guests: 4,
     bedrooms: 2,
     bathrooms: 2,
+    property_type: 'apartment',
+    amenities: ['WiFi', 'Kitchen', 'Balcony'],
     images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop'],
     rating: 4.7,
     reviewCount: 32,
     cleaningFee: 30,
-    serviceFee: 15
+    serviceFee: 15,
+    listing_type: 'rental' as const
   },
   {
     id: '3',
@@ -42,11 +48,14 @@ const featuredProperties = [
     max_guests: 6,
     bedrooms: 3,
     bathrooms: 2,
+    property_type: 'lodge',
+    amenities: ['Full Board', 'Game Drives', 'Pool', 'Spa'],
     images: ['https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop'],
     rating: 5.0,
     reviewCount: 89,
     cleaningFee: 75,
-    serviceFee: 35
+    serviceFee: 35,
+    listing_type: 'rental' as const
   },
   {
     id: '4',
@@ -56,11 +65,14 @@ const featuredProperties = [
     max_guests: 5,
     bedrooms: 2,
     bathrooms: 1,
+    property_type: 'cottage',
+    amenities: ['WiFi', 'Lakefront', 'Boat Access', 'BBQ'],
     images: ['https://images.unsplash.com/photo-1544077960-604201fe74bc?w=800&h=600&fit=crop'],
     rating: 4.8,
     reviewCount: 23,
     cleaningFee: 40,
-    serviceFee: 20
+    serviceFee: 20,
+    listing_type: 'rental' as const
   }
 ];
 

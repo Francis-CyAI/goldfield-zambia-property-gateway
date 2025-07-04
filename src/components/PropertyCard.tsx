@@ -163,9 +163,12 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
         </CardContent>
       </Card>
 
-      {showBookingFlow && property.listing_type === 'rental' && (
+      {showBookingFlow && property.listing_type === 'rental' && property.price_per_night && (
         <BookingFlow 
-          property={property} 
+          property={{
+            ...property,
+            price_per_night: property.price_per_night
+          } as Property}
           onClose={() => setShowBookingFlow(false)} 
         />
       )}
