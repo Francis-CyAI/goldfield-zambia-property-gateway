@@ -19,13 +19,44 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Property } from '@/types/property';
+import { Property } from '@/hooks/useProperties';
 
 interface PropertyListingsProps {
   properties: Property[];
+  isLoading?: boolean;
 }
 
-const PropertyListings = ({ properties }: PropertyListingsProps) => {
+const PropertyListings = ({ properties, isLoading }: PropertyListingsProps) => {
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Your Properties</h2>
+          <Button onClick={() => window.location.href = '/list-property'}>
+            Add New Property
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <Card key={i} className="overflow-hidden animate-pulse">
+              <div className="aspect-video bg-gray-200"></div>
+              <CardHeader className="pb-2">
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -40,7 +71,7 @@ const PropertyListings = ({ properties }: PropertyListingsProps) => {
           <Card key={property.id} className="overflow-hidden">
             <div className="aspect-video relative">
               <img
-                src={property.images[0] || '/placeholder.svg'}
+                src={property.images?.[0] || '/placeholder.svg'}
                 alt={property.title}
                 className="w-full h-full object-cover"
               />
@@ -119,7 +150,7 @@ const PropertyListings = ({ properties }: PropertyListingsProps) => {
         ))}
       </div>
 
-      {properties.length === 0 && (
+      {properties.length === 0 && !isLoading && (
         <Card className="p-8 text-center">
           <div className="flex flex-col items-center space-y-4">
             <Home className="h-12 w-12 text-muted-foreground" />

@@ -1,8 +1,6 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Home, 
@@ -25,64 +23,25 @@ import GuestInquiries from '../components/GuestInquiries';
 import AvailabilityCalendar from '../components/AvailabilityCalendar';
 import SafetyGuidelinesCard from '../components/reviews/SafetyGuidelinesCard';
 import { useAuth } from '@/contexts/AuthContext';
-import { Property } from '@/types/property';
+import { useUserProperties } from '@/hooks/useProperties';
 
 const PropertyOwnerDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const { user } = useAuth();
+  const { data: properties = [], isLoading } = useUserProperties(user?.id);
 
-  // Mock data - in real app this would come from API
+  console.log('User properties:', properties);
+
+  // Calculate stats from actual data
   const stats = {
-    totalProperties: 3,
-    activeBookings: 8,
-    monthlyEarnings: 12500,
-    occupancyRate: 78,
-    averageRating: 4.8,
-    totalViews: 1250
+    totalProperties: properties.length,
+    activeProperties: properties.filter(p => p.is_active).length,
+    activeBookings: 0, // This would come from bookings data
+    monthlyEarnings: 0, // This would come from earnings data
+    occupancyRate: 0, // This would be calculated from bookings
+    averageRating: 0, // This would come from reviews data
+    totalViews: 0 // This would come from analytics data
   };
-
-  // Mock property data with complete Property interface
-  const mockProperties: Property[] = [
-    { 
-      id: '1', 
-      title: 'Sample Property 1',
-      location: 'Lusaka, Zambia',
-      price_per_night: 200,
-      max_guests: 4,
-      bedrooms: 2,
-      bathrooms: 1,
-      property_type: 'apartment',
-      images: [],
-      amenities: [],
-      is_active: true
-    },
-    { 
-      id: '2', 
-      title: 'Sample Property 2',
-      location: 'Ndola, Zambia',
-      price_per_night: 150,
-      max_guests: 2,
-      bedrooms: 1,
-      bathrooms: 1,
-      property_type: 'studio',
-      images: [],
-      amenities: [],
-      is_active: true
-    },
-    { 
-      id: '3', 
-      title: 'Sample Property 3',
-      location: 'Kitwe, Zambia',
-      price_per_night: 300,
-      max_guests: 6,
-      bedrooms: 3,
-      bathrooms: 2,
-      property_type: 'house',
-      images: [],
-      amenities: [],
-      is_active: false
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -112,8 +71,8 @@ const PropertyOwnerDashboard = () => {
               <div className="flex items-center">
                 <Calendar className="h-8 w-8 text-blue-600" />
                 <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Active Bookings</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.activeBookings}</p>
+                  <p className="text-sm font-medium text-gray-600">Active Properties</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.activeProperties}</p>
                 </div>
               </div>
             </CardContent>
@@ -149,7 +108,7 @@ const PropertyOwnerDashboard = () => {
                 <Star className="h-8 w-8 text-yellow-600" />
                 <div className="ml-4">
                   <p className="text-sm font-medium text-gray-600">Avg Rating</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.averageRating}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.averageRating || 'N/A'}</p>
                 </div>
               </div>
             </CardContent>
@@ -183,12 +142,40 @@ const PropertyOwnerDashboard = () => {
           <TabsContent value="overview" className="space-y-6 mt-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <EarningsOverview />
-              <AvailabilityCalendar propertyId="sample-property-id" />
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer" 
+                          onClick={() => window.location.href = '/list-property'}>
+                      <div className="flex items-center space-x-3">
+                        <Plus className="h-8 w-8 text-primary" />
+                        <div>
+                          <h3 className="font-medium">Add Property</h3>
+                          <p className="text-sm text-gray-600">List a new property</p>
+                        </div>
+                      </div>
+                    </Card>
+                    <Card className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+                          onClick={() => setActiveTab('properties')}>
+                      <div className="flex items-center space-x-3">
+                        <Edit className="h-8 w-8 text-blue-600" />
+                        <div>
+                          <h3 className="font-medium">Manage Properties</h3>
+                          <p className="text-sm text-gray-600">Edit your listings</p>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </TabsContent>
 
           <TabsContent value="properties" className="space-y-6 mt-6">
-            <PropertyListings properties={mockProperties} />
+            <PropertyListings properties={properties} isLoading={isLoading} />
           </TabsContent>
 
           <TabsContent value="bookings" className="space-y-6 mt-6">

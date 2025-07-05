@@ -5,6 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PhotoUploadSectionProps {
   form: UseFormReturn<any>;
@@ -12,12 +14,13 @@ interface PhotoUploadSectionProps {
 
 const PhotoUploadSection = ({ form }: PhotoUploadSectionProps) => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [imageUploading, setImageUploading] = useState(false);
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (!files) return;
+    if (!files || !user) return;
 
     if (uploadedImages.length + files.length > 15) {
       toast({
@@ -35,19 +38,70 @@ const PhotoUploadSection = ({ form }: PhotoUploadSectionProps) => {
       
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const imageUrl = URL.createObjectURL(file);
-        newImageUrls.push(imageUrl);
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          toast({
+            title: 'Invalid file type',
+            description: 'Please upload only image files.',
+            variant: 'destructive',
+          });
+          continue;
+        }
+
+        // Validate file size (10MB max)
+        if (file.size > 10 * 1024 * 1024) {
+          toast({
+            title: 'File too large',
+            description: `${file.name} is too large. Maximum size is 10MB.`,
+            variant: 'destructive',
+          });
+          continue;
+        }
+
+        // Create unique filename
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+
+        console.log('Uploading file:', fileName);
+
+        // Upload to Supabase storage
+        const { data, error } = await supabase.storage
+          .from('property-images')
+          .upload(fileName, file);
+
+        if (error) {
+          console.error('Upload error:', error);
+          toast({
+            title: 'Upload failed',
+            description: `Failed to upload ${file.name}. Please try again.`,
+            variant: 'destructive',
+          });
+          continue;
+        }
+
+        // Get public URL
+        const { data: publicData } = supabase.storage
+          .from('property-images')
+          .getPublicUrl(fileName);
+
+        if (publicData?.publicUrl) {
+          newImageUrls.push(publicData.publicUrl);
+        }
       }
 
-      const updatedImages = [...uploadedImages, ...newImageUrls];
-      setUploadedImages(updatedImages);
-      form.setValue('images', updatedImages);
-      
-      toast({
-        title: 'Images uploaded successfully',
-        description: `${files.length} image(s) added. Total: ${updatedImages.length}/15`,
-      });
+      if (newImageUrls.length > 0) {
+        const updatedImages = [...uploadedImages, ...newImageUrls];
+        setUploadedImages(updatedImages);
+        form.setValue('images', updatedImages);
+        
+        toast({
+          title: 'Images uploaded successfully',
+          description: `${newImageUrls.length} image(s) added. Total: ${updatedImages.length}/15`,
+        });
+      }
     } catch (error) {
+      console.error('Upload error:', error);
       toast({
         title: 'Upload failed',
         description: 'Failed to upload images. Please try again.',
@@ -58,7 +112,29 @@ const PhotoUploadSection = ({ form }: PhotoUploadSectionProps) => {
     }
   };
 
-  const removeImage = (indexToRemove: number) => {
+  const removeImage = async (indexToRemove: number) => {
+    const imageToRemove = uploadedImages[indexToRemove];
+    
+    try {
+      // Extract filename from URL to delete from storage
+      const url = new URL(imageToRemove);
+      const pathParts = url.pathname.split('/');
+      const fileName = pathParts.slice(-2).join('/'); // Get user_id/filename
+
+      console.log('Deleting file:', fileName);
+
+      // Delete from Supabase storage
+      const { error } = await supabase.storage
+        .from('property-images')
+        .remove([fileName]);
+
+      if (error) {
+        console.error('Delete error:', error);
+      }
+    } catch (error) {
+      console.error('Error removing file from storage:', error);
+    }
+
     const updatedImages = uploadedImages.filter((_, index) => index !== indexToRemove);
     setUploadedImages(updatedImages);
     form.setValue('images', updatedImages);

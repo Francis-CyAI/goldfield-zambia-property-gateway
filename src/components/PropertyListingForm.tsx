@@ -8,6 +8,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
+import { useCreateProperty } from '@/hooks/useProperties';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Import the new components
 import PhotoUploadSection from './property-listing/PhotoUploadSection';
@@ -42,7 +45,9 @@ type PropertyFormData = z.infer<typeof propertySchema>;
 
 const PropertyListingForm = () => {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const createProperty = useCreateProperty();
 
   const form = useForm<PropertyFormData>({
     resolver: zodResolver(propertySchema),
@@ -67,20 +72,63 @@ const PropertyListingForm = () => {
   });
 
   const onSubmit = async (data: PropertyFormData) => {
-    setIsSubmitting(true);
-    console.log('Property listing data:', data);
+    if (!user) {
+      toast({
+        title: 'Authentication Required',
+        description: 'You must be logged in to list a property.',
+        variant: 'destructive',
+      });
+      navigate('/auth');
+      return;
+    }
+
+    console.log('Submitting property listing data:', data);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    toast({
-      title: 'Property Listed Successfully!',
-      description: 'Your property has been submitted for review. You will be notified within 24 hours.',
-    });
-    
-    setIsSubmitting(false);
-    form.reset();
+    try {
+      await createProperty.mutateAsync({
+        title: data.title,
+        description: data.description,
+        property_type: data.propertyType,
+        location: data.location,
+        price_per_night: data.pricePerNight,
+        max_guests: data.maxGuests,
+        bedrooms: data.bedrooms,
+        bathrooms: data.bathrooms,
+        amenities: data.amenities,
+        images: data.images,
+        is_active: true,
+      });
+
+      // Redirect to property owner dashboard after successful listing
+      navigate('/property-owner-dashboard');
+    } catch (error) {
+      console.error('Property listing error:', error);
+      toast({
+        title: 'Listing Failed',
+        description: 'There was an error listing your property. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
+
+  // Show login prompt if user is not authenticated
+  if (!user) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 text-center">
+        <Card>
+          <CardContent className="pt-6">
+            <h2 className="text-2xl font-bold mb-4">Authentication Required</h2>
+            <p className="text-gray-600 mb-6">
+              You need to be logged in to list a property on our platform.
+            </p>
+            <Button onClick={() => navigate('/auth')} size="lg">
+              Sign In / Sign Up
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-8">
@@ -150,9 +198,9 @@ const PropertyListingForm = () => {
               type="submit" 
               size="lg" 
               className="luxury-gradient text-white px-8 py-3 text-lg font-semibold"
-              disabled={isSubmitting}
+              disabled={createProperty.isPending}
             >
-              {isSubmitting ? 'Submitting for Review...' : 'Submit Property for Review'}
+              {createProperty.isPending ? 'Submitting for Review...' : 'Submit Property for Review'}
             </Button>
             <p className="text-sm text-gray-600 mt-2">
               Your property will be reviewed within 24 hours
