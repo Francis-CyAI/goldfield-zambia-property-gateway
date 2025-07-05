@@ -25,7 +25,7 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
 
   const handleBookNow = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (property.listing_type === 'rental') {
+    if (property.listing_type === 'rental' && property.price_per_night) {
       setShowBookingFlow(true);
     }
   };
@@ -148,6 +148,7 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
                   onClick={handleBookNow}
                   size="sm"
                   className="bg-primary hover:bg-primary/90"
+                  disabled={!property.price_per_night}
                 >
                   Book Now
                 </Button>
@@ -165,7 +166,7 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
 
       {showBookingFlow && property.listing_type === 'rental' && property.price_per_night && (
         <BookingFlow 
-          property={property}
+          property={property as Property & { price_per_night: number }}
           onClose={() => setShowBookingFlow(false)} 
         />
       )}
