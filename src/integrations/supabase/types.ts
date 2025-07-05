@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_activity_logs: {
+        Row: {
+          action: string
+          admin_user_id: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          ip_address: unknown | null
+          target_id: string | null
+          target_type: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          admin_user_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          admin_user_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          ip_address?: unknown | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_activity_logs_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       admin_roles: {
         Row: {
           created_at: string
@@ -33,6 +77,42 @@ export type Database = {
           role?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      admin_users: {
+        Row: {
+          admin_type: string
+          branch_location: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          permissions: string[] | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_type: string
+          branch_location?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          permissions?: string[] | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_type?: string
+          branch_location?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          permissions?: string[] | null
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -242,6 +322,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      branches: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean | null
+          location: string
+          manager_id: string | null
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          location: string
+          manager_id?: string | null
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          location?: string
+          manager_id?: string | null
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       course_materials: {
         Row: {
@@ -1281,6 +1400,10 @@ export type Database = {
       calculate_platform_commission: {
         Args: { booking_id: string; user_tier?: string }
         Returns: undefined
+      }
+      check_admin_permission: {
+        Args: { user_id: string; required_type?: string }
+        Returns: boolean
       }
     }
     Enums: {

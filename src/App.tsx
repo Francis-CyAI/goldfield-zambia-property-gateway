@@ -17,6 +17,7 @@ import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import PropertyOwnerDashboard from "./pages/PropertyOwnerDashboard";
 import RealEstateServicesDashboard from "./pages/RealEstateServicesDashboard";
 import UserDashboard from "./components/UserDashboard";
@@ -51,6 +52,7 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/property-owner-dashboard" element={<PropertyOwnerDashboard />} />
                 <Route path="/real-estate-services" element={<RealEstateServicesDashboard />} />
                 <Route path="/user-dashboard" element={<UserDashboard />} />
