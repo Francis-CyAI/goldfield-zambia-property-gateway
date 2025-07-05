@@ -20,9 +20,11 @@ import {
   Star
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const Contact = () => {
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -33,21 +35,59 @@ const Contact = () => {
     message: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Message Sent Successfully!",
-      description: "Thank you for contacting ABS Business Solutions. We'll get back to you within 24 hours.",
-    });
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      service: '',
-      propertyType: '',
-      location: '',
-      message: ''
-    });
+    
+    if (!formData.name || !formData.email || !formData.message) {
+      toast({
+        title: "Required Fields Missing",
+        description: "Please fill in your name, email, and message.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    console.log("Submitting contact form:", formData);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('send-contact-email', {
+        body: formData
+      });
+
+      if (error) {
+        console.error("Error calling edge function:", error);
+        throw error;
+      }
+
+      console.log("Contact form submission successful:", data);
+
+      toast({
+        title: "Message Sent Successfully!",
+        description: "Thank you for contacting ABS Business Solutions. We'll get back to you within 4 hours.",
+      });
+
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        service: '',
+        propertyType: '',
+        location: '',
+        message: ''
+      });
+
+    } catch (error: any) {
+      console.error("Error submitting contact form:", error);
+      toast({
+        title: "Error Sending Message",
+        description: "There was an issue sending your message. Please try again or contact us directly.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -170,6 +210,7 @@ const Contact = () => {
                       placeholder="Your full name"
                       className="border-luxury-gold/30 focus:border-luxury-gold focus:ring-luxury-gold/20 h-12"
                       required
+                      disabled={isSubmitting}
                     />
                   </div>
                   <div>
@@ -181,7 +222,7 @@ const Contact = () => {
                       onChange={(e) => handleInputChange('phone', e.target.value)}
                       placeholder="+260 xxx xxx xxx"
                       className="border-luxury-gold/30 focus:border-luxury-gold focus:ring-luxury-gold/20 h-12"
-                      required
+                      disabled={isSubmitting}
                     />
                   </div>
                 </div>
@@ -197,6 +238,7 @@ const Contact = () => {
                     placeholder="your.email@example.com"
                     className="border-luxury-gold/30 focus:border-luxury-gold focus:ring-luxury-gold/20 h-12"
                     required
+                    disabled={isSubmitting}
                   />
                 </div>
 
@@ -205,7 +247,11 @@ const Contact = () => {
                     <label className="block text-sm font-semibold text-luxury-charcoal mb-3">
                       Service Needed
                     </label>
-                    <Select value={formData.service} onValueChange={(value) => handleInputChange('service', value)}>
+                    <Select 
+                      value={formData.service} 
+                      onValueChange={(value) => handleInputChange('service', value)}
+                      disabled={isSubmitting}
+                    >
                       <SelectTrigger className="border-luxury-gold/30 focus:border-luxury-gold focus:ring-luxury-gold/20 h-12">
                         <SelectValue placeholder="Select a service" />
                       </SelectTrigger>
@@ -222,7 +268,11 @@ const Contact = () => {
                     <label className="block text-sm font-semibold text-luxury-charcoal mb-3">
                       Property Type
                     </label>
-                    <Select value={formData.propertyType} onValueChange={(value) => handleInputChange('propertyType', value)}>
+                    <Select 
+                      value={formData.propertyType} 
+                      onValueChange={(value) => handleInputChange('propertyType', value)}
+                      disabled={isSubmitting}
+                    >
                       <SelectTrigger className="border-luxury-gold/30 focus:border-luxury-gold focus:ring-luxury-gold/20 h-12">
                         <SelectValue placeholder="Select property type" />
                       </SelectTrigger>
@@ -241,7 +291,11 @@ const Contact = () => {
                   <label className="block text-sm font-semibold text-luxury-charcoal mb-3">
                     Preferred Location
                   </label>
-                  <Select value={formData.location} onValueChange={(value) => handleInputChange('location', value)}>
+                  <Select 
+                    value={formData.location} 
+                    onValueChange={(value) => handleInputChange('location', value)}
+                    disabled={isSubmitting}
+                  >
                     <SelectTrigger className="border-luxury-gold/30 focus:border-luxury-gold focus:ring-luxury-gold/20 h-12">
                       <SelectValue placeholder="Select location" />
                     </SelectTrigger>
@@ -266,12 +320,17 @@ const Contact = () => {
                     rows={4}
                     className="border-luxury-gold/30 focus:border-luxury-gold focus:ring-luxury-gold/20"
                     required
+                    disabled={isSubmitting}
                   />
                 </div>
 
-                <Button type="submit" className="w-full luxury-gradient text-white hover:shadow-xl transition-all duration-300 h-12 text-lg font-semibold">
+                <Button 
+                  type="submit" 
+                  className="w-full luxury-gradient text-white hover:shadow-xl transition-all duration-300 h-12 text-lg font-semibold"
+                  disabled={isSubmitting}
+                >
                   <Send className="h-5 w-5 mr-2" />
-                  Send Premium Message
+                  {isSubmitting ? 'Sending...' : 'Send Premium Message'}
                 </Button>
               </form>
             </CardContent>
