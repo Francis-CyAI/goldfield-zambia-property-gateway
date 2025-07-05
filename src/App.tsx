@@ -25,6 +25,7 @@ import ListProperty from "./pages/ListProperty";
 import Partners from "./pages/Partners";
 import Subscription from "./pages/Subscription";
 import News from "./pages/News";
+import FAQSection from "./components/FAQSection";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,6 +47,7 @@ const App = () => (
                 <Route path="/about" element={<About />} />
                 <Route path="/services" element={<Services />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/faq" element={<FAQSection />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/dashboard" element={<Dashboard />} />
