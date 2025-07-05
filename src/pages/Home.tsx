@@ -1,19 +1,21 @@
 
-import HeroSection from '../components/HeroSection';
-import PopularDestinations from '../components/PopularDestinations';
-import FeaturedPropertiesSection from '../components/FeaturedPropertiesSection';
-import TrustFeatures from '../components/TrustFeatures';
-import FeaturesSection from '../components/FeaturesSection';
-import CTASection from '../components/CTASection';
+import HeroSection from '@/components/HeroSection';
+import FeaturesSection from '@/components/FeaturesSection';
+import FeaturedPropertiesSection from '@/components/FeaturedPropertiesSection';
+import PopularDestinations from '@/components/PopularDestinations';
+import TestimonialsSection from '@/components/TestimonialsSection';
+import CTASection from '@/components/CTASection';
+import PricingSection from '@/components/PricingSection';
 
 const Home = () => {
   return (
-    <div className="min-h-screen">
+    <div>
       <HeroSection />
-      <PopularDestinations />
-      <FeaturedPropertiesSection />
-      <TrustFeatures />
       <FeaturesSection />
+      <FeaturedPropertiesSection />
+      <PopularDestinations />
+      <PricingSection />
+      <TestimonialsSection />
       <CTASection />
     </div>
   );

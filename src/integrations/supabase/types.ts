@@ -640,6 +640,63 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_commissions: {
+        Row: {
+          booking_amount: number
+          booking_id: string | null
+          commission_amount: number
+          commission_rate: number
+          created_at: string
+          host_id: string
+          id: string
+          processed_at: string | null
+          property_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          booking_amount: number
+          booking_id?: string | null
+          commission_amount: number
+          commission_rate?: number
+          created_at?: string
+          host_id: string
+          id?: string
+          processed_at?: string | null
+          property_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          booking_amount?: number
+          booking_id?: string | null
+          commission_amount?: number
+          commission_rate?: number
+          created_at?: string
+          host_id?: string
+          id?: string
+          processed_at?: string | null
+          property_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_commissions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_commissions_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -1221,7 +1278,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_platform_commission: {
+        Args: { booking_id: string; user_tier?: string }
+        Returns: undefined
+      }
     }
     Enums: {
       content_type: "video" | "document" | "book" | "assessment" | "image"
