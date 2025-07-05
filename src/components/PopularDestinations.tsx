@@ -2,14 +2,19 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin, Star, Users, Camera } from 'lucide-react';
+import { MapPin, Star, Users, Camera, Globe2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useLocalization } from '@/contexts/LocalizationContext';
 
 const PopularDestinations = () => {
+  const { formatCurrency, currentCountry } = useLocalization();
+
   const destinations = [
     {
       id: 1,
       name: 'Livingstone',
+      country: 'Zambia',
+      countryCode: 'ZM',
       subtitle: 'Victoria Falls Gateway',
       description: 'Experience the thundering Victoria Falls and luxury safari lodges',
       image: 'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?w=800&h=600&fit=crop',
@@ -17,79 +22,107 @@ const PopularDestinations = () => {
       rating: 4.9,
       startingPrice: 250,
       highlights: ['Victoria Falls', 'Safari Lodges', 'Adventure Sports'],
-      instantBook: true
+      instantBook: true,
+      region: 'Southern Africa'
     },
     {
       id: 2,
-      name: 'Lusaka',
-      subtitle: 'Capital City Comfort',
-      description: 'Modern apartments and homes in Zambia\'s bustling capital',
-      image: 'https://images.unsplash.com/photo-1486299267070-83823f5448dd?w=800&h=600&fit=crop',
-      properties: 200,
-      rating: 4.7,
-      startingPrice: 80,
-      highlights: ['City Center', 'Business District', 'Shopping Malls'],
-      instantBook: true
+      name: 'Cape Town',
+      country: 'South Africa',
+      countryCode: 'ZA',
+      subtitle: 'Mother City Magic',
+      description: 'Stunning mountain views, wine estates, and vibrant city life',
+      image: 'https://images.unsplash.com/photo-1580060839134-75a5edca2e99?w=800&h=600&fit=crop',
+      properties: 450,
+      rating: 4.8,
+      startingPrice: 180,
+      highlights: ['Table Mountain', 'Wine Tours', 'Ocean Views'],
+      instantBook: true,
+      region: 'Southern Africa'
     },
     {
       id: 3,
-      name: 'Ndola',
-      subtitle: 'Copperbelt Hub',
-      description: 'Comfortable stays in the heart of Zambia\'s mining region',
-      image: 'https://images.unsplash.com/photo-1573160813927-2de6c2b2c525?w=800&h=600&fit=crop',
+      name: 'Serengeti',
+      country: 'Tanzania',
+      countryCode: 'TZ',
+      subtitle: 'Safari Paradise',
+      description: 'Witness the Great Migration and incredible wildlife',
+      image: 'https://images.unsplash.com/photo-1534567110404-5996d426b9c8?w=800&h=600&fit=crop',
       properties: 85,
-      rating: 4.6,
-      startingPrice: 60,
-      highlights: ['Mining Heritage', 'Industrial Hub', 'Local Culture'],
-      instantBook: true
+      rating: 4.9,
+      startingPrice: 420,
+      highlights: ['Wildlife Safari', 'Great Migration', 'Luxury Camps'],
+      instantBook: false,
+      region: 'East Africa'
     },
     {
       id: 4,
-      name: 'South Luangwa',
-      subtitle: 'Wildlife Paradise',
-      description: 'Exclusive bush camps and lodges in pristine wilderness',
-      image: 'https://images.unsplash.com/photo-1534567110404-5996d426b9c8?w=800&h=600&fit=crop',
-      properties: 45,
-      rating: 4.9,
-      startingPrice: 400,
-      highlights: ['Wildlife Safari', 'Bush Camps', 'Walking Safaris'],
-      instantBook: false
+      name: 'Maasai Mara',
+      country: 'Kenya',
+      countryCode: 'KE',
+      subtitle: 'Wildlife Kingdom',
+      description: 'World-famous game reserve with incredible biodiversity',
+      image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800&h=600&fit=crop',
+      properties: 75,
+      rating: 4.8,
+      startingPrice: 380,
+      highlights: ['Big Five', 'Maasai Culture', 'Hot Air Balloons'],
+      instantBook: true,
+      region: 'East Africa'
     },
     {
       id: 5,
-      name: 'Kafue National Park',
-      subtitle: 'Untamed Wilderness',
-      description: 'Remote lodges in Africa\'s second-largest national park',
-      image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=800&h=600&fit=crop',
-      properties: 25,
-      rating: 4.8,
-      startingPrice: 350,
-      highlights: ['Game Drives', 'River Safari', 'Bird Watching'],
-      instantBook: false
+      name: 'Accra',
+      country: 'Ghana',
+      countryCode: 'GH',
+      subtitle: 'Gateway to West Africa',
+      description: 'Rich history, vibrant culture, and beautiful beaches',
+      image: 'https://images.unsplash.com/photo-1544306094-57c5b1e6c3b8?w=800&h=600&fit=crop',
+      properties: 95,
+      rating: 4.6,
+      startingPrice: 120,
+      highlights: ['Historic Sites', 'Cultural Tours', 'Atlantic Beaches'],
+      instantBook: true,
+      region: 'West Africa'
     },
     {
       id: 6,
-      name: 'Lake Kariba',
-      subtitle: 'Waterfront Retreats',
-      description: 'Houseboats and lakeside lodges on Africa\'s largest artificial lake',
-      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop',
-      properties: 35,
+      name: 'Marrakech',
+      country: 'Morocco',
+      countryCode: 'MA',
+      subtitle: 'Imperial City',
+      description: 'Ancient medinas, stunning riads, and Atlas Mountains',
+      image: 'https://images.unsplash.com/photo-1539650116574-75c0c6d73f6e?w=800&h=600&fit=crop',
+      properties: 280,
       rating: 4.7,
-      startingPrice: 180,
-      highlights: ['Houseboats', 'Fishing', 'Sunset Views'],
-      instantBook: true
+      startingPrice: 90,
+      highlights: ['Medina Tours', 'Atlas Mountains', 'Traditional Riads'],
+      instantBook: true,
+      region: 'North Africa'
     }
   ];
+
+  const getCountryFlag = (countryCode: string) => {
+    const country = currentCountry.code === countryCode ? currentCountry : 
+      destinations.find(d => d.countryCode === countryCode);
+    
+    const flagMap: Record<string, string> = {
+      'ZM': '🇿🇲', 'ZA': '🇿🇦', 'TZ': '🇹🇿', 'KE': '🇰🇪', 'GH': '🇬🇭', 'MA': '🇲🇦'
+    };
+    
+    return flagMap[countryCode] || '🌍';
+  };
 
   return (
     <section className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Popular Destinations
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 flex items-center justify-center space-x-3">
+            <Globe2 className="h-12 w-12 text-orange-500" />
+            <span>African Destinations</span>
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            From Victoria Falls to the heart of Lusaka, discover the best places to stay across Zambia
+            From Victoria Falls to the Serengeti, discover the best places to stay across our beautiful continent
           </p>
         </div>
 
@@ -104,9 +137,17 @@ const PopularDestinations = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                 
+                {/* Country Flag Badge */}
+                <div className="absolute top-4 left-4">
+                  <Badge className="bg-white/90 text-gray-800 border-0 px-3 py-1 backdrop-blur-sm">
+                    <span className="mr-1">{getCountryFlag(destination.countryCode)}</span>
+                    {destination.country}
+                  </Badge>
+                </div>
+
                 {/* Instant Book Badge */}
                 {destination.instantBook && (
-                  <div className="absolute top-4 left-4">
+                  <div className="absolute top-4 right-16">
                     <Badge className="bg-green-500 hover:bg-green-600 text-white border-0 px-3 py-1">
                       <Camera className="h-3 w-3 mr-1" />
                       Book Instantly
@@ -130,6 +171,13 @@ const PopularDestinations = () => {
               <CardContent className="p-6">
                 <p className="text-gray-600 mb-4 leading-relaxed">{destination.description}</p>
 
+                {/* Region Badge */}
+                <div className="mb-4">
+                  <Badge variant="outline" className="text-xs border-blue-200 text-blue-700">
+                    {destination.region}
+                  </Badge>
+                </div>
+
                 {/* Highlights */}
                 <div className="flex flex-wrap gap-2 mb-4">
                   {destination.highlights.map((highlight, index) => (
@@ -147,7 +195,7 @@ const PopularDestinations = () => {
                   </div>
                   <div className="flex items-center space-x-1">
                     <MapPin className="h-4 w-4" />
-                    <span>Zambia</span>
+                    <span>{destination.country}</span>
                   </div>
                 </div>
 
@@ -155,7 +203,7 @@ const PopularDestinations = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="text-2xl font-bold text-gray-900">
-                      ZMW {destination.startingPrice.toLocaleString()}
+                      {formatCurrency(destination.startingPrice)}
                     </span>
                     <span className="text-gray-500 text-sm"> / night</span>
                   </div>
@@ -173,7 +221,8 @@ const PopularDestinations = () => {
         <div className="text-center mt-12">
           <Link to="/properties">
             <Button variant="outline" size="lg" className="border-2 border-orange-500 text-orange-600 hover:bg-orange-500 hover:text-white transition-all duration-300 px-8 py-3">
-              View All Destinations
+              <Globe2 className="h-5 w-5 mr-2" />
+              Explore All African Destinations
             </Button>
           </Link>
         </div>
