@@ -5,15 +5,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Building2, Plus, Edit, MapPin, Phone, Mail, Users } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { MapPin, Search, Plus, Edit, Building, Users, Activity } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface Manager {
+  id: string;
   email: string;
   first_name: string;
   last_name: string;
@@ -26,18 +26,19 @@ interface Branch {
   address: string | null;
   phone: string | null;
   email: string | null;
-  is_active: boolean;
   manager_id: string | null;
-  manager: Manager | null;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
+  manager?: Manager | null;
   admin_count?: number;
 }
 
 const AdminBranchManagement = () => {
   const [branches, setBranches] = useState<Branch[]>([]);
-  const [managers, setManagers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState<Branch | null>(null);
@@ -49,11 +50,12 @@ const AdminBranchManagement = () => {
     email: '',
     manager_id: ''
   });
+  const [availableManagers, setAvailableManagers] = useState<Manager[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchBranches();
-    fetchPotentialManagers();
+    fetchAvailableManagers();
   }, []);
 
   const fetchBranches = async () => {
@@ -63,12 +65,7 @@ const AdminBranchManagement = () => {
       const { data, error } = await supabase
         .from('branches')
         .select(`
-          *,
-          manager:profiles!branches_manager_id_fkey(
-            email,
-            first_name,
-            last_name
-          )
+          *
         `)
         .order('created_at', { ascending: false });
 
@@ -80,7 +77,8 @@ const AdminBranchManagement = () => {
           const { count } = await supabase
             .from('admin_users')
             .select('*', { count: 'exact', head: true })
-            .eq('branch_location', branch.location);
+            .eq('branch_location', branch.location)
+            .eq('is_active', true);
 
           return {
             ...branch,
@@ -102,36 +100,17 @@ const AdminBranchManagement = () => {
     }
   };
 
-  const fetchPotentialManagers = async () => {
+  const fetchAvailableManagers = async () => {
     try {
       const { data, error } = await supabase
-        .from('admin_users')
-        .select(`
-          user_id,
-          profiles!admin_users_user_id_fkey(
-            id,
-            email,
-            first_name,
-            last_name
-          )
-        `)
-        .eq('admin_type', 'branch_admin')
-        .eq('is_active', true);
+        .from('profiles')
+        .select('id, email, first_name, last_name')
+        .eq('role', 'institution_admin');
 
       if (error) throw error;
-
-      const formattedManagers = (data || [])
-        .filter(item => item.profiles)
-        .map(item => ({
-          id: item.profiles.id,
-          email: item.profiles.email,
-          first_name: item.profiles.first_name,
-          last_name: item.profiles.last_name
-        }));
-
-      setManagers(formattedManagers);
+      setAvailableManagers(data || []);
     } catch (error) {
-      console.error('Error fetching potential managers:', error);
+      console.error('Error fetching managers:', error);
     }
   };
 
@@ -139,14 +118,7 @@ const AdminBranchManagement = () => {
     try {
       const { error } = await supabase
         .from('branches')
-        .insert({
-          name: formData.name,
-          location: formData.location,
-          address: formData.address || null,
-          phone: formData.phone || null,
-          email: formData.email || null,
-          manager_id: formData.manager_id || null
-        });
+        .insert([formData]);
 
       if (error) throw error;
 
@@ -187,14 +159,7 @@ const AdminBranchManagement = () => {
     try {
       const { error } = await supabase
         .from('branches')
-        .update({
-          name: formData.name,
-          location: formData.location,
-          address: formData.address || null,
-          phone: formData.phone || null,
-          email: formData.email || null,
-          manager_id: formData.manager_id || null
-        })
+        .update(formData)
         .eq('id', selectedBranch.id);
 
       if (error) throw error;
@@ -205,6 +170,7 @@ const AdminBranchManagement = () => {
       });
 
       setIsEditDialogOpen(false);
+      setSelectedBranch(null);
       resetForm();
       fetchBranches();
     } catch (error) {
@@ -251,169 +217,199 @@ const AdminBranchManagement = () => {
       email: '',
       manager_id: ''
     });
-    setSelectedBranch(null);
   };
 
+  const filteredBranches = branches.filter(branch => {
+    const matchesSearch = !searchTerm || 
+      branch.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      branch.location.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || 
+      (statusFilter === 'active' && branch.is_active) ||
+      (statusFilter === 'inactive' && !branch.is_active);
+    
+    return matchesSearch && matchesStatus;
+  });
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-3 p-1 sm:p-3 lg:p-6 max-w-full overflow-hidden">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Branch Management</h2>
-          <p className="text-muted-foreground">
-            Manage office branches and their administrators
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">Branch Management</h2>
+          <p className="text-muted-foreground text-xs sm:text-sm">
+            Manage branch offices and locations
           </p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
+        <Button onClick={() => setIsCreateDialogOpen(true)} className="h-8 text-xs px-3">
+          <Plus className="h-3 w-3 mr-1" />
           Add Branch
         </Button>
       </div>
 
-      {/* Branches Overview */}
-      <div className="grid gap-4 md:grid-cols-3">
+      {/* Stats Overview */}
+      <div className="grid gap-2 grid-cols-2 md:grid-cols-3">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Branches</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium">Total Branches</CardTitle>
+            <Building className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{branches.length}</div>
+          <CardContent className="pb-1">
+            <div className="text-lg sm:text-xl font-bold">{branches.length}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Branches</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium">Active Branches</CardTitle>
+            <Activity className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="pb-1">
+            <div className="text-lg sm:text-xl font-bold">
               {branches.filter(b => b.is_active).length}
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Admins</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium">Total Admins</CardTitle>
+            <Users className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
+          <CardContent className="pb-1">
+            <div className="text-lg sm:text-xl font-bold">
               {branches.reduce((sum, branch) => sum + (branch.admin_count || 0), 0)}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Branches Table */}
+      {/* Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle>Branches</CardTitle>
-          <CardDescription>
-            All registered office branches and their details
-          </CardDescription>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
+            <Search className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
+            Filters
+          </CardTitle>
         </CardHeader>
         <CardContent>
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+            <div>
+              <label className="text-xs font-medium mb-1 block">Search</label>
+              <Input
+                placeholder="Search branches..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-8 text-xs"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1 block">Status</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Branches</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Branches Table */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm sm:text-base lg:text-lg">
+            Branches ({filteredBranches.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
           {loading ? (
-            <div className="text-center py-8">Loading branches...</div>
-          ) : branches.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No branches found. Create your first branch to get started.
+            <div className="text-center py-6">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-3"></div>
+              <p className="text-xs text-muted-foreground">Loading branches...</p>
+            </div>
+          ) : filteredBranches.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground">
+              <p className="text-xs">No branches found matching your criteria</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Branch Name</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Manager</TableHead>
-                    <TableHead>Contact</TableHead>
-                    <TableHead>Admins</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {branches.map((branch) => (
-                    <TableRow key={branch.id}>
-                      <TableCell>
-                        <div className="font-medium">{branch.name}</div>
-                        <div className="text-sm text-muted-foreground flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {branch.location}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>{branch.location}</div>
-                        {branch.address && (
-                          <div className="text-sm text-muted-foreground">
-                            {branch.address}
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {branch.manager ? (
-                          <div>
-                            <div className="font-medium">
-                              {branch.manager.first_name} {branch.manager.last_name}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {branch.manager.first_name} {branch.manager.last_name}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">No manager assigned</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          {branch.phone && (
-                            <div className="flex items-center gap-1 text-sm">
-                              <Phone className="h-3 w-3" />
-                              {branch.phone}
-                            </div>
-                          )}
-                          {branch.email && (
-                            <div className="flex items-center gap-1 text-sm">
-                              <Mail className="h-3 w-3" />
-                              {branch.manager?.email}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {branch.admin_count || 0} admins
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={branch.is_active ? 'default' : 'secondary'}>
-                          {branch.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditBranch(branch)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleBranchStatus(branch)}
-                            className={branch.is_active ? 'text-red-600' : 'text-green-600'}
-                          >
-                            {branch.is_active ? 'Deactivate' : 'Activate'}
-                          </Button>
-                        </div>
-                      </TableCell>
+              <div className="min-w-[800px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">Branch</TableHead>
+                      <TableHead className="text-xs hidden sm:table-cell">Contact</TableHead>
+                      <TableHead className="text-xs hidden md:table-cell">Manager</TableHead>
+                      <TableHead className="text-xs hidden lg:table-cell">Admins</TableHead>
+                      <TableHead className="text-xs">Status</TableHead>
+                      <TableHead className="text-xs">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredBranches.map((branch) => (
+                      <TableRow key={branch.id}>
+                        <TableCell className="py-1">
+                          <div>
+                            <div className="font-medium text-xs">{branch.name}</div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <MapPin className="h-2 w-2" />
+                              <span className="truncate max-w-[100px]">{branch.location}</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-1 hidden sm:table-cell">
+                          <div className="text-xs">
+                            {branch.email && (
+                              <div className="truncate max-w-[120px]">{branch.email}</div>
+                            )}
+                            {branch.phone && (
+                              <div className="text-muted-foreground">{branch.phone}</div>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-1 hidden md:table-cell">
+                          <span className="text-xs text-muted-foreground">
+                            {branch.manager_id ? 'Assigned' : 'Unassigned'}
+                          </span>
+                        </TableCell>
+                        <TableCell className="py-1 hidden lg:table-cell">
+                          <Badge variant="outline" className="text-xs px-1 py-0">
+                            {branch.admin_count || 0} admins
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-1">
+                          <Badge variant={branch.is_active ? 'default' : 'secondary'} className="text-xs px-1 py-0">
+                            {branch.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-1">
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditBranch(branch)}
+                              className="h-6 px-2 text-xs"
+                            >
+                              <Edit className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleBranchStatus(branch)}
+                              className={`h-6 px-2 text-xs ${branch.is_active ? 'text-red-600' : 'text-green-600'}`}
+                            >
+                              {branch.is_active ? 'Deactivate' : 'Activate'}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
         </CardContent>
@@ -421,170 +417,136 @@ const AdminBranchManagement = () => {
 
       {/* Create Branch Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-w-[95vw]">
           <DialogHeader>
-            <DialogTitle>Create New Branch</DialogTitle>
-            <DialogDescription>
-              Add a new office branch to your organization
+            <DialogTitle className="text-sm sm:text-base">Create New Branch</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
+              Add a new branch office to the system
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Branch Name</Label>
+          <div className="grid gap-3 py-3">
+            <div className="grid gap-1">
+              <Label htmlFor="name" className="text-xs">Branch Name</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                placeholder="Enter branch name"
+                className="h-8 text-xs"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="location">Location</Label>
+            <div className="grid gap-1">
+              <Label htmlFor="location" className="text-xs">Location</Label>
               <Input
                 id="location"
                 value={formData.location}
                 onChange={(e) => setFormData({...formData, location: e.target.value})}
-                placeholder="Enter location"
+                className="h-8 text-xs"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="address">Address</Label>
-              <Textarea
+            <div className="grid gap-1">
+              <Label htmlFor="address" className="text-xs">Address</Label>
+              <Input
                 id="address"
                 value={formData.address}
                 onChange={(e) => setFormData({...formData, address: e.target.value})}
-                placeholder="Enter full address"
+                className="h-8 text-xs"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                placeholder="Enter phone number"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+            <div className="grid gap-1">
+              <Label htmlFor="email" className="text-xs">Email</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                placeholder="Enter email address"
+                className="h-8 text-xs"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="manager">Branch Manager</Label>
-              <Select 
-                value={formData.manager_id} 
-                onValueChange={(value) => setFormData({...formData, manager_id: value})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a manager (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">No manager</SelectItem>
-                  {managers.map((manager) => (
-                    <SelectItem key={manager.id} value={manager.id}>
-                      {manager.first_name} {manager.last_name} ({manager.email})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid gap-1">
+              <Label htmlFor="phone" className="text-xs">Phone</Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                className="h-8 text-xs"
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="h-7 text-xs px-3">
               Cancel
             </Button>
-            <Button onClick={handleCreateBranch}>Create Branch</Button>
+            <Button onClick={handleCreateBranch} className="h-7 text-xs px-3">
+              Create Branch
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Edit Branch Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-w-[95vw]">
           <DialogHeader>
-            <DialogTitle>Edit Branch</DialogTitle>
-            <DialogDescription>
-              Update branch information and settings
+            <DialogTitle className="text-sm sm:text-base">Edit Branch</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
+              Update branch information
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="edit-name">Branch Name</Label>
+          <div className="grid gap-3 py-3">
+            <div className="grid gap-1">
+              <Label htmlFor="edit-name" className="text-xs">Branch Name</Label>
               <Input
                 id="edit-name"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
-                placeholder="Enter branch name"
+                className="h-8 text-xs"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-location">Location</Label>
+            <div className="grid gap-1">
+              <Label htmlFor="edit-location" className="text-xs">Location</Label>
               <Input
                 id="edit-location"
                 value={formData.location}
                 onChange={(e) => setFormData({...formData, location: e.target.value})}
-                placeholder="Enter location"
+                className="h-8 text-xs"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-address">Address</Label>
-              <Textarea
+            <div className="grid gap-1">
+              <Label htmlFor="edit-address" className="text-xs">Address</Label>
+              <Input
                 id="edit-address"
                 value={formData.address}
                 onChange={(e) => setFormData({...formData, address: e.target.value})}
-                placeholder="Enter full address"
+                className="h-8 text-xs"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-phone">Phone</Label>
-              <Input
-                id="edit-phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                placeholder="Enter phone number"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-email">Email</Label>
+            <div className="grid gap-1">
+              <Label htmlFor="edit-email" className="text-xs">Email</Label>
               <Input
                 id="edit-email"
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                placeholder="Enter email address"
+                className="h-8 text-xs"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-manager">Branch Manager</Label>
-              <Select 
-                value={formData.manager_id} 
-                onValueChange={(value) => setFormData({...formData, manager_id: value})}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a manager (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">No manager</SelectItem>
-                  {managers.map((manager) => (
-                    <SelectItem key={manager.id} value={manager.id}>
-                      {manager.first_name} {manager.last_name} ({manager.email})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="grid gap-1">
+              <Label htmlFor="edit-phone" className="text-xs">Phone</Label>
+              <Input
+                id="edit-phone"
+                value={formData.phone}
+                onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                className="h-8 text-xs"
+              />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="h-7 text-xs px-3">
               Cancel
             </Button>
-            <Button onClick={handleUpdateBranch}>Update Branch</Button>
+            <Button onClick={handleUpdateBranch} className="h-7 text-xs px-3">
+              Update Branch
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
