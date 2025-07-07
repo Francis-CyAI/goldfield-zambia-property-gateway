@@ -38,11 +38,11 @@ const AdminDashboard = () => {
 
   if (!adminStatus?.isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-96">
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-center text-red-600">Access Denied</CardTitle>
-            <CardDescription className="text-center">
+            <CardTitle className="text-center text-red-600 text-sm sm:text-base">Access Denied</CardTitle>
+            <CardDescription className="text-center text-xs sm:text-sm">
               You don't have permission to access the admin dashboard.
             </CardDescription>
           </CardHeader>
@@ -56,25 +56,25 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+        <div className="mb-4 sm:mb-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-gray-600 mt-2">
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+              <p className="text-gray-600 mt-1 text-xs sm:text-sm lg:text-base">
                 Welcome back, {user?.email}
               </p>
             </div>
-            <div className="flex items-center space-x-2">
-              <Badge variant={isSuperAdmin ? "default" : "secondary"}>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant={isSuperAdmin ? "default" : "secondary"} className="text-xs">
                 <Shield className="h-3 w-3 mr-1" />
                 {adminStatus.adminType?.replace('_', ' ').toUpperCase()}
               </Badge>
               {adminStatus.branchLocation && (
-                <Badge variant="outline">
+                <Badge variant="outline" className="text-xs">
                   <MapPin className="h-3 w-3 mr-1" />
-                  {adminStatus.branchLocation}
+                  <span className="truncate max-w-[100px]">{adminStatus.branchLocation}</span>
                 </Badge>
               )}
             </div>
@@ -82,39 +82,41 @@ const AdminDashboard = () => {
         </div>
 
         {/* Dashboard Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 lg:grid-cols-7">
-            <TabsTrigger value="overview" className="flex items-center space-x-2">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Overview</span>
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center space-x-2">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Users</span>
-            </TabsTrigger>
-            <TabsTrigger value="properties" className="flex items-center space-x-2">
-              <Building2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Properties</span>
-            </TabsTrigger>
-            <TabsTrigger value="commissions" className="flex items-center space-x-2">
-              <DollarSign className="h-4 w-4" />
-              <span className="hidden sm:inline">Commissions</span>
-            </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center space-x-2">
-              <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Analytics</span>
-            </TabsTrigger>
-            {isHQAdmin && (
-              <TabsTrigger value="branches" className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4" />
-                <span className="hidden sm:inline">Branches</span>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 sm:space-y-6">
+          <div className="overflow-x-auto">
+            <TabsList className="grid w-full min-w-[600px] grid-cols-6 lg:grid-cols-7 h-auto p-1">
+              <TabsTrigger value="overview" className="flex flex-col items-center space-y-1 p-2 text-xs">
+                <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>Overview</span>
               </TabsTrigger>
-            )}
-            <TabsTrigger value="activity" className="flex items-center space-x-2">
-              <Activity className="h-4 w-4" />
-              <span className="hidden sm:inline">Activity</span>
-            </TabsTrigger>
-          </TabsList>
+              <TabsTrigger value="users" className="flex flex-col items-center space-y-1 p-2 text-xs">
+                <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>Users</span>
+              </TabsTrigger>
+              <TabsTrigger value="properties" className="flex flex-col items-center space-y-1 p-2 text-xs">
+                <Building2 className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>Properties</span>
+              </TabsTrigger>
+              <TabsTrigger value="commissions" className="flex flex-col items-center space-y-1 p-2 text-xs">
+                <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>Commissions</span>
+              </TabsTrigger>
+              <TabsTrigger value="analytics" className="flex flex-col items-center space-y-1 p-2 text-xs">
+                <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>Analytics</span>
+              </TabsTrigger>
+              {isHQAdmin && (
+                <TabsTrigger value="branches" className="flex flex-col items-center space-y-1 p-2 text-xs">
+                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span>Branches</span>
+                </TabsTrigger>
+              )}
+              <TabsTrigger value="activity" className="flex flex-col items-center space-y-1 p-2 text-xs">
+                <Activity className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>Activity</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="overview">
             <AdminAnalytics />

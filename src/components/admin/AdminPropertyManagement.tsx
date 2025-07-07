@@ -202,76 +202,77 @@ const AdminPropertyManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 p-1 sm:p-3 lg:p-6 max-w-full overflow-hidden">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Property Management</h2>
-        <p className="text-muted-foreground">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">Property Management</h2>
+        <p className="text-muted-foreground text-xs sm:text-sm">
           Monitor and manage all properties on the platform
         </p>
       </div>
 
       {/* Stats Overview */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-2 grid-cols-2 md:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Properties</CardTitle>
-            <Home className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium">Total Properties</CardTitle>
+            <Home className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalProperties}</div>
+          <CardContent className="pb-1">
+            <div className="text-lg sm:text-xl font-bold">{stats.totalProperties}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Properties</CardTitle>
-            <Home className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium">Active Properties</CardTitle>
+            <Home className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.activeProperties}</div>
+          <CardContent className="pb-1">
+            <div className="text-lg sm:text-xl font-bold">{stats.activeProperties}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inactive Properties</CardTitle>
-            <Home className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium">Inactive Properties</CardTitle>
+            <Home className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.inactiveProperties}</div>
+          <CardContent className="pb-1">
+            <div className="text-lg sm:text-xl font-bold">{stats.inactiveProperties}</div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Hosts</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium">Total Hosts</CardTitle>
+            <Users className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalHosts}</div>
+          <CardContent className="pb-1">
+            <div className="text-lg sm:text-xl font-bold">{stats.totalHosts}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
+            <Search className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
             Filters
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <div>
-              <label className="text-sm font-medium mb-2 block">Search</label>
+              <label className="text-xs font-medium mb-1 block">Search</label>
               <Input
-                placeholder="Search properties, locations, or hosts..."
+                placeholder="Search properties, locations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-8 text-xs"
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">Status</label>
+              <label className="text-xs font-medium mb-1 block">Status</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -282,9 +283,9 @@ const AdminPropertyManagement = () => {
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">Property Type</label>
+              <label className="text-xs font-medium mb-1 block">Property Type</label>
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -303,122 +304,120 @@ const AdminPropertyManagement = () => {
 
       {/* Properties Table */}
       <Card>
-        <CardHeader>
-          <CardTitle>Properties ({filteredProperties.length})</CardTitle>
-          <CardDescription>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm sm:text-base lg:text-lg">Properties ({filteredProperties.length})</CardTitle>
+          <CardDescription className="text-xs">
             All properties registered on the platform
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
-            <div className="text-center py-8">Loading properties...</div>
+            <div className="text-center py-6">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-3"></div>
+              <p className="text-xs text-muted-foreground">Loading properties...</p>
+            </div>
           ) : filteredProperties.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No properties found matching your criteria
+            <div className="text-center py-6 text-muted-foreground">
+              <p className="text-xs">No properties found matching your criteria</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Property</TableHead>
-                    <TableHead>Host</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Capacity</TableHead>
-                    <TableHead>Bookings</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProperties.map((property) => (
-                    <TableRow key={property.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{property.title}</div>
-                          <div className="text-sm text-muted-foreground flex items-center gap-1">
-                            <MapPin className="h-3 w-3" />
-                            {property.location}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {property.host ? (
-                          <div>
-                            <div className="font-medium">
-                              {property.host.first_name} {property.host.last_name}
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {property.host.first_name} {property.host.last_name}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">Unknown Host</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {property.property_type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="font-medium">
-                          ${property.price_per_night}/night
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="text-sm">
-                          <div>{property.max_guests} guests</div>
-                          <div className="text-muted-foreground">
-                            {property.bedrooms}bd • {property.bathrooms}ba
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{property.booking_count || 0}</div>
-                          <div className="text-sm text-muted-foreground">
-                            ${(property.total_revenue || 0).toFixed(0)} revenue
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={property.is_active ? 'default' : 'secondary'}>
-                          {property.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewProperty(property)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => togglePropertyStatus(property)}
-                            className={property.is_active ? 'text-red-600' : 'text-green-600'}
-                          >
-                            {property.is_active ? 'Deactivate' : 'Activate'}
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => deleteProperty(property.id)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
+              <div className="min-w-[900px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">Property</TableHead>
+                      <TableHead className="text-xs hidden sm:table-cell">Host</TableHead>
+                      <TableHead className="text-xs hidden md:table-cell">Type</TableHead>
+                      <TableHead className="text-xs">Price</TableHead>
+                      <TableHead className="text-xs hidden lg:table-cell">Capacity</TableHead>
+                      <TableHead className="text-xs hidden xl:table-cell">Bookings</TableHead>
+                      <TableHead className="text-xs">Status</TableHead>
+                      <TableHead className="text-xs">Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredProperties.map((property) => (
+                      <TableRow key={property.id}>
+                        <TableCell className="py-1">
+                          <div>
+                            <div className="font-medium text-xs truncate max-w-[120px]">{property.title}</div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-1">
+                              <MapPin className="h-2 w-2" />
+                              <span className="truncate max-w-[100px]">{property.location}</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-1 hidden sm:table-cell">
+                          {property.host ? (
+                            <div>
+                              <div className="font-medium text-xs">
+                                {property.host.first_name} {property.host.last_name}
+                              </div>
+                              <div className="text-xs text-muted-foreground truncate max-w-[100px]">
+                                {property.host.email}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">Unknown Host</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-1 hidden md:table-cell">
+                          <Badge variant="outline" className="text-xs px-1 py-0">
+                            {property.property_type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-1">
+                          <div className="font-medium text-xs">
+                            ${property.price_per_night}/night
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-1 hidden lg:table-cell">
+                          <div className="text-xs">
+                            <div>{property.max_guests} guests</div>
+                            <div className="text-muted-foreground">
+                              {property.bedrooms}bd • {property.bathrooms}ba
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-1 hidden xl:table-cell">
+                          <div>
+                            <div className="font-medium text-xs">{property.booking_count || 0}</div>
+                            <div className="text-xs text-muted-foreground">
+                              ${(property.total_revenue || 0).toFixed(0)} revenue
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-1">
+                          <Badge variant={property.is_active ? 'default' : 'secondary'} className="text-xs px-1 py-0">
+                            {property.is_active ? 'Active' : 'Inactive'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-1">
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewProperty(property)}
+                              className="h-6 px-2 text-xs"
+                            >
+                              <Eye className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => togglePropertyStatus(property)}
+                              className={`h-6 px-2 text-xs ${property.is_active ? 'text-red-600' : 'text-green-600'}`}
+                            >
+                              {property.is_active ? 'Deactivate' : 'Activate'}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
         </CardContent>
@@ -426,19 +425,19 @@ const AdminPropertyManagement = () => {
 
       {/* Property Details Dialog */}
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Property Details</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-sm sm:text-base">Property Details</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
               Detailed information about {selectedProperty?.title}
             </DialogDescription>
           </DialogHeader>
           {selectedProperty && (
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-3 py-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <h4 className="font-medium mb-2">Basic Information</h4>
-                  <div className="space-y-2 text-sm">
+                  <h4 className="font-medium mb-2 text-xs">Basic Information</h4>
+                  <div className="space-y-1 text-xs">
                     <div><strong>Title:</strong> {selectedProperty.title}</div>
                     <div><strong>Type:</strong> {selectedProperty.property_type}</div>
                     <div><strong>Location:</strong> {selectedProperty.location}</div>
@@ -447,8 +446,8 @@ const AdminPropertyManagement = () => {
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-medium mb-2">Capacity & Features</h4>
-                  <div className="space-y-2 text-sm">
+                  <h4 className="font-medium mb-2 text-xs">Capacity & Features</h4>
+                  <div className="space-y-1 text-xs">
                     <div><strong>Max Guests:</strong> {selectedProperty.max_guests}</div>
                     <div><strong>Bedrooms:</strong> {selectedProperty.bedrooms}</div>
                     <div><strong>Bathrooms:</strong> {selectedProperty.bathrooms}</div>
@@ -459,24 +458,24 @@ const AdminPropertyManagement = () => {
               </div>
               {selectedProperty.description && (
                 <div>
-                  <h4 className="font-medium mb-2">Description</h4>
-                  <p className="text-sm text-muted-foreground">
+                  <h4 className="font-medium mb-2 text-xs">Description</h4>
+                  <p className="text-xs text-muted-foreground">
                     {selectedProperty.description}
                   </p>
                 </div>
               )}
               <div>
-                <h4 className="font-medium mb-2">Host Information</h4>
+                <h4 className="font-medium mb-2 text-xs">Host Information</h4>
                 {selectedProperty.host ? (
-                  <div className="text-sm">
+                  <div className="text-xs">
                     <div><strong>Name:</strong> {selectedProperty.host.first_name} {selectedProperty.host.last_name}</div>
                     <div><strong>Email:</strong> {selectedProperty.host.email}</div>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">Host information not available</p>
+                  <p className="text-xs text-muted-foreground">Host information not available</p>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                 <div>
                   <strong>Created:</strong> {new Date(selectedProperty.created_at).toLocaleDateString()}
                 </div>
@@ -487,7 +486,7 @@ const AdminPropertyManagement = () => {
             </div>
           )}
           <DialogFooter>
-            <Button onClick={() => setIsViewDialogOpen(false)}>
+            <Button onClick={() => setIsViewDialogOpen(false)} className="h-7 text-xs px-3">
               Close
             </Button>
           </DialogFooter>

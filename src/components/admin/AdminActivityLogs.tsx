@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -25,8 +26,8 @@ interface ActivityLog {
       first_name: string;
       last_name: string;
       email: string;
-    };
-  };
+    } | null;
+  } | null;
 }
 
 const AdminActivityLogs = () => {
@@ -75,7 +76,11 @@ const AdminActivityLogs = () => {
       // Fix TypeScript issues by properly typing the data
       const typedLogs: ActivityLog[] = (data || []).map(log => ({
         ...log,
-        ip_address: log.ip_address ? String(log.ip_address) : null
+        ip_address: log.ip_address ? String(log.ip_address) : null,
+        admin_user: log.admin_user && !('error' in log.admin_user) ? {
+          ...log.admin_user,
+          profiles: log.admin_user.profiles && !('error' in log.admin_user.profiles) ? log.admin_user.profiles : null
+        } : null
       }));
       
       setLogs(typedLogs);
@@ -106,13 +111,13 @@ const AdminActivityLogs = () => {
     switch (action.toLowerCase()) {
       case 'login':
       case 'logout':
-        return <User className="h-4 w-4" />;
+        return <User className="h-3 w-3 sm:h-4 sm:w-4" />;
       case 'create':
       case 'update':
       case 'delete':
-        return <Settings className="h-4 w-4" />;
+        return <Settings className="h-3 w-3 sm:h-4 sm:w-4" />;
       default:
-        return <AlertTriangle className="h-4 w-4" />;
+        return <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4" />;
     }
   };
 
@@ -145,37 +150,37 @@ const AdminActivityLogs = () => {
   };
 
   return (
-    <div className="space-y-4 p-2 sm:p-4 lg:p-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Activity Logs</h2>
-        <p className="text-muted-foreground text-sm sm:text-base">
+    <div className="space-y-3 p-1 sm:p-3 lg:p-6 max-w-full overflow-hidden">
+      <div className="space-y-1">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">Activity Logs</h2>
+        <p className="text-muted-foreground text-xs sm:text-sm">
           Track all administrative actions and system events
         </p>
       </div>
 
       {/* Filters */}
       <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Search className="h-4 w-4 sm:h-5 sm:w-5" />
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
+            <Search className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
             Filters
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Search</label>
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-1">
+              <label className="text-xs font-medium">Search</label>
               <Input
-                placeholder="Search actions, users, or targets..."
+                placeholder="Search actions, users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="text-sm"
+                className="text-xs h-8"
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Action Type</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium">Action Type</label>
               <Select value={actionFilter} onValueChange={setActionFilter}>
-                <SelectTrigger className="text-sm">
+                <SelectTrigger className="text-xs h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -188,10 +193,10 @@ const AdminActivityLogs = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Time Period</label>
+            <div className="space-y-1">
+              <label className="text-xs font-medium">Time Period</label>
               <Select value={dateFilter} onValueChange={setDateFilter}>
-                <SelectTrigger className="text-sm">
+                <SelectTrigger className="text-xs h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -209,61 +214,61 @@ const AdminActivityLogs = () => {
 
       {/* Activity Logs Table */}
       <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
+            <Calendar className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
             Recent Activity
           </CardTitle>
-          <CardDescription className="text-sm">
+          <CardDescription className="text-xs">
             Showing {filteredLogs.length} of {logs.length} activity logs
           </CardDescription>
         </CardHeader>
-        <CardContent className="px-2 sm:px-6">
+        <CardContent className="p-0">
           {loading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-sm text-muted-foreground">Loading activity logs...</p>
+            <div className="text-center py-6">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-3"></div>
+              <p className="text-xs text-muted-foreground">Loading activity logs...</p>
             </div>
           ) : filteredLogs.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-sm">No activity logs found matching your criteria</p>
+            <div className="text-center py-6 text-muted-foreground">
+              <AlertTriangle className="h-8 w-8 mx-auto mb-3 text-gray-400" />
+              <p className="text-xs">No activity logs found matching your criteria</p>
             </div>
           ) : (
-            <div className="overflow-x-auto -mx-2 sm:mx-0">
-              <div className="min-w-full inline-block align-middle">
+            <div className="overflow-x-auto">
+              <div className="min-w-[800px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="min-w-[120px] text-xs sm:text-sm">Action</TableHead>
-                      <TableHead className="min-w-[140px] text-xs sm:text-sm hidden sm:table-cell">Admin User</TableHead>
-                      <TableHead className="min-w-[100px] text-xs sm:text-sm hidden md:table-cell">Target</TableHead>
-                      <TableHead className="min-w-[120px] text-xs sm:text-sm hidden lg:table-cell">Details</TableHead>
-                      <TableHead className="min-w-[100px] text-xs sm:text-sm hidden xl:table-cell">IP Address</TableHead>
-                      <TableHead className="min-w-[120px] text-xs sm:text-sm">Timestamp</TableHead>
+                      <TableHead className="w-[120px] text-xs">Action</TableHead>
+                      <TableHead className="w-[140px] text-xs hidden sm:table-cell">Admin User</TableHead>
+                      <TableHead className="w-[100px] text-xs hidden md:table-cell">Target</TableHead>
+                      <TableHead className="w-[120px] text-xs hidden lg:table-cell">Details</TableHead>
+                      <TableHead className="w-[100px] text-xs hidden xl:table-cell">IP Address</TableHead>
+                      <TableHead className="w-[120px] text-xs">Timestamp</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredLogs.map((log) => (
                       <TableRow key={log.id}>
-                        <TableCell className="py-2">
-                          <div className="flex items-center gap-2">
+                        <TableCell className="py-1">
+                          <div className="flex items-center gap-1">
                             {getActionIcon(log.action)}
-                            <Badge variant={getActionBadgeVariant(log.action)} className="text-xs">
+                            <Badge variant={getActionBadgeVariant(log.action)} className="text-xs px-1 py-0">
                               {log.action}
                             </Badge>
                           </div>
                         </TableCell>
-                        <TableCell className="py-2 hidden sm:table-cell">
+                        <TableCell className="py-1 hidden sm:table-cell">
                           {log.admin_user?.profiles ? (
-                            <div className="space-y-1">
-                              <div className="font-medium text-xs sm:text-sm">
+                            <div className="space-y-0.5">
+                              <div className="font-medium text-xs">
                                 {log.admin_user.profiles.first_name} {log.admin_user.profiles.last_name}
                               </div>
-                              <div className="text-xs text-muted-foreground truncate max-w-[120px]">
+                              <div className="text-xs text-muted-foreground truncate max-w-[100px]">
                                 {log.admin_user.profiles.email}
                               </div>
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="outline" className="text-xs px-1 py-0">
                                 {log.admin_user.admin_type}
                               </Badge>
                             </div>
@@ -271,9 +276,9 @@ const AdminActivityLogs = () => {
                             <span className="text-muted-foreground text-xs">System</span>
                           )}
                         </TableCell>
-                        <TableCell className="py-2 hidden md:table-cell">
+                        <TableCell className="py-1 hidden md:table-cell">
                           {log.target_type && log.target_id ? (
-                            <div className="space-y-1">
+                            <div className="space-y-0.5">
                               <div className="font-medium text-xs">{log.target_type}</div>
                               <div className="text-xs text-muted-foreground">
                                 ID: {log.target_id.substring(0, 8)}...
@@ -283,17 +288,17 @@ const AdminActivityLogs = () => {
                             <span className="text-muted-foreground text-xs">-</span>
                           )}
                         </TableCell>
-                        <TableCell className="py-2 hidden lg:table-cell">
+                        <TableCell className="py-1 hidden lg:table-cell">
                           <div className="max-w-xs truncate text-xs" title={formatDetails(log.details)}>
                             {formatDetails(log.details)}
                           </div>
                         </TableCell>
-                        <TableCell className="py-2 hidden xl:table-cell">
+                        <TableCell className="py-1 hidden xl:table-cell">
                           <code className="text-xs bg-muted px-1 py-0.5 rounded">
                             {log.ip_address || '-'}
                           </code>
                         </TableCell>
-                        <TableCell className="py-2">
+                        <TableCell className="py-1">
                           <div className="text-xs">
                             <div className="font-medium">
                               {new Date(log.created_at).toLocaleDateString()}

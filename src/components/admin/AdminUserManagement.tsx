@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -76,7 +75,7 @@ const AdminUserManagement = () => {
         last_name: user.last_name,
         role: user.role,
         created_at: user.created_at,
-        admin_status: user.admin_users?.[0] ? {
+        admin_status: user.admin_users && Array.isArray(user.admin_users) && user.admin_users.length > 0 ? {
           admin_type: user.admin_users[0].admin_type,
           is_active: user.admin_users[0].is_active,
           branch_location: user.admin_users[0].branch_location
@@ -228,11 +227,11 @@ const AdminUserManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-3 p-1 sm:p-3 lg:p-6 max-w-full overflow-hidden">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">User Management</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">User Management</h2>
+          <p className="text-muted-foreground text-xs sm:text-sm">
             Manage user accounts and administrative privileges
           </p>
         </div>
@@ -240,26 +239,27 @@ const AdminUserManagement = () => {
 
       {/* Filters */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
+            <Search className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
             Filters
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <div>
-              <label className="text-sm font-medium mb-2 block">Search</label>
+              <label className="text-xs font-medium mb-1 block">Search</label>
               <Input
                 placeholder="Search users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-8 text-xs"
               />
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">Role</label>
+              <label className="text-xs font-medium mb-1 block">Role</label>
               <Select value={roleFilter} onValueChange={setRoleFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -271,9 +271,9 @@ const AdminUserManagement = () => {
               </Select>
             </div>
             <div>
-              <label className="text-sm font-medium mb-2 block">Status</label>
+              <label className="text-xs font-medium mb-1 block">Status</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -290,115 +290,121 @@ const AdminUserManagement = () => {
 
       {/* Users Table */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base lg:text-lg">
+            <Users className="h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
             Users ({filteredUsers.length})
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           {loading ? (
-            <div className="text-center py-8">Loading users...</div>
+            <div className="text-center py-6">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-3"></div>
+              <p className="text-xs text-muted-foreground">Loading users...</p>
+            </div>
           ) : filteredUsers.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No users found matching your criteria
+            <div className="text-center py-6 text-muted-foreground">
+              <p className="text-xs">No users found matching your criteria</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Admin Status</TableHead>
-                    <TableHead>Branch</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">
-                            {user.first_name && user.last_name 
-                              ? `${user.first_name} ${user.last_name}`
-                              : 'No name provided'
-                            }
+              <div className="min-w-[800px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs">User</TableHead>
+                      <TableHead className="text-xs">Role</TableHead>
+                      <TableHead className="text-xs hidden sm:table-cell">Admin Status</TableHead>
+                      <TableHead className="text-xs hidden md:table-cell">Branch</TableHead>
+                      <TableHead className="text-xs hidden lg:table-cell">Status</TableHead>
+                      <TableHead className="text-xs hidden xl:table-cell">Created</TableHead>
+                      <TableHead className="text-xs">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="py-1">
+                          <div>
+                            <div className="font-medium text-xs">
+                              {user.first_name && user.last_name 
+                                ? `${user.first_name} ${user.last_name}`
+                                : 'No name provided'
+                              }
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate max-w-[120px]">
+                              {user.email}
+                            </div>
                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            {user.email}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getRoleBadgeVariant(user.role)}>
-                          {user.role.replace('_', ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {user.admin_status ? (
-                          <Badge variant={getAdminBadgeVariant(user.admin_status.admin_type)}>
-                            {user.admin_status.admin_type.replace('_', ' ')}
+                        </TableCell>
+                        <TableCell className="py-1">
+                          <Badge variant={getRoleBadgeVariant(user.role)} className="text-xs px-1 py-0">
+                            {user.role.replace('_', ' ')}
                           </Badge>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {user.admin_status?.branch_location || '-'}
-                      </TableCell>
-                      <TableCell>
-                        {user.admin_status ? (
-                          <div className="flex items-center gap-2">
-                            {user.admin_status.is_active ? (
-                              <Badge variant="default" className="bg-green-100 text-green-800">
-                                Active
-                              </Badge>
-                            ) : (
-                              <Badge variant="secondary" className="bg-red-100 text-red-800">
-                                Inactive
-                              </Badge>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">Regular User</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {new Date(user.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEditUser(user)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          {user.admin_status && (
+                        </TableCell>
+                        <TableCell className="py-1 hidden sm:table-cell">
+                          {user.admin_status ? (
+                            <Badge variant={getAdminBadgeVariant(user.admin_status.admin_type)} className="text-xs px-1 py-0">
+                              {user.admin_status.admin_type.replace('_', ' ')}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-1 hidden md:table-cell">
+                          <span className="text-xs">{user.admin_status?.branch_location || '-'}</span>
+                        </TableCell>
+                        <TableCell className="py-1 hidden lg:table-cell">
+                          {user.admin_status ? (
+                            <div className="flex items-center gap-1">
+                              {user.admin_status.is_active ? (
+                                <Badge variant="default" className="bg-green-100 text-green-800 text-xs px-1 py-0">
+                                  Active
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="bg-red-100 text-red-800 text-xs px-1 py-0">
+                                  Inactive
+                                </Badge>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">Regular User</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-1 hidden xl:table-cell">
+                          <span className="text-xs">{new Date(user.created_at).toLocaleDateString()}</span>
+                        </TableCell>
+                        <TableCell className="py-1">
+                          <div className="flex items-center gap-1">
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => toggleUserStatus(user)}
-                              className={user.admin_status.is_active ? 'text-red-600' : 'text-green-600'}
+                              onClick={() => handleEditUser(user)}
+                              className="h-6 px-2 text-xs"
                             >
-                              {user.admin_status.is_active ? (
-                                <UserX className="h-4 w-4" />
-                              ) : (
-                                <UserCheck className="h-4 w-4" />
-                              )}
+                              <Edit className="h-3 w-3" />
                             </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                            {user.admin_status && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => toggleUserStatus(user)}
+                                className={`h-6 px-2 text-xs ${user.admin_status.is_active ? 'text-red-600' : 'text-green-600'}`}
+                              >
+                                {user.admin_status.is_active ? (
+                                  <UserX className="h-3 w-3" />
+                                ) : (
+                                  <UserCheck className="h-3 w-3" />
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           )}
         </CardContent>
@@ -406,18 +412,18 @@ const AdminUserManagement = () => {
 
       {/* Edit User Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-w-[95vw]">
           <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-sm sm:text-base">Edit User</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
               Update user role and administrative privileges
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="role">User Role</Label>
+          <div className="grid gap-3 py-3">
+            <div className="grid gap-1">
+              <Label htmlFor="role" className="text-xs">User Role</Label>
               <Select value={editForm.role} onValueChange={(value) => setEditForm({...editForm, role: value})}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -427,10 +433,10 @@ const AdminUserManagement = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="adminType">Admin Type</Label>
+            <div className="grid gap-1">
+              <Label htmlFor="adminType" className="text-xs">Admin Type</Label>
               <Select value={editForm.adminType} onValueChange={(value) => setEditForm({...editForm, adminType: value})}>
-                <SelectTrigger>
+                <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder="Select admin type (optional)" />
                 </SelectTrigger>
                 <SelectContent>
@@ -449,25 +455,26 @@ const AdminUserManagement = () => {
                     checked={editForm.isActive}
                     onCheckedChange={(checked) => setEditForm({...editForm, isActive: !!checked})}
                   />
-                  <Label htmlFor="isActive">Active Admin</Label>
+                  <Label htmlFor="isActive" className="text-xs">Active Admin</Label>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="branchLocation">Branch Location</Label>
+                <div className="grid gap-1">
+                  <Label htmlFor="branchLocation" className="text-xs">Branch Location</Label>
                   <Input
                     id="branchLocation"
                     value={editForm.branchLocation}
                     onChange={(e) => setEditForm({...editForm, branchLocation: e.target.value})}
                     placeholder="Enter branch location"
+                    className="h-8 text-xs"
                   />
                 </div>
               </>
             )}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="h-7 text-xs px-3">
               Cancel
             </Button>
-            <Button onClick={handleSaveUser}>Save Changes</Button>
+            <Button onClick={handleSaveUser} className="h-7 text-xs px-3">Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

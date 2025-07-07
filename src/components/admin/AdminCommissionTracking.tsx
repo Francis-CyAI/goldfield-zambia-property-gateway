@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -191,66 +192,65 @@ const AdminCommissionTracking = () => {
   };
 
   return (
-    <div className="space-y-4 p-2 sm:p-4 lg:p-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-3 p-1 sm:p-3 lg:p-6 max-w-full overflow-hidden">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <div className="space-y-1">
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Commission Tracking</h2>
-          <p className="text-muted-foreground text-sm sm:text-base">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">Commission Tracking</h2>
+          <p className="text-muted-foreground text-xs sm:text-sm">
             Monitor and manage platform commission payments
           </p>
         </div>
-        <Button onClick={exportCommissions} variant="outline" className="w-full sm:w-auto">
-          <Download className="h-4 w-4 mr-2" />
-          <span className="hidden sm:inline">Export Data</span>
-          <span className="sm:hidden">Export</span>
+        <Button onClick={exportCommissions} variant="outline" className="w-full sm:w-auto h-7 text-xs">
+          <Download className="h-3 w-3 mr-1" />
+          Export Data
         </Button>
       </div>
 
       {/* Stats Overview */}
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-2 grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Total</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium">Total</CardTitle>
+            <DollarSign className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="pb-2">
-            <div className="text-lg sm:text-2xl font-bold">{stats.totalCommissions}</div>
+          <CardContent className="pb-1">
+            <div className="text-lg sm:text-xl font-bold">{stats.totalCommissions}</div>
             <p className="text-xs text-muted-foreground">
               All transactions
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Pending</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium">Pending</CardTitle>
+            <Calendar className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="pb-2">
-            <div className="text-lg sm:text-2xl font-bold">{stats.pendingCommissions}</div>
+          <CardContent className="pb-1">
+            <div className="text-lg sm:text-xl font-bold">{stats.pendingCommissions}</div>
             <p className="text-xs text-muted-foreground">
               Awaiting process
             </p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Processed</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium">Processed</CardTitle>
+            <TrendingUp className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="pb-2">
-            <div className="text-lg sm:text-2xl font-bold">{stats.processedCommissions}</div>
+          <CardContent className="pb-1">
+            <div className="text-lg sm:text-xl font-bold">{stats.processedCommissions}</div>
             <p className="text-xs text-muted-foreground">
               Completed
             </p>
           </CardContent>
         </Card>
         <Card className="col-span-2 lg:col-span-1">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs sm:text-sm font-medium">Total Amount</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1">
+            <CardTitle className="text-xs font-medium">Total Amount</CardTitle>
+            <DollarSign className="h-3 w-3 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="pb-2">
-            <div className="text-lg sm:text-2xl font-bold">${stats.totalAmount.toFixed(2)}</div>
+          <CardContent className="pb-1">
+            <div className="text-lg sm:text-xl font-bold">${stats.totalAmount.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">
               Commission earned
             </p>
@@ -260,14 +260,14 @@ const AdminCommissionTracking = () => {
 
       {/* Filters */}
       <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg">Filters</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm sm:text-base lg:text-lg">Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1 min-w-[200px]">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1 min-w-[150px]">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="text-sm">
+                <SelectTrigger className="text-xs h-8">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -290,42 +290,42 @@ const AdminCommissionTracking = () => {
 
       {/* Commissions Table */}
       <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg">Commission Transactions</CardTitle>
-          <CardDescription className="text-sm">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm sm:text-base lg:text-lg">Commission Transactions</CardTitle>
+          <CardDescription className="text-xs">
             Recent commission payments and their status
           </CardDescription>
         </CardHeader>
-        <CardContent className="px-2 sm:px-6">
+        <CardContent className="p-0">
           {loading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-              <p className="text-sm text-muted-foreground">Loading commissions...</p>
+            <div className="text-center py-6">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto mb-3"></div>
+              <p className="text-xs text-muted-foreground">Loading commissions...</p>
             </div>
           ) : commissions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <DollarSign className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p className="text-sm">No commission data found matching your criteria</p>
+            <div className="text-center py-6 text-muted-foreground">
+              <DollarSign className="h-8 w-8 mx-auto mb-3 text-gray-400" />
+              <p className="text-xs">No commission data found matching your criteria</p>
             </div>
           ) : (
-            <div className="overflow-x-auto -mx-2 sm:mx-0">
-              <div className="min-w-full inline-block align-middle">
+            <div className="overflow-x-auto">
+              <div className="min-w-[900px]">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="min-w-[100px] text-xs sm:text-sm">Date</TableHead>
-                      <TableHead className="min-w-[120px] text-xs sm:text-sm hidden sm:table-cell">Host</TableHead>
-                      <TableHead className="min-w-[140px] text-xs sm:text-sm hidden md:table-cell">Property</TableHead>
-                      <TableHead className="min-w-[100px] text-xs sm:text-sm">Amount</TableHead>
-                      <TableHead className="min-w-[100px] text-xs sm:text-sm">Commission</TableHead>
-                      <TableHead className="min-w-[80px] text-xs sm:text-sm">Status</TableHead>
-                      <TableHead className="min-w-[120px] text-xs sm:text-sm">Actions</TableHead>
+                      <TableHead className="w-[100px] text-xs">Date</TableHead>
+                      <TableHead className="w-[120px] text-xs hidden sm:table-cell">Host</TableHead>
+                      <TableHead className="w-[140px] text-xs hidden md:table-cell">Property</TableHead>
+                      <TableHead className="w-[100px] text-xs">Amount</TableHead>
+                      <TableHead className="w-[100px] text-xs">Commission</TableHead>
+                      <TableHead className="w-[80px] text-xs">Status</TableHead>
+                      <TableHead className="w-[120px] text-xs">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {commissions.map((commission) => (
                       <TableRow key={commission.id}>
-                        <TableCell className="py-2">
+                        <TableCell className="py-1">
                           <div className="text-xs">
                             <div className="font-medium">
                               {new Date(commission.created_at).toLocaleDateString()}
@@ -335,13 +335,13 @@ const AdminCommissionTracking = () => {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="py-2 hidden sm:table-cell">
+                        <TableCell className="py-1 hidden sm:table-cell">
                           {commission.host ? (
-                            <div className="space-y-1">
+                            <div className="space-y-0.5">
                               <div className="font-medium text-xs">
                                 {commission.host.first_name} {commission.host.last_name}
                               </div>
-                              <div className="text-xs text-muted-foreground truncate max-w-[100px]">
+                              <div className="text-xs text-muted-foreground truncate max-w-[80px]">
                                 {commission.host.email}
                               </div>
                             </div>
@@ -349,24 +349,24 @@ const AdminCommissionTracking = () => {
                             <span className="text-muted-foreground text-xs">Unknown Host</span>
                           )}
                         </TableCell>
-                        <TableCell className="py-2 hidden md:table-cell">
-                          <div className="space-y-1">
-                            <div className="font-medium text-xs truncate max-w-[120px]">
+                        <TableCell className="py-1 hidden md:table-cell">
+                          <div className="space-y-0.5">
+                            <div className="font-medium text-xs truncate max-w-[100px]">
                               {commission.property?.title || 'Unknown Property'}
                             </div>
-                            <div className="text-xs text-muted-foreground truncate max-w-[120px]">
+                            <div className="text-xs text-muted-foreground truncate max-w-[100px]">
                               {commission.property?.location}
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="py-2">
-                          <div className="font-medium text-xs sm:text-sm">
+                        <TableCell className="py-1">
+                          <div className="font-medium text-xs">
                             ${commission.booking_amount.toFixed(2)}
                           </div>
                         </TableCell>
-                        <TableCell className="py-2">
-                          <div className="space-y-1">
-                            <div className="font-medium text-xs sm:text-sm">
+                        <TableCell className="py-1">
+                          <div className="space-y-0.5">
+                            <div className="font-medium text-xs">
                               ${commission.commission_amount.toFixed(2)}
                             </div>
                             <div className="text-xs text-muted-foreground">
@@ -374,17 +374,17 @@ const AdminCommissionTracking = () => {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="py-2">
-                          <Badge variant={getStatusBadgeVariant(commission.status)} className="text-xs">
+                        <TableCell className="py-1">
+                          <Badge variant={getStatusBadgeVariant(commission.status)} className="text-xs px-1 py-0">
                             {commission.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="py-2">
+                        <TableCell className="py-1">
                           {commission.status === 'pending' && (
-                            <div className="flex flex-col sm:flex-row gap-1">
+                            <div className="flex flex-col gap-1">
                               <Button
                                 size="sm"
-                                className="text-xs px-2 py-1 h-auto"
+                                className="text-xs px-2 py-1 h-6"
                                 onClick={() => updateCommissionStatus(commission.id, 'processed')}
                               >
                                 Process
@@ -392,7 +392,7 @@ const AdminCommissionTracking = () => {
                               <Button
                                 size="sm"
                                 variant="destructive"
-                                className="text-xs px-2 py-1 h-auto"
+                                className="text-xs px-2 py-1 h-6"
                                 onClick={() => updateCommissionStatus(commission.id, 'failed')}
                               >
                                 Reject
