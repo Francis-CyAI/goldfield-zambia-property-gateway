@@ -246,24 +246,34 @@ const Auth = () => {
                   <div>
                     <Label>I want to:</Label>
                     <RadioGroup value={role} onValueChange={setRole} className="mt-2">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="guest" id="guest" />
-                        <Label htmlFor="guest" className="flex items-center space-x-2 cursor-pointer">
-                          <User className="h-4 w-4" />
-                          <span>Find and book properties (Guest)</span>
+                      <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent transition-colors">
+                        <RadioGroupItem value="student" id="guest" />
+                        <Label htmlFor="guest" className="flex items-center space-x-2 cursor-pointer flex-1">
+                          <User className="h-4 w-4 text-primary" />
+                          <div>
+                            <div className="font-medium">Find Places to Stay</div>
+                            <div className="text-sm text-muted-foreground">Book amazing accommodations as a traveler</div>
+                          </div>
                         </Label>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="host" id="host" />
-                        <Label htmlFor="host" className="flex items-center space-x-2 cursor-pointer">
-                          <Building className="h-4 w-4" />
-                          <span>List my properties (Host)</span>
+                      <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent transition-colors">
+                        <RadioGroupItem value="student" id="host" />
+                        <Label htmlFor="host" className="flex items-center space-x-2 cursor-pointer flex-1">
+                          <Building className="h-4 w-4 text-secondary" />
+                          <div>
+                            <div className="font-medium">Become a Host</div>
+                            <div className="text-sm text-muted-foreground">List your property and earn income</div>
+                          </div>
                         </Label>
                       </div>
                     </RadioGroup>
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-12 text-lg font-semibold" 
+                    disabled={loading}
+                  >
                     {loading ? 'Creating account...' : 'Create account'}
                   </Button>
                 </form>

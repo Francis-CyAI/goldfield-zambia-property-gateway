@@ -1,247 +1,231 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Search, MapPin, Calendar as CalendarIcon, Users, Shield, Zap, Star, Heart } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Search, MapPin, Calendar, Users, Home, Building, Star, Shield, Clock, TrendingUp } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const HeroSection = () => {
-  const [location, setLocation] = useState('');
-  const [checkIn, setCheckIn] = useState<Date>();
-  const [checkOut, setCheckOut] = useState<Date>();
-  const [guests, setGuests] = useState(1);
-  const navigate = useNavigate();
-
-  const zambianCities = [
-    { value: 'lusaka', label: 'Lusaka - Capital City' },
-    { value: 'livingstone', label: 'Livingstone - Victoria Falls' },
-    { value: 'ndola', label: 'Ndola - Copperbelt' },
-    { value: 'kitwe', label: 'Kitwe - Mining Hub' },
-    { value: 'kabwe', label: 'Kabwe - Central Province' },
-    { value: 'solwezi', label: 'Solwezi - North Western' },
-    { value: 'kasama', label: 'Kasama - Northern Province' },
-    { value: 'chipata', label: 'Chipata - Eastern Province' },
-    { value: 'mongu', label: 'Mongu - Western Province' },
-    { value: 'choma', label: 'Choma - Southern Province' }
-  ];
-
-  const handleSearch = () => {
-    const searchParams = new URLSearchParams();
-    if (location) searchParams.set('location', location);
-    if (checkIn) searchParams.set('checkin', format(checkIn, 'yyyy-MM-dd'));
-    if (checkOut) searchParams.set('checkout', format(checkOut, 'yyyy-MM-dd'));
-    searchParams.set('guests', guests.toString());
-    
-    navigate(`/properties?${searchParams.toString()}`);
-  };
-
-  const isSearchEnabled = location && checkIn && checkOut;
+  const [searchData, setSearchData] = useState({
+    location: '',
+    checkIn: '',
+    checkOut: '',
+    guests: '1'
+  });
+  const { user } = useAuth();
 
   return (
-    <section className="relative bg-gradient-to-br from-orange-50 via-red-50 to-yellow-50 overflow-hidden">
+    <div className="relative min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-orange-500 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-40 h-40 bg-red-500 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-60 h-60 bg-yellow-500 rounded-full blur-3xl"></div>
-      </div>
+      <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width=%2260%22%20height=%2260%22%20viewBox=%220%200%2060%2060%22%20xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cg%20fill=%22none%22%20fill-rule=%22evenodd%22%3E%3Cg%20fill=%22%23f1f5f9%22%20fill-opacity=%220.3%22%3E%3Ccircle%20cx=%227%22%20cy=%227%22%20r=%221%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-20"></div>
+      
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-16">
+        {/* Trust Indicators */}
+        <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mb-8 animate-fade-in">
+          <Badge className="bg-green-50 text-green-700 border-green-200 px-3 sm:px-4 py-2 text-sm font-medium">
+            <Shield className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Verified Properties</span>
+            <span className="sm:hidden">Verified</span>
+          </Badge>
+          <Badge className="bg-blue-50 text-blue-700 border-blue-200 px-3 sm:px-4 py-2 text-sm font-medium">
+            <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Instant Booking</span>
+            <span className="sm:hidden">Instant</span>
+          </Badge>
+          <Badge className="bg-yellow-50 text-yellow-700 border-yellow-200 px-3 sm:px-4 py-2 text-sm font-medium">
+            <Star className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">5-Star Hosts</span>
+            <span className="sm:hidden">5-Star</span>
+          </Badge>
+        </div>
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center mb-16">
-          <div className="flex items-center justify-center space-x-2 mb-6">
-            <div className="flex items-center space-x-1">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-              <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-            </div>
-            <span className="text-sm font-medium text-gray-600">Proudly Zambian</span>
-          </div>
-          
-          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-            Discover Amazing
-            <br />
-            <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-              Zambian Stays
+        {/* Main Hero Content */}
+        <div className="text-center mb-12 animate-fade-in">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 leading-tight">
+            <span className="block">Zambia's #1</span>
+            <span className="block bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Property Marketplace
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-gray-700 mb-8 max-w-3xl mx-auto leading-relaxed">
-            From luxury lodges near Victoria Falls to cozy homes in Lusaka. 
-            Experience authentic Zambian hospitality with verified hosts and instant booking.
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed px-4">
+            <strong>For Travelers:</strong> Discover unique stays from Victoria Falls to Lusaka<br className="hidden sm:block" />
+            <strong>For Hosts:</strong> Turn your property into a thriving business
           </p>
 
-          {/* Key Features */}
-          <div className="flex flex-wrap justify-center gap-4 mb-12">
-            <Badge variant="secondary" className="px-6 py-3 text-base bg-white/80 backdrop-blur-sm border border-orange-200 hover:bg-orange-50 transition-colors">
-              <Zap className="h-5 w-5 mr-2 text-orange-600" />
-              Book Instantly
-            </Badge>
-            <Badge variant="secondary" className="px-6 py-3 text-base bg-white/80 backdrop-blur-sm border border-green-200 hover:bg-green-50 transition-colors">
-              <Shield className="h-5 w-5 mr-2 text-green-600" />
-              Verified Hosts
-            </Badge>
-            <Badge variant="secondary" className="px-6 py-3 text-base bg-white/80 backdrop-blur-sm border border-blue-200 hover:bg-blue-50 transition-colors">
-              <Star className="h-5 w-5 mr-2 text-blue-600" />
-              Local Experiences
-            </Badge>
-            <Badge variant="secondary" className="px-6 py-3 text-base bg-white/80 backdrop-blur-sm border border-purple-200 hover:bg-purple-50 transition-colors">
-              <Heart className="h-5 w-5 mr-2 text-purple-600" />
-              Trusted Community
-            </Badge>
+          {/* Two-Sided Marketplace CTA - Mobile Optimized */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-12 px-4">
+            <Link to="/properties" className="w-full sm:w-auto">
+              <Button 
+                size="lg" 
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 sm:px-8 py-4 text-base sm:text-lg font-bold min-h-[56px] border-2 border-primary"
+              >
+                <Search className="h-5 w-5 mr-2" />
+                <span className="hidden sm:inline">Find Places to Stay</span>
+                <span className="sm:hidden">Find Stays</span>
+              </Button>
+            </Link>
+            
+            <Link to={user ? "/list-property" : "/auth"} className="w-full sm:w-auto">
+              <Button 
+                variant="outline" 
+                size="lg"
+                className="w-full sm:w-auto border-3 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 px-6 sm:px-8 py-4 text-base sm:text-lg font-bold min-h-[56px] bg-white"
+              >
+                <Home className="h-5 w-5 mr-2" />
+                <span className="hidden sm:inline">Become a Host</span>
+                <span className="sm:hidden">List Property</span>
+              </Button>
+            </Link>
           </div>
         </div>
 
-        {/* Search Card */}
-        <Card className="max-w-5xl mx-auto bg-white/95 backdrop-blur-sm shadow-2xl border-0 rounded-2xl overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-8">
-            <CardTitle className="text-2xl font-bold text-center">Find Your Perfect Zambian Getaway</CardTitle>
-            <CardDescription className="text-center text-orange-100 text-lg">
-              Discover unique stays from Livingstone to Lusaka
-            </CardDescription>
-          </CardHeader>
-          
-          <CardContent className="p-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {/* Location */}
+        {/* Search Card - Responsive */}
+        <Card className="max-w-5xl mx-auto shadow-2xl border-0 bg-white/95 backdrop-blur-sm animate-scale-in">
+          <CardContent className="p-4 sm:p-6 md:p-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700 flex items-center">
-                  <MapPin className="h-4 w-4 mr-2 text-orange-500" />
-                  Where to?
+                <label className="text-sm font-medium text-foreground flex items-center">
+                  <MapPin className="h-4 w-4 mr-1 text-primary" />
+                  Location
                 </label>
-                <Select value={location} onValueChange={setLocation}>
-                  <SelectTrigger className="h-14 border-2 border-gray-200 hover:border-orange-300 focus:border-orange-500 transition-colors">
-                    <SelectValue placeholder="Choose destination" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {zambianCities.map((city) => (
-                      <SelectItem key={city.value} value={city.value} className="py-3">
-                        {city.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Input
+                  placeholder="Where are you going?"
+                  value={searchData.location}
+                  onChange={(e) => setSearchData(prev => ({ ...prev, location: e.target.value }))}
+                  className="border-2 border-border focus:border-primary transition-colors h-12 text-base"
+                />
               </div>
-
-              {/* Check-in */}
+              
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700 flex items-center">
-                  <CalendarIcon className="h-4 w-4 mr-2 text-orange-500" />
-                  Check in
+                <label className="text-sm font-medium text-foreground flex items-center">
+                  <Calendar className="h-4 w-4 mr-1 text-primary" />
+                  Check-in
                 </label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="h-14 w-full justify-start border-2 border-gray-200 hover:border-orange-300 focus:border-orange-500 transition-colors">
-                      {checkIn ? format(checkIn, 'MMM dd, yyyy') : 'Add dates'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={checkIn}
-                      onSelect={setCheckIn}
-                      disabled={(date) => date < new Date()}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Input
+                  type="date"
+                  value={searchData.checkIn}
+                  onChange={(e) => setSearchData(prev => ({ ...prev, checkIn: e.target.value }))}
+                  className="border-2 border-border focus:border-primary transition-colors h-12 text-base"
+                />
               </div>
-
-              {/* Check-out */}
+              
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700 flex items-center">
-                  <CalendarIcon className="h-4 w-4 mr-2 text-orange-500" />
-                  Check out
+                <label className="text-sm font-medium text-foreground flex items-center">
+                  <Calendar className="h-4 w-4 mr-1 text-primary" />
+                  Check-out
                 </label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className="h-14 w-full justify-start border-2 border-gray-200 hover:border-orange-300 focus:border-orange-500 transition-colors">
-                      {checkOut ? format(checkOut, 'MMM dd, yyyy') : 'Add dates'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={checkOut}
-                      onSelect={setCheckOut}
-                      disabled={(date) => date < new Date() || (checkIn && date <= checkIn)}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+                <Input
+                  type="date"
+                  value={searchData.checkOut}
+                  onChange={(e) => setSearchData(prev => ({ ...prev, checkOut: e.target.value }))}
+                  className="border-2 border-border focus:border-primary transition-colors h-12 text-base"
+                />
               </div>
-
-              {/* Guests */}
+              
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700 flex items-center">
-                  <Users className="h-4 w-4 mr-2 text-orange-500" />
+                <label className="text-sm font-medium text-foreground flex items-center">
+                  <Users className="h-4 w-4 mr-1 text-primary" />
                   Guests
                 </label>
-                <Select value={guests.toString()} onValueChange={(value) => setGuests(parseInt(value))}>
-                  <SelectTrigger className="h-14 border-2 border-gray-200 hover:border-orange-300 focus:border-orange-500 transition-colors">
+                <Select value={searchData.guests} onValueChange={(value) => setSearchData(prev => ({ ...prev, guests: value }))}>
+                  <SelectTrigger className="border-2 border-border focus:border-primary transition-colors h-12">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 16].map((num) => (
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
                       <SelectItem key={num} value={num.toString()}>
-                        {num} guest{num > 1 ? 's' : ''}
+                        {num} {num === 1 ? 'Guest' : 'Guests'}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-
-            {/* Search Button */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            
+            <Link to="/properties">
               <Button 
-                onClick={handleSearch}
-                disabled={!isSearchEnabled}
-                className={`flex-1 h-16 text-lg font-semibold rounded-xl transition-all duration-300 ${
-                  isSearchEnabled 
-                    ? 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 shadow-lg hover:shadow-xl' 
-                    : 'bg-gray-300 cursor-not-allowed'
-                }`}
+                className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] h-14 text-base sm:text-lg font-bold border-2 border-secondary"
               >
-                <Search className="h-6 w-6 mr-3" />
-                Search Amazing Stays
+                <Search className="h-5 w-5 mr-2" />
+                Search Properties
               </Button>
-              
-              <Link to="/contact">
-                <Button variant="outline" className="h-16 px-8 text-lg font-semibold border-2 border-gray-300 hover:border-orange-500 hover:text-orange-600 rounded-xl transition-colors">
-                  Need Help?
-                </Button>
-              </Link>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-8 border-t border-gray-200">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">500+</div>
-                <div className="text-sm text-gray-600">Properties</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">98%</div>
-                <div className="text-sm text-gray-600">Verified Hosts</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">4.8★</div>
-                <div className="text-sm text-gray-600">Average Rating</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">24/7</div>
-                <div className="text-sm text-gray-600">Support</div>
-              </div>
-            </div>
+            </Link>
           </CardContent>
         </Card>
+
+        {/* Two-Sided Value Proposition - Mobile Optimized */}
+        <div className="grid md:grid-cols-2 gap-6 sm:gap-8 mt-12 sm:mt-16 animate-fade-in px-4 sm:px-0">
+          {/* For Guests */}
+          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <CardContent className="p-6 sm:p-8 text-center">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Search className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-4">For Travelers & Guests</h3>
+              <p className="text-muted-foreground mb-6 leading-relaxed text-sm sm:text-base">
+                Book unique accommodations instantly. From luxury safari lodges to city apartments - 
+                all with verified hosts across Zambia.
+              </p>
+              <Link to="/properties">
+                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-bold h-12 border-2 border-primary">
+                  <Search className="h-4 w-4 mr-2" />
+                  Start Exploring
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          {/* For Hosts */}
+          <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <CardContent className="p-6 sm:p-8 text-center">
+              <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Building className="h-8 w-8 text-secondary" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-4">For Property Owners & Hosts</h3>
+              <p className="text-muted-foreground mb-6 leading-relaxed text-sm sm:text-base">
+                Turn your property into income. Join our marketplace platform, 
+                set your rates, and start earning with instant bookings.
+              </p>
+              <Link to={user ? "/list-property" : "/auth"}>
+                <Button 
+                  variant="outline" 
+                  className="w-full border-3 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 font-bold h-12 bg-white"
+                >
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Start Earning
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Marketplace Stats */}
+        <div className="mt-12 sm:mt-16 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-8 max-w-4xl mx-auto">
+            <div className="bg-white/80 rounded-lg p-4 shadow-sm">
+              <div className="text-2xl sm:text-3xl font-bold text-primary">500+</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Properties Listed</div>
+            </div>
+            <div className="bg-white/80 rounded-lg p-4 shadow-sm">
+              <div className="text-2xl sm:text-3xl font-bold text-green-600">98%</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Host Approval</div>
+            </div>
+            <div className="bg-white/80 rounded-lg p-4 shadow-sm">
+              <div className="text-2xl sm:text-3xl font-bold text-blue-600">4.8★</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Average Rating</div>
+            </div>
+            <div className="bg-white/80 rounded-lg p-4 shadow-sm">
+              <div className="text-2xl sm:text-3xl font-bold text-purple-600">24/7</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Support</div>
+            </div>
+          </div>
+        </div>
       </div>
-    </section>
+    </div>
   );
 };
 
