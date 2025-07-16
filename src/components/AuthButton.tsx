@@ -56,8 +56,10 @@ const AuthButton = () => {
         return 'bg-blue-100 text-blue-800';
       case 'super_admin':
         return 'bg-purple-100 text-purple-800';
-      default:
+      case 'student':
         return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -67,8 +69,10 @@ const AuthButton = () => {
         return 'Admin';
       case 'super_admin':
         return 'Super Admin';
-      default:
+      case 'student':
         return 'Student';
+      default:
+        return 'User';
     }
   };
 
@@ -111,11 +115,18 @@ const AuthButton = () => {
           </Link>
         </DropdownMenuItem>
         
+        <DropdownMenuItem asChild>
+          <Link to="/list-property" className="flex items-center w-full">
+            <Building className="h-4 w-4 mr-2" />
+            List Property
+          </Link>
+        </DropdownMenuItem>
+        
         {(profile?.role === 'institution_admin' || profile?.role === 'super_admin') && (
           <DropdownMenuItem asChild>
-            <Link to="/admin/properties" className="flex items-center w-full">
+            <Link to="/admin" className="flex items-center w-full">
               <Building className="h-4 w-4 mr-2" />
-              Manage Properties
+              Admin Dashboard
             </Link>
           </DropdownMenuItem>
         )}

@@ -27,6 +27,7 @@ import Partners from "./pages/Partners";
 import Subscription from "./pages/Subscription";
 import News from "./pages/News";
 import FAQSection from "./components/FAQSection";
+import Setup from "./pages/Setup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,7 @@ const App = () => (
                 <Route path="/partners" element={<Partners />} />
                 <Route path="/subscription" element={<Subscription />} />
                 <Route path="/news" element={<News />} />
+                <Route path="/setup" element={<Setup />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Layout>

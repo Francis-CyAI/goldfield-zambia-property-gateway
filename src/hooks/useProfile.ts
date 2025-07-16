@@ -3,16 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-export interface UserProfile {
-  id: string;
-  email: string;
-  first_name: string | null;
-  last_name: string | null;
-  role: 'student' | 'institution_admin' | 'super_admin';
-  institution_id: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import { Tables } from '@/integrations/supabase/types';
+
+export type UserProfile = Tables<'profiles'>;
 
 export const useProfile = (userId?: string) => {
   return useQuery({
