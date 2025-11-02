@@ -172,7 +172,7 @@ const PropertyDetail = () => {
     } : undefined
   }));
 
-  const isHost = property.host_id === user?.id;
+  const isHost = property.host_id === user?.uid;
 
   return (
     <div className="min-h-screen bg-white">

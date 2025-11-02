@@ -13,7 +13,7 @@ interface PropertyAnalyticsDashboardProps {
 const PropertyAnalyticsDashboard = ({ propertyId }: PropertyAnalyticsDashboardProps) => {
   const { user } = useAuth();
   const { data: analytics, isLoading: analyticsLoading } = usePropertyAnalytics(propertyId);
-  const { data: bookingRequests = [], isLoading: requestsLoading } = useBookingRequests(user?.id || '', 'host');
+  const { data: bookingRequests = [], isLoading: requestsLoading } = useBookingRequests(user?.uid || '', 'host');
 
   const propertyRequests = bookingRequests.filter((req: any) => req.property_id === propertyId);
   const pendingRequests = propertyRequests.filter((req: any) => req.status === 'pending');

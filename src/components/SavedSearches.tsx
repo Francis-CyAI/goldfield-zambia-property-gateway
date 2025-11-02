@@ -23,7 +23,7 @@ const SavedSearches = () => {
     guests: 1,
   });
 
-  const { data: savedSearches = [], isLoading } = useSavedSearches(user?.id);
+  const { data: savedSearches = [], isLoading } = useSavedSearches(user?.uid);
   const createSavedSearch = useCreateSavedSearch();
   const deleteSavedSearch = useDeleteSavedSearch();
 

@@ -1,11 +1,25 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { auth, db, COLLECTIONS } from '@/lib/constants/firebase';
+import { serializeDoc, serializeDocs } from '@/lib/utils/firestore-serialize';
 
 export interface Booking {
   id: string;
   property_id: string;
+  host_id?: string;
   guest_id: string;
   check_in: string;
   check_out: string;
@@ -25,17 +39,31 @@ export const useBookings = (userId?: string) => {
   return useQuery({
     queryKey: ['bookings', userId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('bookings')
-        .select(`
-          *,
-          property:properties(title, location, images)
-        `)
-        .eq('guest_id', userId!)
-        .order('created_at', { ascending: false });
+      const bookingsRef = collection(db, COLLECTIONS.bookings);
+      const bookingsQuery = query(
+        bookingsRef,
+        where('guest_id', '==', userId!),
+        orderBy('created_at', 'desc'),
+      );
+      const snapshot = await getDocs(bookingsQuery);
+      const bookings = serializeDocs<Booking>(snapshot);
 
-      if (error) throw error;
-      return data as Booking[];
+      const enriched = await Promise.all(
+        bookings.map(async (booking) => {
+          if (!booking.property_id) return booking;
+
+          const propertySnapshot = await getDoc(doc(db, COLLECTIONS.properties, booking.property_id));
+          if (propertySnapshot.exists()) {
+            const propertyData = serializeDoc<{ title?: string; location?: string; images?: string[] }>(
+              propertySnapshot,
+            );
+            return { ...booking, property: propertyData };
+          }
+          return booking;
+        }),
+      );
+
+      return enriched;
     },
     enabled: !!userId,
   });
@@ -45,17 +73,31 @@ export const useHostBookings = (userId?: string) => {
   return useQuery({
     queryKey: ['host-bookings', userId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('bookings')
-        .select(`
-          *,
-          property:properties!inner(title, location, images)
-        `)
-        .eq('properties.host_id', userId!)
-        .order('created_at', { ascending: false });
+      const bookingsRef = collection(db, COLLECTIONS.bookings);
+      const hostBookingsQuery = query(
+        bookingsRef,
+        where('host_id', '==', userId!),
+        orderBy('created_at', 'desc'),
+      );
+      const snapshot = await getDocs(hostBookingsQuery);
+      const bookings = serializeDocs<Booking>(snapshot);
 
-      if (error) throw error;
-      return data as Booking[];
+      const enriched = await Promise.all(
+        bookings.map(async (booking) => {
+          if (!booking.property_id) return booking;
+
+          const propertySnapshot = await getDoc(doc(db, COLLECTIONS.properties, booking.property_id));
+          if (propertySnapshot.exists()) {
+            const propertyData = serializeDoc<{ title?: string; location?: string; images?: string[] }>(
+              propertySnapshot,
+            );
+            return { ...booking, property: propertyData };
+          }
+          return booking;
+        }),
+      );
+
+      return enriched;
     },
     enabled: !!userId,
   });
@@ -73,17 +115,42 @@ export const useCreateBooking = () => {
       guest_count: number;
       total_price: number;
     }) => {
-      const { data, error } = await supabase
-        .from('bookings')
-        .insert([{
-          ...bookingData,
-          guest_id: (await supabase.auth.getUser()).data.user?.id,
-        }])
-        .select()
-        .single();
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('User must be signed in to create a booking.');
+      }
 
-      if (error) throw error;
-      return data;
+      const propertySnapshot = await getDoc(doc(db, COLLECTIONS.properties, bookingData.property_id));
+      if (!propertySnapshot.exists()) {
+        throw new Error('Property not found for booking.');
+      }
+      const propertyData = serializeDoc<{ host_id?: string }>(propertySnapshot);
+
+      const bookingsRef = collection(db, COLLECTIONS.bookings);
+      const payload = {
+        ...bookingData,
+        guest_id: currentUser.uid,
+        host_id: propertyData.host_id ?? null,
+        status: 'pending',
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+      };
+
+      const docRef = await addDoc(bookingsRef, payload);
+      const snapshot = await getDoc(docRef);
+
+      if (!snapshot.exists()) {
+        throw new Error('Failed to create booking.');
+      }
+
+      const createdBooking = serializeDoc<Booking>(snapshot);
+      if (propertySnapshot.exists()) {
+        createdBooking.property = serializeDoc<{ title?: string; location?: string; images?: string[] }>(
+          propertySnapshot,
+        );
+      }
+
+      return createdBooking;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
@@ -109,15 +176,18 @@ export const useUpdateBookingStatus = () => {
 
   return useMutation({
     mutationFn: async ({ bookingId, status }: { bookingId: string; status: string }) => {
-      const { data, error } = await supabase
-        .from('bookings')
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq('id', bookingId)
-        .select()
-        .single();
+      const bookingRef = doc(db, COLLECTIONS.bookings, bookingId);
+      await updateDoc(bookingRef, {
+        status,
+        updated_at: serverTimestamp(),
+      });
 
-      if (error) throw error;
-      return data;
+      const snapshot = await getDoc(bookingRef);
+      if (!snapshot.exists()) {
+        throw new Error('Booking not found after update.');
+      }
+
+      return serializeDoc<Booking>(snapshot);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });

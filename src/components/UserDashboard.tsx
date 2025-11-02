@@ -27,8 +27,8 @@ import { format } from 'date-fns';
 
 const UserDashboard = () => {
   const { user } = useAuth();
-  const { data: profile } = useProfile(user?.id);
-  const { data: properties = [], isLoading } = useUserProperties(user?.id);
+  const { data: profile } = useProfile(user?.uid);
+  const { data: properties = [], isLoading } = useUserProperties(user?.uid);
   const { data: userSubscription } = useUserSubscription();
 
   const getGreeting = () => {

@@ -1,21 +1,9 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, type FirebaseOptions } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore, collection, CollectionReference, DocumentData, FirestoreDataConverter } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import {
-  type BaseDocument,
-  type CollectionKey,
-  type CollectionRecordMap,
-  type Course,
-  type CourseMaterial,
-  type Institution,
-  type LearningApplication,
-  type Notification,
-  type Profile,
-  type StudentEnrollment,
-} from "@/lib/models";
 
 const requireEnv = (value: string | undefined, key: string): string => {
   if (value == null || value === "") {
@@ -41,50 +29,26 @@ export const storage = getStorage(app);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-export const collections: Record<CollectionKey, string> = {
+export const COLLECTIONS = {
   profiles: "profiles",
-  institutions: "institutions",
-  courses: "courses",
-  studentEnrollments: "student_enrollments",
-  courseMaterials: "course_materials",
-  applications: "applications",
+  properties: "properties",
+  propertyAvailability: "property_availability",
+  propertyLocations: "property_locations",
+  propertyViews: "property_views",
+  bookings: "bookings",
+  bookingRequests: "booking_requests",
+  platformCommissions: "platform_commissions",
   notifications: "notifications",
-};
+  messages: "messages",
+  savedSearches: "saved_searches",
+  subscriptionTiers: "subscription_tiers",
+  userSubscriptions: "user_subscriptions",
+  partnerSubscriptionTiers: "partner_subscription_tiers",
+  partnerSubscriptions: "partner_subscriptions",
+  branches: "branches",
+  adminUsers: "admin_users",
+  adminActivityLogs: "admin_activity_logs",
+} as const;
 
-const createConverter = <T extends BaseDocument>(): FirestoreDataConverter<T> => ({
-  toFirestore: (value) => {
-    const { id, ...rest } = value;
-    return rest as DocumentData;
-  },
-  fromFirestore: (snapshot, options) => {
-    const data = snapshot.data(options) as Omit<T, "id">;
-    return { id: snapshot.id, ...data } as T;
-  },
-});
-
-const converters: { [K in CollectionKey]: FirestoreDataConverter<CollectionRecordMap[K]> } = {
-  profiles: createConverter<Profile>(),
-  institutions: createConverter<Institution>(),
-  courses: createConverter<Course>(),
-  studentEnrollments: createConverter<StudentEnrollment>(),
-  courseMaterials: createConverter<CourseMaterial>(),
-  applications: createConverter<LearningApplication>(),
-  notifications: createConverter<Notification>(),
-};
-
-type TypedCollectionMap = {
-  [K in CollectionKey]: CollectionReference<CollectionRecordMap[K]>;
-};
-
-export const collectionRefs: TypedCollectionMap = {
-  profiles: collection(db, collections.profiles).withConverter(converters.profiles),
-  institutions: collection(db, collections.institutions).withConverter(converters.institutions),
-  courses: collection(db, collections.courses).withConverter(converters.courses),
-  studentEnrollments: collection(db, collections.studentEnrollments).withConverter(converters.studentEnrollments),
-  courseMaterials: collection(db, collections.courseMaterials).withConverter(converters.courseMaterials),
-  applications: collection(db, collections.applications).withConverter(converters.applications),
-  notifications: collection(db, collections.notifications).withConverter(converters.notifications),
-};
-
-export const getCollectionRef = <K extends CollectionKey>(key: K): CollectionReference<CollectionRecordMap[K]> =>
-  collectionRefs[key];
+export type CollectionName = keyof typeof COLLECTIONS;
+export type CollectionPath = typeof COLLECTIONS[CollectionName];

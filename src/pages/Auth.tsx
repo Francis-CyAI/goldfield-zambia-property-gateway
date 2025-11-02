@@ -8,9 +8,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Home, User, Building } from 'lucide-react';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  sendEmailVerification,
+} from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/constants/firebase';
 
 const Auth = () => {
   const [email, setEmail] = useState('');
@@ -30,19 +38,7 @@ const Auth = () => {
     setError('');
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          setError('Invalid email or password. Please check your credentials and try again.');
-        } else {
-          setError(error.message);
-        }
-        return;
-      }
+      await signInWithEmailAndPassword(auth, email, password);
 
       toast({
         title: 'Welcome back!',
@@ -51,7 +47,17 @@ const Auth = () => {
 
       navigate('/');
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      if (err instanceof FirebaseError) {
+        if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+          setError('Invalid email or password. Please check your credentials and try again.');
+        } else if (err.code === 'auth/user-not-found') {
+          setError('No account found with that email. Please sign up first.');
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -69,28 +75,36 @@ const Auth = () => {
     }
 
     try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-            role: role,
-          },
-        },
-      });
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const newUser = userCredential.user;
 
-      if (error) {
-        if (error.message.includes('User already registered')) {
-          setError('An account with this email already exists. Please try logging in instead.');
-        } else {
-          setError(error.message);
-        }
-        return;
+      const displayName = `${firstName} ${lastName}`.trim();
+      if (displayName) {
+        await updateProfile(newUser, { displayName });
+      }
+
+      // Create or update the matching profile document in Firestore
+      await setDoc(
+        doc(db, 'profiles', newUser.uid),
+        {
+          first_name: firstName,
+          last_name: lastName,
+          full_name: displayName || null,
+          email: newUser.email,
+          role,
+          is_active: true,
+          provider: 'password',
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+        },
+        { merge: true },
+      );
+
+      // Fire-and-forget email verification; ignore unsupported errors
+      try {
+        await sendEmailVerification(newUser);
+      } catch (verificationError) {
+        console.warn('Failed to send verification email:', verificationError);
       }
 
       toast({
@@ -105,7 +119,17 @@ const Auth = () => {
       setFirstName('');
       setLastName('');
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      if (err instanceof FirebaseError) {
+        if (err.code === 'auth/email-already-in-use') {
+          setError('An account with this email already exists. Please try logging in instead.');
+        } else if (err.code === 'auth/weak-password') {
+          setError('Your password is too weak. Please choose a stronger password.');
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError('An unexpected error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

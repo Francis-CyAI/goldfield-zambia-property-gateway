@@ -11,8 +11,8 @@ import { format } from 'date-fns';
 
 const BookingManagement = () => {
   const { user } = useAuth();
-  const { data: guestBookings = [], isLoading: loadingGuestBookings } = useBookings(user?.id);
-  const { data: hostBookings = [], isLoading: loadingHostBookings } = useHostBookings(user?.id);
+  const { data: guestBookings = [], isLoading: loadingGuestBookings } = useBookings(user?.uid);
+  const { data: hostBookings = [], isLoading: loadingHostBookings } = useHostBookings(user?.uid);
   const updateBookingStatus = useUpdateBookingStatus();
 
   const handleStatusUpdate = (bookingId: string, status: string) => {

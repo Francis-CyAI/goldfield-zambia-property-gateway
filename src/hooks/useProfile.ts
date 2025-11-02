@@ -1,11 +1,30 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import {
+  doc,
+  getDoc,
+  serverTimestamp,
+  setDoc,
+} from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { db } from '@/lib/constants/firebase';
+import { removeUndefined } from '@/lib/utils/remove-undfined';
+import { serializeDoc } from '@/lib/utils/firestore-serialize';
 
-import { Tables } from '@/integrations/supabase/types';
-
-export type UserProfile = Tables<'profiles'>;
+export interface UserProfile {
+  id: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  full_name?: string | null;
+  email?: string | null;
+  role?: string | null;
+  phone?: string | null;
+  avatar_url?: string | null;
+  provider?: string | null;
+  is_active?: boolean | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
 
 export const useProfile = (userId?: string) => {
   return useQuery({
@@ -14,19 +33,17 @@ export const useProfile = (userId?: string) => {
       if (!userId) return null;
       
       console.log('Fetching profile for user:', userId);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      const profileRef = doc(db, 'profiles', userId);
+      const snapshot = await getDoc(profileRef);
 
-      if (error) {
-        console.error('Error fetching profile:', error);
-        throw error;
+      if (!snapshot.exists()) {
+        console.warn('Profile not found for user:', userId);
+        return null;
       }
 
-      console.log('Profile fetched:', data);
-      return data as UserProfile;
+      const profile = serializeDoc<UserProfile>(snapshot);
+      console.log('Profile fetched:', profile);
+      return profile;
     },
     enabled: !!userId,
   });
@@ -42,20 +59,21 @@ export const useUpdateProfile = () => {
       updates: Partial<Omit<UserProfile, 'id' | 'created_at' | 'updated_at'>>;
     }) => {
       console.log('Updating profile:', { userId, updates });
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', userId)
-        .select()
-        .single();
 
-      if (error) {
-        console.error('Error updating profile:', error);
-        throw error;
+      const profileRef = doc(db, 'profiles', userId);
+      const payload = removeUndefined({
+        ...updates,
+        updated_at: serverTimestamp(),
+      });
+
+      await setDoc(profileRef, payload, { merge: true });
+      const updatedSnapshot = await getDoc(profileRef);
+
+      if (!updatedSnapshot.exists()) {
+        throw new Error('Profile not found after update');
       }
 
-      return data as UserProfile;
+      return serializeDoc<UserProfile>(updatedSnapshot);
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['profile', data.id] });

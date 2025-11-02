@@ -28,8 +28,8 @@ const PropertyOwnerDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   
-  const { data: properties = [], isLoading: propertiesLoading } = useUserProperties(user?.id);
-  const { data: bookings = [], isLoading: bookingsLoading } = useHostBookings(user?.id);
+  const { data: properties = [], isLoading: propertiesLoading } = useUserProperties(user?.uid);
+  const { data: bookings = [], isLoading: bookingsLoading } = useHostBookings(user?.uid);
 
   const activeProperties = properties.filter(p => p.is_active);
   const totalBookings = bookings.length;

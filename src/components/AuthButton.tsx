@@ -17,7 +17,7 @@ import { User, LogOut, Settings, Building, Heart } from 'lucide-react';
 
 const AuthButton = () => {
   const { user, signOut } = useAuth();
-  const { data: profile } = useProfile(user?.id);
+  const { data: profile } = useProfile(user?.uid);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignOut = async () => {
