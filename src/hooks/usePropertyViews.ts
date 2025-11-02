@@ -1,29 +1,38 @@
-
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import {
+  addDoc,
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  where,
+} from 'firebase/firestore';
+import { db, COLLECTIONS } from '@/lib/constants/firebase';
+import { serializeDocs } from '@/lib/utils/firestore-serialize';
 
 export interface PropertyView {
   id: string;
   property_id: string;
-  user_id?: string;
-  ip_address?: string;
-  user_agent?: string;
-  referrer?: string;
-  viewed_at: string;
+  user_id?: string | null;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  referrer?: string | null;
+  viewed_at?: string | null;
 }
 
 export const usePropertyViews = (propertyId: string) => {
   return useQuery({
     queryKey: ['property-views', propertyId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('property_views')
-        .select('*')
-        .eq('property_id', propertyId)
-        .order('viewed_at', { ascending: false });
-
-      if (error) throw error;
-      return data as PropertyView[];
+      const viewsRef = collection(db, COLLECTIONS.propertyViews);
+      const viewsQuery = query(
+        viewsRef,
+        where('property_id', '==', propertyId),
+        orderBy('viewed_at', 'desc'),
+      );
+      const snapshot = await getDocs(viewsQuery);
+      return serializeDocs<PropertyView>(snapshot);
     },
     enabled: !!propertyId,
   });
@@ -33,24 +42,23 @@ export const usePropertyAnalytics = (propertyId: string) => {
   return useQuery({
     queryKey: ['property-analytics', propertyId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('property_views')
-        .select('viewed_at')
-        .eq('property_id', propertyId);
+      const viewsRef = collection(db, COLLECTIONS.propertyViews);
+      const viewsQuery = query(viewsRef, where('property_id', '==', propertyId));
+      const snapshot = await getDocs(viewsQuery);
+      const views = serializeDocs<PropertyView>(snapshot);
 
-      if (error) throw error;
-
-      // Process analytics data
-      const totalViews = data.length;
+      const totalViews = views.length;
       const today = new Date();
-      const viewsToday = data.filter(view => {
+      const viewsToday = views.filter((view) => {
+        if (!view.viewed_at) return false;
         const viewDate = new Date(view.viewed_at);
         return viewDate.toDateString() === today.toDateString();
       }).length;
 
-      const viewsThisWeek = data.filter(view => {
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const viewsThisWeek = views.filter((view) => {
+        if (!view.viewed_at) return false;
         const viewDate = new Date(view.viewed_at);
-        const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
         return viewDate >= weekAgo;
       }).length;
 
@@ -58,7 +66,9 @@ export const usePropertyAnalytics = (propertyId: string) => {
         totalViews,
         viewsToday,
         viewsThisWeek,
-        viewHistory: data.map(view => view.viewed_at),
+        viewHistory: views
+          .map((view) => view.viewed_at)
+          .filter((timestamp): timestamp is string => Boolean(timestamp)),
       };
     },
     enabled: !!propertyId,
@@ -68,21 +78,18 @@ export const usePropertyAnalytics = (propertyId: string) => {
 export const useTrackPropertyView = () => {
   return useMutation({
     mutationFn: async ({ propertyId, userId }: { propertyId: string; userId?: string }) => {
-      const viewData = {
+      const viewsRef = collection(db, COLLECTIONS.propertyViews);
+      const payload = {
         property_id: propertyId,
-        user_id: userId,
-        user_agent: navigator.userAgent,
-        referrer: document.referrer,
+        user_id: userId ?? null,
+        user_agent: typeof window !== 'undefined' ? window.navigator.userAgent : null,
+        referrer: typeof document !== 'undefined' ? document.referrer : null,
+        viewed_at: serverTimestamp(),
+        created_at: serverTimestamp(),
       };
-
-      const { data, error } = await supabase
-        .from('property_views')
-        .insert(viewData)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      const docRef = await addDoc(viewsRef, payload);
+      return docRef.id;
     },
   });
 };
+

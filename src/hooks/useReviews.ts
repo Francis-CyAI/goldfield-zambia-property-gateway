@@ -1,7 +1,20 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { auth, db, COLLECTIONS } from '@/lib/constants/firebase';
+import { serializeDoc, serializeDocs } from '@/lib/utils/firestore-serialize';
+import { removeUndefined } from '@/lib/utils/remove-undfined';
 
 export interface Review {
   id: string;
@@ -19,36 +32,48 @@ export interface Review {
     value: number;
   };
   is_verified_stay?: boolean;
-  created_at: string;
+  created_at?: string | null;
+  updated_at?: string | null;
   profiles?: {
-    first_name: string;
-    last_name: string;
+    first_name?: string;
+    last_name?: string;
   };
   host_response?: {
     message: string;
     created_at: string;
-    host_name: string;
-  };
+    host_name?: string;
+  } | null;
 }
+
+const hydrateReview = async (review: Review) => {
+  const [profileSnapshot] = await Promise.all([
+    getDoc(doc(db, COLLECTIONS.profiles, review.guest_id)),
+  ]);
+
+  if (profileSnapshot.exists()) {
+    const profile = serializeDoc<{ first_name?: string; last_name?: string }>(profileSnapshot);
+    review.profiles = {
+      first_name: profile.first_name,
+      last_name: profile.last_name,
+    };
+  }
+
+  return review;
+};
 
 export const usePropertyReviews = (propertyId: string) => {
   return useQuery({
     queryKey: ['reviews', propertyId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('reviews')
-        .select(`
-          *,
-          profiles:guest_id (
-            first_name,
-            last_name
-          )
-        `)
-        .eq('property_id', propertyId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data as Review[];
+      const reviewsRef = collection(db, COLLECTIONS.reviews);
+      const reviewsQuery = query(
+        reviewsRef,
+        where('property_id', '==', propertyId),
+        orderBy('created_at', 'desc'),
+      );
+      const snapshot = await getDocs(reviewsQuery);
+      const reviews = serializeDocs<Review>(snapshot);
+      return Promise.all(reviews.map(hydrateReview));
     },
     enabled: !!propertyId,
   });
@@ -74,20 +99,23 @@ export const useCreateReview = () => {
       };
       is_verified_stay?: boolean;
     }) => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('User not authenticated');
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error('User not authenticated');
 
-      const { data, error } = await supabase
-        .from('reviews')
-        .insert([{
-          ...reviewData,
-          guest_id: user.user.id,
-        }])
-        .select()
-        .single();
+      const reviewsRef = collection(db, COLLECTIONS.reviews);
+      const docRef = await addDoc(reviewsRef, {
+        ...reviewData,
+        guest_id: currentUser.uid,
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+      });
 
-      if (error) throw error;
-      return data;
+      const snapshot = await getDoc(docRef);
+      if (!snapshot.exists()) {
+        throw new Error('Failed to create review.');
+      }
+
+      return hydrateReview(serializeDoc<Review>(snapshot));
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['reviews', variables.property_id] });
@@ -112,35 +140,29 @@ export const useHostResponse = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async ({ reviewId, response }: { reviewId: string; response: string }) => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('User not authenticated');
+    mutationFn: async ({ reviewId, response, hostName }: { reviewId: string; response: string; hostName?: string }) => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error('User not authenticated');
 
-      // Get the current review first
-      const { data: currentReview, error: fetchError } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('id', reviewId)
-        .single();
+      const reviewRef = doc(db, COLLECTIONS.reviews, reviewId);
+      await updateDoc(reviewRef, removeUndefined({
+        host_response: {
+          message: response,
+          created_at: new Date().toISOString(),
+          host_name: hostName ?? null,
+        },
+        updated_at: serverTimestamp(),
+      }));
 
-      if (fetchError) throw fetchError;
+      const snapshot = await getDoc(reviewRef);
+      if (!snapshot.exists()) {
+        throw new Error('Review not found after update.');
+      }
 
-      // Update with host response in JSON format
-      const { data, error } = await supabase
-        .from('reviews')
-        .update({
-          // Store host response as a separate field if the table supports it
-          comment: currentReview.comment + `\n\n[HOST RESPONSE] ${response}`
-        })
-        .eq('id', reviewId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      return serializeDoc<Review>(snapshot);
     },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['reviews', data.property_id] });
+    onSuccess: (review) => {
+      queryClient.invalidateQueries({ queryKey: ['reviews', review.property_id] });
       toast({
         title: 'Response posted',
         description: 'Your response has been added to the review.',
@@ -156,3 +178,4 @@ export const useHostResponse = () => {
     },
   });
 };
+

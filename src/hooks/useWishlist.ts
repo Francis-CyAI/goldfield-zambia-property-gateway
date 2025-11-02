@@ -1,7 +1,17 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import {
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  serverTimestamp,
+  setDoc,
+  where,
+} from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { db, COLLECTIONS } from '@/lib/constants/firebase';
 
 export const useWishlist = (userId?: string) => {
   return useQuery({
@@ -10,17 +20,13 @@ export const useWishlist = (userId?: string) => {
       if (!userId) return [];
       
       console.log('Fetching wishlist for user:', userId);
-      const { data, error } = await supabase
-        .from('wishlists')
-        .select('property_id')
-        .eq('user_id', userId);
+      const wishlistRef = collection(db, COLLECTIONS.wishlists);
+      const wishlistQuery = query(wishlistRef, where('user_id', '==', userId));
+      const snapshot = await getDocs(wishlistQuery);
 
-      if (error) {
-        console.error('Error fetching wishlist:', error);
-        throw error;
-      }
-
-      return data.map(item => item.property_id);
+      return snapshot.docs
+        .map((docSnapshot) => docSnapshot.get('property_id') as string | undefined)
+        .filter((propertyId): propertyId is string => Boolean(propertyId));
     },
     enabled: !!userId,
   });
@@ -39,24 +45,16 @@ export const useToggleWishlist = () => {
       console.log('Toggling wishlist:', { userId, propertyId, isWishlisted });
       
       if (isWishlisted) {
-        // Remove from wishlist
-        const { error } = await supabase
-          .from('wishlists')
-          .delete()
-          .eq('user_id', userId)
-          .eq('property_id', propertyId);
-
-        if (error) throw error;
+        const entryRef = doc(db, COLLECTIONS.wishlists, `${userId}_${propertyId}`);
+        await deleteDoc(entryRef);
       } else {
-        // Add to wishlist
-        const { error } = await supabase
-          .from('wishlists')
-          .insert({
-            user_id: userId,
-            property_id: propertyId,
-          });
-
-        if (error) throw error;
+        const entryRef = doc(db, COLLECTIONS.wishlists, `${userId}_${propertyId}`);
+        await setDoc(entryRef, {
+          user_id: userId,
+          property_id: propertyId,
+          created_at: serverTimestamp(),
+          updated_at: serverTimestamp(),
+        }, { merge: true });
       }
     },
     onSuccess: (_, variables) => {

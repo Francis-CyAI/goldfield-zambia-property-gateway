@@ -1,7 +1,20 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { db, COLLECTIONS } from '@/lib/constants/firebase';
+import { serializeDoc, serializeDocs } from '@/lib/utils/firestore-serialize';
+import { removeUndefined } from '@/lib/utils/remove-undfined';
 
 export interface Notification {
   id: string;
@@ -10,8 +23,9 @@ export interface Notification {
   message: string;
   type: 'info' | 'success' | 'warning' | 'error';
   is_read: boolean;
-  related_id?: string;
-  created_at: string;
+  related_id?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export const useNotifications = (userId?: string) => {
@@ -19,19 +33,16 @@ export const useNotifications = (userId?: string) => {
     queryKey: ['notifications', userId],
     queryFn: async () => {
       if (!userId) return [];
-      
-      console.log('Fetching notifications for user:', userId);
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching notifications:', error);
-        throw error;
-      }
-      return data as Notification[];
+      const notificationsRef = collection(db, COLLECTIONS.notifications);
+      const notificationsQuery = query(
+        notificationsRef,
+        where('user_id', '==', userId),
+        orderBy('created_at', 'desc'),
+      );
+
+      const snapshot = await getDocs(notificationsQuery);
+      return serializeDocs<Notification>(snapshot);
     },
     enabled: !!userId,
   });
@@ -43,19 +54,19 @@ export const useMarkNotificationAsRead = () => {
 
   return useMutation({
     mutationFn: async (notificationId: string) => {
-      console.log('Marking notification as read:', notificationId);
-      const { data, error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('id', notificationId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
+      const notificationRef = doc(db, COLLECTIONS.notifications, notificationId);
+      await updateDoc(
+        notificationRef,
+        removeUndefined({ is_read: true, updated_at: serverTimestamp() }),
+      );
+      const snapshot = await getDoc(notificationRef);
+      if (!snapshot.exists()) {
+        throw new Error('Notification not found after update.');
+      }
+      return serializeDoc<Notification>(snapshot);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    onSuccess: (notification) => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', notification.user_id] });
       toast({
         title: 'Notification marked as read',
         description: 'The notification has been updated.',
@@ -82,20 +93,25 @@ export const useCreateNotification = () => {
       title: string;
       message: string;
       type?: 'info' | 'success' | 'warning' | 'error';
-      related_id?: string;
+      related_id?: string | null;
     }) => {
-      console.log('Creating notification:', notificationData);
-      const { data, error } = await supabase
-        .from('notifications')
-        .insert([notificationData])
-        .select()
-        .single();
+      const notificationsRef = collection(db, COLLECTIONS.notifications);
+      const docRef = await addDoc(notificationsRef, {
+        ...notificationData,
+        type: notificationData.type ?? 'info',
+        is_read: false,
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+      });
 
-      if (error) throw error;
-      return data;
+      const snapshot = await getDoc(docRef);
+      if (!snapshot.exists()) {
+        throw new Error('Failed to create notification.');
+      }
+      return serializeDoc<Notification>(snapshot);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    onSuccess: (notification) => {
+      queryClient.invalidateQueries({ queryKey: ['notifications', notification.user_id] });
       toast({
         title: 'Notification created',
         description: 'The notification has been sent successfully.',
@@ -111,3 +127,4 @@ export const useCreateNotification = () => {
     },
   });
 };
+

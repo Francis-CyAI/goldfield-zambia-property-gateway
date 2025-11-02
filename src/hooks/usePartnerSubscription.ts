@@ -1,8 +1,18 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  where,
+} from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { auth, db, functions, COLLECTIONS } from '@/lib/constants/firebase';
+import { serializeDoc, serializeDocs } from '@/lib/utils/firestore-serialize';
 
 export interface PartnerSubscription {
   id: string;
@@ -16,11 +26,11 @@ export interface PartnerSubscription {
   stripe_subscription_id: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
-export interface SubscriptionTier {
+export interface PartnerSubscriptionTier {
   id: string;
   name: string;
   monthly_price: number;
@@ -28,19 +38,18 @@ export interface SubscriptionTier {
   max_listings: number | null;
   priority_support: boolean;
   featured_placement: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
-export const useSubscriptionTiers = () => {
+export const usePartnerSubscriptionTiers = () => {
   return useQuery({
-    queryKey: ['subscription-tiers'],
+    queryKey: ['partner-subscription-tiers'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('partner_subscription_tiers')
-        .select('*')
-        .order('monthly_price', { ascending: true });
-
-      if (error) throw error;
-      return data as SubscriptionTier[];
+      const tiersRef = collection(db, COLLECTIONS.partnerSubscriptionTiers);
+      const tiersQuery = query(tiersRef, orderBy('monthly_price', 'asc'));
+      const snapshot = await getDocs(tiersQuery);
+      return serializeDocs<PartnerSubscriptionTier>(snapshot);
     },
   });
 };
@@ -49,14 +58,19 @@ export const usePartnerSubscription = () => {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['partner-subscription', user?.id],
+    queryKey: ['partner-subscription', user?.uid],
     queryFn: async () => {
       if (!user) return null;
 
-      const { data, error } = await supabase.functions.invoke('check-partner-subscription');
-      
-      if (error) throw error;
-      return data;
+      const subscriptionQuery = query(
+        collection(db, COLLECTIONS.partnerSubscriptions),
+        where('user_id', '==', user.uid),
+        where('status', 'in', ['active', 'trialing']),
+      );
+      const snapshot = await getDocs(subscriptionQuery);
+      if (snapshot.empty) return null;
+
+      return serializeDoc<PartnerSubscription>(snapshot.docs[0]);
     },
     enabled: !!user,
   });
@@ -66,20 +80,18 @@ export const useCreatePartnerCheckout = () => {
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (data: {
+    mutationFn: async (payload: {
       partnerName: string;
       businessType: string;
       subscriptionTier: string;
     }) => {
-      const { data: result, error } = await supabase.functions.invoke('create-partner-checkout', {
-        body: data,
-      });
-
-      if (error) throw error;
-      return result;
+      if (!functions) throw new Error('Firebase functions not initialized.');
+      const checkoutFn = httpsCallable(functions, 'createPartnerCheckout');
+      const result = await checkoutFn(payload);
+      return result.data as { url?: string };
     },
     onSuccess: (data) => {
-      if (data.url) {
+      if (data?.url) {
         window.location.href = data.url;
       }
     },
@@ -99,13 +111,13 @@ export const usePartnerCustomerPortal = () => {
 
   return useMutation({
     mutationFn: async () => {
-      const { data, error } = await supabase.functions.invoke('partner-customer-portal');
-      
-      if (error) throw error;
-      return data;
+      if (!functions) throw new Error('Firebase functions not initialized.');
+      const portalFn = httpsCallable(functions, 'partnerCustomerPortal');
+      const result = await portalFn();
+      return result.data as { url?: string };
     },
     onSuccess: (data) => {
-      if (data.url) {
+      if (data?.url) {
         window.location.href = data.url;
       }
     },

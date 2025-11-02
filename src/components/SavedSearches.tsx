@@ -31,7 +31,7 @@ const SavedSearches = () => {
     if (!user || !newSearchName.trim()) return;
 
     await createSavedSearch.mutateAsync({
-      user_id: user.id,
+      user_id: user.uid,
       name: newSearchName,
       search_criteria: newSearchCriteria,
       is_active: true,
@@ -50,7 +50,8 @@ const SavedSearches = () => {
   };
 
   const handleDeleteSearch = (searchId: string) => {
-    deleteSavedSearch.mutate(searchId);
+    if (!user?.uid) return;
+    deleteSavedSearch.mutate({ searchId, userId: user.uid });
   };
 
   const formatSearchCriteria = (criteria: Record<string, any>) => {

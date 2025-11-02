@@ -1,7 +1,15 @@
-
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  where,
+} from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
+import { db, COLLECTIONS } from '@/lib/constants/firebase';
+import { serializeDoc } from '@/lib/utils/firestore-serialize';
 
 export interface AdminStatus {
   isAdmin: boolean;
@@ -15,7 +23,7 @@ export const useAdminStatus = () => {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['admin-status', user?.id],
+    queryKey: ['admin-status', user?.uid],
     queryFn: async (): Promise<AdminStatus> => {
       if (!user) {
         return {
@@ -23,37 +31,49 @@ export const useAdminStatus = () => {
           adminType: null,
           branchLocation: null,
           permissions: [],
-          isActive: false
+          isActive: false,
         };
       }
 
-      console.log('Checking admin status for user:', user.id);
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .single();
+      const adminDocRef = doc(db, COLLECTIONS.adminUsers, user.uid);
+      let adminSnapshot = await getDoc(adminDocRef);
 
-      if (error) {
-        console.log('User is not an admin:', error.message);
+      if (!adminSnapshot.exists()) {
+        const adminQuery = query(
+          collection(db, COLLECTIONS.adminUsers),
+          where('user_id', '==', user.uid),
+          where('is_active', '==', true),
+        );
+        const querySnapshot = await getDocs(adminQuery);
+        adminSnapshot = querySnapshot.docs[0];
+      }
+
+      if (!adminSnapshot || !adminSnapshot.exists()) {
         return {
           isAdmin: false,
           adminType: null,
           branchLocation: null,
           permissions: [],
-          isActive: false
+          isActive: false,
         };
       }
 
+      const data = serializeDoc<{
+        admin_type?: string;
+        branch_location?: string;
+        permissions?: string[];
+        is_active?: boolean;
+      }>(adminSnapshot);
+
       return {
         isAdmin: true,
-        adminType: data.admin_type,
-        branchLocation: data.branch_location,
-        permissions: data.permissions || [],
-        isActive: data.is_active
+        adminType: data.admin_type ?? null,
+        branchLocation: data.branch_location ?? null,
+        permissions: data.permissions ?? [],
+        isActive: data.is_active ?? true,
       };
     },
     enabled: !!user,
   });
 };
+

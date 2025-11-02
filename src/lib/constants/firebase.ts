@@ -4,6 +4,7 @@ import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getFunctions } from "firebase/functions";
 
 const requireEnv = (value: string | undefined, key: string): string => {
   if (value == null || value === "") {
@@ -27,6 +28,7 @@ export const analytics = typeof window !== "undefined" ? getAnalytics(app) : und
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const auth = getAuth(app);
+export const functions = getFunctions(app);
 export const googleProvider = new GoogleAuthProvider();
 
 export const COLLECTIONS = {
@@ -41,6 +43,7 @@ export const COLLECTIONS = {
   notifications: "notifications",
   messages: "messages",
   savedSearches: "saved_searches",
+  reviews: "reviews",
   subscriptionTiers: "subscription_tiers",
   userSubscriptions: "user_subscriptions",
   partnerSubscriptionTiers: "partner_subscription_tiers",

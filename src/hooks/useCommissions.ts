@@ -1,7 +1,16 @@
-
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  orderBy,
+  query,
+  where,
+} from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
+import { db, COLLECTIONS } from '@/lib/constants/firebase';
+import { serializeDoc, serializeDocs } from '@/lib/utils/firestore-serialize';
 
 export interface Commission {
   id: string;
@@ -13,43 +22,54 @@ export interface Commission {
   commission_amount: number;
   status: 'pending' | 'processed' | 'paid';
   processed_at: string | null;
-  created_at: string;
-  updated_at: string;
+  created_at?: string | null;
+  updated_at?: string | null;
   booking?: {
-    check_in: string;
-    check_out: string;
-    guest_count: number;
+    check_in?: string;
+    check_out?: string;
+    guest_count?: number;
   };
   property?: {
-    title: string;
-    location: string;
+    title?: string;
+    location?: string;
   };
 }
+
+const hydrateCommission = async (commission: Commission) => {
+  const [bookingSnapshot, propertySnapshot] = await Promise.all([
+    commission.booking_id ? getDoc(doc(db, COLLECTIONS.bookings, commission.booking_id)) : Promise.resolve(null),
+    commission.property_id ? getDoc(doc(db, COLLECTIONS.properties, commission.property_id)) : Promise.resolve(null),
+  ]);
+
+  if (bookingSnapshot && bookingSnapshot.exists()) {
+    commission.booking = serializeDoc<{ check_in?: string; check_out?: string; guest_count?: number }>(bookingSnapshot);
+  }
+
+  if (propertySnapshot && propertySnapshot.exists()) {
+    commission.property = serializeDoc<{ title?: string; location?: string }>(propertySnapshot);
+  }
+
+  return commission;
+};
 
 export const useHostCommissions = () => {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['host-commissions', user?.id],
+    queryKey: ['host-commissions', user?.uid],
     queryFn: async () => {
       if (!user) return [];
 
-      console.log('Fetching commission data for host:', user.id);
-      const { data, error } = await supabase
-        .from('platform_commissions')
-        .select(`
-          *,
-          booking:bookings(check_in, check_out, guest_count),
-          property:properties(title, location)
-        `)
-        .eq('host_id', user.id)
-        .order('created_at', { ascending: false });
+      const commissionsRef = collection(db, COLLECTIONS.platformCommissions);
+      const commissionsQuery = query(
+        commissionsRef,
+        where('host_id', '==', user.uid),
+        orderBy('created_at', 'desc'),
+      );
 
-      if (error) {
-        console.error('Error fetching commissions:', error);
-        throw error;
-      }
-      return data as Commission[];
+      const snapshot = await getDocs(commissionsQuery);
+      const commissions = serializeDocs<Commission>(snapshot);
+      return Promise.all(commissions.map(hydrateCommission));
     },
     enabled: !!user,
   });
@@ -59,21 +79,12 @@ export const usePlatformCommissions = () => {
   return useQuery({
     queryKey: ['platform-commissions'],
     queryFn: async () => {
-      console.log('Fetching all platform commission data');
-      const { data, error } = await supabase
-        .from('platform_commissions')
-        .select(`
-          *,
-          booking:bookings(check_in, check_out, guest_count),
-          property:properties(title, location)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching platform commissions:', error);
-        throw error;
-      }
-      return data as Commission[];
+      const commissionsRef = collection(db, COLLECTIONS.platformCommissions);
+      const commissionsQuery = query(commissionsRef, orderBy('created_at', 'desc'));
+      const snapshot = await getDocs(commissionsQuery);
+      const commissions = serializeDocs<Commission>(snapshot);
+      return Promise.all(commissions.map(hydrateCommission));
     },
   });
 };
+

@@ -20,7 +20,8 @@ import {
   Star
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/lib/constants/firebase';
 
 const Contact = () => {
   const { toast } = useToast();
@@ -51,16 +52,10 @@ const Contact = () => {
     console.log("Submitting contact form:", formData);
 
     try {
-      const { data, error } = await supabase.functions.invoke('send-contact-email', {
-        body: formData
-      });
+      const sendContactEmail = httpsCallable(functions, 'sendContactEmail');
+      const result = await sendContactEmail(formData);
 
-      if (error) {
-        console.error("Error calling edge function:", error);
-        throw error;
-      }
-
-      console.log("Contact form submission successful:", data);
+      console.log("Contact form submission successful:", result.data);
 
       toast({
         title: "Message Sent Successfully!",

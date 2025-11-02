@@ -7,14 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectValue, SelectTrigger, SelectItem } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Check, Crown, Star, Zap } from 'lucide-react';
-import { useSubscriptionTiers, useCreatePartnerCheckout } from '@/hooks/usePartnerSubscription';
+import { usePartnerSubscriptionTiers, useCreatePartnerCheckout } from '@/hooks/usePartnerSubscription';
 
 const PartnerSubscriptionForm = () => {
   const [partnerName, setPartnerName] = useState('');
   const [businessType, setBusinessType] = useState('');
   const [selectedTier, setSelectedTier] = useState('');
-
-  const { data: tiers, isLoading: tiersLoading } = useSubscriptionTiers();
+  const { data: tiers, isLoading: tiersLoading } = usePartnerSubscriptionTiers();
   const createCheckout = useCreatePartnerCheckout();
 
   const handleSubmit = (e: React.FormEvent) => {
