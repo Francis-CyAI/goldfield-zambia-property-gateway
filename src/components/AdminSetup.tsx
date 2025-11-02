@@ -4,23 +4,16 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import {
-  collection,
-  doc,
-  getDocs,
-  limit,
-  query,
-  serverTimestamp,
-  setDoc,
-  where,
-} from 'firebase/firestore';
-import { db, COLLECTIONS } from '@/lib/constants/firebase';
+import { limit, serverTimestamp, where } from 'firebase/firestore';
+import { useAuth } from '@/contexts/AuthContext';
+import { listDocuments, setDocument, logAdminActivity } from '@/lib/utils/firebase';
 
 export const AdminSetup = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleCreateAdmin = async () => {
     if (!email) {
@@ -32,30 +25,38 @@ export const AdminSetup = () => {
     setMessage('');
 
     try {
-      const profileQuery = query(
-        collection(db, COLLECTIONS.profiles),
+      const profileResult = await listDocuments('profiles', [
         where('email', '==', email.trim().toLowerCase()),
         limit(1),
-      );
-      const snapshot = await getDocs(profileQuery);
+      ]);
+      if (profileResult.error) throw profileResult.error;
+      const profile = profileResult.data?.[0];
 
-      if (snapshot.empty) {
+      if (!profile) {
         throw new Error('No user found with that email address.');
       }
 
-      const profileDoc = snapshot.docs[0];
-      await setDoc(
-        doc(db, COLLECTIONS.adminUsers, profileDoc.id),
+      await setDocument(
+        'adminUsers',
+        profile.id,
         {
-          user_id: profileDoc.id,
+          user_id: profile.id,
           admin_type: 'super_admin',
           is_active: true,
           permissions: ['manage_users', 'manage_properties', 'view_reports'],
           created_at: serverTimestamp(),
           updated_at: serverTimestamp(),
         },
-        { merge: true },
       );
+
+      await logAdminActivity({
+        actorId: user?.uid ?? 'system',
+        actorEmail: user?.email ?? undefined,
+        action: 'Granted super admin access',
+        entityType: 'profile',
+        entityId: profile.id,
+        metadata: { email: profile.email },
+      });
 
       toast({
         title: 'Admin created',

@@ -1,57 +1,46 @@
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  collection,
-  doc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  updateDoc,
-} from 'firebase/firestore';
+import { orderBy, serverTimestamp } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { MapPin, Home, Users, DollarSign, RefreshCw } from 'lucide-react';
-import { db, COLLECTIONS } from '@/lib/constants/firebase';
-import { serializeDocs } from '@/lib/utils/firestore-serialize';
 import { useToast } from '@/hooks/use-toast';
-
-interface AdminProperty {
-  id: string;
-  title: string;
-  location: string;
-  property_type?: string;
-  price_per_night?: number;
-  bedrooms?: number;
-  bathrooms?: number;
-  is_active?: boolean;
-  created_at?: string | null;
-  host_id?: string;
-}
+import { useAuth } from '@/contexts/AuthContext';
+import { listDocuments, setDocument, logAdminActivity } from '@/lib/utils/firebase';
+import type { Property } from '@/lib/models';
 
 const AdminPropertyManagement = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = React.useState('');
 
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ['admin-properties'],
     queryFn: async () => {
-      const propertiesRef = query(collection(db, COLLECTIONS.properties), orderBy('created_at', 'desc'));
-      const snapshot = await getDocs(propertiesRef);
-      return serializeDocs<AdminProperty>(snapshot);
+      const { data, error } = await listDocuments('properties', [orderBy('created_at', 'desc')]);
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
   const toggleMutation = useMutation({
     mutationFn: async ({ propertyId, isActive }: { propertyId: string; isActive: boolean }) => {
-      const propertyRef = doc(db, COLLECTIONS.properties, propertyId);
-      await updateDoc(propertyRef, {
+      await setDocument('properties', propertyId, {
         is_active: isActive,
         updated_at: serverTimestamp(),
+      });
+
+      await logAdminActivity({
+        actorId: user?.uid ?? 'system',
+        actorEmail: user?.email ?? undefined,
+        action: isActive ? 'Activated property' : 'Deactivated property',
+        entityType: 'property',
+        entityId: propertyId,
+        metadata: { is_active: isActive },
       });
     },
     onSuccess: () => {
@@ -140,7 +129,7 @@ const AdminPropertyManagement = () => {
                   </TableCell>
                 </TableRow>
               )}
-              {filteredProperties.map((property) => (
+              {filteredProperties.map((property: Property) => (
                 <TableRow key={property.id}>
                   <TableCell>
                     <div className="font-medium">{property.title}</div>

@@ -1,16 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  collection,
-  doc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-  where,
-} from 'firebase/firestore';
+import { orderBy, serverTimestamp } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -33,14 +23,15 @@ import {
 } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Users, Search, Plus, Edit, Shield, UserX, UserCheck } from 'lucide-react';
-import { db, COLLECTIONS } from '@/lib/constants/firebase';
-import { serializeDocs } from '@/lib/utils/firestore-serialize';
+import { Users, Search, Plus, Edit, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { listDocuments, setDocument, logAdminActivity } from '@/lib/utils/firebase';
+import { removeUndefined } from '@/lib/utils/remove-undfined';
 
 interface AdminUserRecord {
   user_id: string;
-  admin_type?: string;
+  admin_type?: string | null;
   is_active?: boolean;
   branch_location?: string | null;
   permissions?: string[];
@@ -53,6 +44,7 @@ interface ProfileRecord {
   last_name?: string | null;
   role?: string | null;
   created_at?: string | null;
+  admin_status?: AdminUserRecord | null;
 }
 
 interface FormState {
@@ -74,6 +66,7 @@ const defaultFormState: FormState = {
 const AdminUserManagement = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -84,41 +77,36 @@ const AdminUserManagement = () => {
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin-users'],
     queryFn: async () => {
-      const profilesQuery = query(collection(db, COLLECTIONS.profiles), orderBy('created_at', 'desc'));
-      const [profileSnapshot, adminSnapshot] = await Promise.all([
-        getDocs(profilesQuery),
-        getDocs(collection(db, COLLECTIONS.adminUsers)),
+      const [profilesResult, adminResult] = await Promise.all([
+        listDocuments('profiles', [orderBy('created_at', 'desc')]),
+        listDocuments('adminUsers'),
       ]);
+      if (profilesResult.error) throw profilesResult.error;
+      if (adminResult.error) throw adminResult.error;
 
-      const profiles = serializeDocs<ProfileRecord>(profileSnapshot);
-      const adminRecords = serializeDocs<AdminUserRecord>(adminSnapshot).reduce<Record<string, AdminUserRecord>>(
-        (acc, record) => {
-          acc[record.user_id] = record;
-          return acc;
-        },
-        {},
-      );
+      const adminMap = new Map<string, AdminUserRecord>();
+      (adminResult.data ?? []).forEach((record) => {
+        adminMap.set(record.user_id, record);
+      });
 
-      return profiles.map((profile) => ({
+      return (profilesResult.data ?? []).map((profile) => ({
         ...profile,
-        admin_status: adminRecords[profile.id] ?? null,
+        admin_status: adminMap.get(profile.id) ?? null,
       }));
     },
   });
 
   const filteredUsers = useMemo(() => {
-    return users.filter((user: any) => {
+    return users.filter((user) => {
       const matchesSearch =
         !searchTerm ||
         user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         `${user.first_name ?? ''} ${user.last_name ?? ''}`.toLowerCase().includes(searchTerm.toLowerCase());
-
       const matchesRole = roleFilter === 'all' || user.role === roleFilter;
       const matchesStatus =
         statusFilter === 'all' ||
         (statusFilter === 'admin' && Boolean(user.admin_status?.is_active)) ||
         (statusFilter === 'inactive' && !user.admin_status?.is_active);
-
       return matchesSearch && matchesRole && matchesStatus;
     });
   }, [users, searchTerm, roleFilter, statusFilter]);
@@ -131,15 +119,20 @@ const AdminUserManagement = () => {
       profile: ProfileRecord;
       updates: FormState;
     }) => {
-      await updateDoc(doc(db, COLLECTIONS.profiles, profile.id), {
-        role: updates.role,
-        updated_at: serverTimestamp(),
-      });
+      await setDocument(
+        'profiles',
+        profile.id,
+        removeUndefined({
+          role: updates.role,
+          updated_at: serverTimestamp(),
+        }),
+      );
 
       if (updates.adminType) {
-        await setDoc(
-          doc(db, COLLECTIONS.adminUsers, profile.id),
-          {
+        await setDocument(
+          'adminUsers',
+          profile.id,
+          removeUndefined({
             user_id: profile.id,
             admin_type: updates.adminType,
             is_active: updates.isActive,
@@ -147,10 +140,35 @@ const AdminUserManagement = () => {
             permissions: updates.permissions,
             updated_at: serverTimestamp(),
             created_at: serverTimestamp(),
+          }),
+        );
+      } else {
+        await setDocument(
+          'adminUsers',
+          profile.id,
+          {
+            user_id: profile.id,
+            admin_type: null,
+            is_active: false,
+            branch_location: null,
+            permissions: [],
+            updated_at: serverTimestamp(),
           },
-          { merge: true },
         );
       }
+
+      await logAdminActivity({
+        actorId: currentUser?.uid ?? 'system',
+        actorEmail: currentUser?.email ?? undefined,
+        action: 'Updated user access',
+        entityType: 'profile',
+        entityId: profile.id,
+        metadata: {
+          role: updates.role,
+          adminType: updates.adminType || null,
+          isActive: updates.isActive,
+        },
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
@@ -169,7 +187,7 @@ const AdminUserManagement = () => {
     },
   });
 
-  const handleEdit = (user: any) => {
+  const handleEdit = (user: ProfileRecord) => {
     setSelectedUser(user);
     setFormState({
       role: user.role || 'guest',
@@ -258,11 +276,11 @@ const AdminUserManagement = () => {
               {!isLoading && filteredUsers.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
-                    No users found for the selected filters.
+                    No users match your filters.
                   </TableCell>
                 </TableRow>
               )}
-              {filteredUsers.map((user: any) => (
+              {filteredUsers.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>
                     <div className="font-medium">
@@ -272,9 +290,7 @@ const AdminUserManagement = () => {
                     </div>
                     <div className="text-xs text-muted-foreground">
                       Joined{' '}
-                      {user.created_at
-                        ? new Date(user.created_at).toLocaleDateString()
-                        : 'Unknown'}
+                      {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
                     </div>
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
@@ -378,7 +394,7 @@ const AdminUserManagement = () => {
               Cancel
             </Button>
             <Button onClick={handleSave} disabled={updateUserMutation.isLoading}>
-              {updateUserMutation.isLoading ? 'Saving…' : 'Save Changes'}
+              {updateUserMutation.isLoading ? 'Saving...' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </DialogContent>

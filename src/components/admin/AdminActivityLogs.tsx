@@ -1,49 +1,28 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  collection,
-  getDocs,
-  orderBy,
-  query,
-  where,
-} from 'firebase/firestore';
+import { orderBy } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Activity, User, Shield, Clock } from 'lucide-react';
-import { db, COLLECTIONS } from '@/lib/constants/firebase';
-import { serializeDocs } from '@/lib/utils/firestore-serialize';
-
-interface ActivityLog {
-  id: string;
-  actor_id: string;
-  actor_email?: string;
-  action: string;
-  entity_type?: string;
-  entity_id?: string;
-  metadata?: Record<string, unknown>;
-  created_at?: string | null;
-  severity?: 'info' | 'warning' | 'critical';
-}
+import { Activity, User, Shield } from 'lucide-react';
+import { listDocuments } from '@/lib/utils/firebase';
+import type { AdminActivityLog } from '@/lib/models';
 
 const AdminActivityLogs = () => {
   const { data: logs = [], isLoading } = useQuery({
     queryKey: ['admin-activity-logs'],
     queryFn: async () => {
-      const logsQuery = query(
-        collection(db, COLLECTIONS.adminActivityLogs),
-        orderBy('created_at', 'desc'),
-      );
-      const snapshot = await getDocs(logsQuery);
-      return serializeDocs<ActivityLog>(snapshot);
+      const { data, error } = await listDocuments('adminActivityLogs', [orderBy('created_at', 'desc')]);
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
   const auditLogs = logs.filter((log) => log.entity_type === 'user' || log.entity_type === 'permission');
   const activityLogs = logs.filter((log) => !auditLogs.includes(log));
 
-  const renderRows = (records: ActivityLog[]) => {
+  const renderRows = (records: AdminActivityLog[]) => {
     if (isLoading) {
       return (
         <TableRow>
@@ -77,7 +56,8 @@ const AdminActivityLogs = () => {
           <div className="font-medium">{log.action}</div>
           {log.entity_type && (
             <div className="text-xs text-muted-foreground">
-              {log.entity_type} {log.entity_id ? `• ${log.entity_id}` : ''}
+              {log.entity_type}
+              {log.entity_id ? ` • ${log.entity_id}` : ''}
             </div>
           )}
         </TableCell>

@@ -1,15 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  collection,
-  doc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  updateDoc,
-} from 'firebase/firestore';
+import { orderBy, serverTimestamp } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -18,22 +9,15 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { MapPin, Building2, Plus, Edit } from 'lucide-react';
-import { db, COLLECTIONS } from '@/lib/constants/firebase';
-import { serializeDocs } from '@/lib/utils/firestore-serialize';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { addDocument, listDocuments, logAdminActivity, setDocument } from '@/lib/utils/firebase';
+import { removeUndefined } from '@/lib/utils/remove-undfined';
+import type { Branch } from '@/lib/models';
 
-interface BranchRecord {
-  id: string;
-  name: string;
-  location: string;
-  manager_name?: string;
-  phone?: string;
-  email?: string;
-  created_at?: string | null;
-  updated_at?: string | null;
-}
+type BranchForm = Omit<Branch, 'id' | 'created_at' | 'updated_at'>;
 
-const defaultBranch: Omit<BranchRecord, 'id'> = {
+const defaultBranch: BranchForm = {
   name: '',
   location: '',
   manager_name: '',
@@ -44,17 +28,18 @@ const defaultBranch: Omit<BranchRecord, 'id'> = {
 const AdminBranchManagement = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingBranch, setEditingBranch] = useState<BranchRecord | null>(null);
+  const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
   const [formState, setFormState] = useState(defaultBranch);
 
   const { data: branches = [], isLoading } = useQuery({
     queryKey: ['admin-branches'],
     queryFn: async () => {
-      const branchesRef = query(collection(db, COLLECTIONS.branches), orderBy('created_at', 'desc'));
-      const snapshot = await getDocs(branchesRef);
-      return serializeDocs<BranchRecord>(snapshot);
+      const { data, error } = await listDocuments('branches', [orderBy('created_at', 'desc')]);
+      if (error) throw error;
+      return data ?? [];
     },
   });
 
@@ -65,26 +50,41 @@ const AdminBranchManagement = () => {
       (branch) =>
         branch.name.toLowerCase().includes(normalised) ||
         branch.location.toLowerCase().includes(normalised) ||
-        branch.manager_name?.toLowerCase().includes(normalised),
+        branch.manager_name?.toLowerCase().includes(normalised ?? ''),
     );
   }, [branches, searchTerm]);
 
   const saveBranchMutation = useMutation({
-    mutationFn: async (branch: Omit<BranchRecord, 'id'> & { id?: string }) => {
-      if (branch.id) {
-        const branchRef = doc(db, COLLECTIONS.branches, branch.id);
-        await updateDoc(branchRef, {
-          ...branch,
-          updated_at: serverTimestamp(),
-        });
+    mutationFn: async (payload: { id?: string } & BranchForm) => {
+      if (payload.id) {
+        await setDocument(
+          'branches',
+          payload.id,
+          removeUndefined({
+            ...payload,
+            updated_at: serverTimestamp(),
+          }),
+        );
       } else {
-        const branchRef = doc(collection(db, COLLECTIONS.branches));
-        await setDoc(branchRef, {
-          ...branch,
+        await addDocument('branches', {
+          ...payload,
           created_at: serverTimestamp(),
           updated_at: serverTimestamp(),
-        });
+        } as Omit<Branch, 'id'>);
       }
+
+      await logAdminActivity({
+        actorId: user?.uid ?? 'system',
+        actorEmail: user?.email ?? undefined,
+        action: payload.id ? 'Updated branch' : 'Created branch',
+        entityType: 'branch',
+        entityId: payload.id,
+        metadata: removeUndefined({
+          name: payload.name,
+          location: payload.location,
+          manager: payload.manager_name ?? null,
+        }),
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-branches'] });
@@ -110,7 +110,7 @@ const AdminBranchManagement = () => {
     setDialogOpen(true);
   };
 
-  const handleEdit = (branch: BranchRecord) => {
+  const handleEdit = (branch: Branch) => {
     setEditingBranch(branch);
     setFormState({
       name: branch.name,
@@ -241,7 +241,7 @@ const AdminBranchManagement = () => {
               <Label>Manager Name</Label>
               <Input
                 className="mt-1"
-                value={formState.manager_name || ''}
+                value={formState.manager_name ?? ''}
                 onChange={(event) => setFormState((prev) => ({ ...prev, manager_name: event.target.value }))}
               />
             </div>
@@ -250,7 +250,7 @@ const AdminBranchManagement = () => {
                 <Label>Phone</Label>
                 <Input
                   className="mt-1"
-                  value={formState.phone || ''}
+                  value={formState.phone ?? ''}
                   onChange={(event) => setFormState((prev) => ({ ...prev, phone: event.target.value }))}
                 />
               </div>
@@ -258,7 +258,7 @@ const AdminBranchManagement = () => {
                 <Label>Email</Label>
                 <Input
                   className="mt-1"
-                  value={formState.email || ''}
+                  value={formState.email ?? ''}
                   onChange={(event) => setFormState((prev) => ({ ...prev, email: event.target.value }))}
                 />
               </div>

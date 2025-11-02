@@ -5,16 +5,22 @@ import {
   DocumentReference,
   getDoc,
   getDocs,
-  Query,
   query,
+  Query,
   QueryConstraint,
   runTransaction,
+  serverTimestamp,
   setDoc,
   Transaction,
   writeBatch,
   WriteBatch,
 } from "firebase/firestore";
-import type { CollectionKey, CollectionRecord, CollectionRecordMap } from "@/lib/models";
+import type {
+  AdminActivityLog,
+  CollectionKey,
+  CollectionRecord,
+  CollectionRecordMap,
+} from "@/lib/models";
 import { db, getCollectionRef } from "@/lib/constants/firebase";
 import { removeUndefined } from "@/lib/utils/remove-undfined";
 
@@ -132,5 +138,37 @@ export const runFirestoreBatch = async (
   } catch (error) {
     return toResult(undefined, handleFirestoreError(error, "batch"));
   }
+};
+
+export interface AdminActivityPayload {
+  actorId: string;
+  actorEmail?: string | null;
+  action: string;
+  entityType?: string | null;
+  entityId?: string | null;
+  severity?: AdminActivityLog["severity"];
+  metadata?: Record<string, unknown> | null;
+}
+
+export const logAdminActivity = async (
+  payload: AdminActivityPayload,
+): Promise<FirestoreResult<void>> => {
+  const record = removeUndefined({
+    actor_id: payload.actorId,
+    actor_email: payload.actorEmail ?? null,
+    action: payload.action,
+    entity_type: payload.entityType ?? null,
+    entity_id: payload.entityId ?? null,
+    severity: payload.severity ?? "info",
+    metadata: payload.metadata ?? null,
+    created_at: serverTimestamp(),
+    updated_at: serverTimestamp(),
+  });
+
+  const { error } = await addDocument("adminActivityLogs", record as Omit<AdminActivityLog, "id">);
+  if (error) {
+    return toResult(undefined, error);
+  }
+  return toResult(undefined, null);
 };
 
