@@ -1,52 +1,28 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
-} from 'firebase/firestore';
+import { orderBy, where, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { auth, db, COLLECTIONS } from '@/lib/constants/firebase';
-import { serializeDoc, serializeDocs } from '@/lib/utils/firestore-serialize';
+import { auth } from '@/lib/constants/firebase';
+import type { Property } from '@/lib/models';
+import {
+  addDocument,
+  getDocument,
+  listDocuments,
+  setDocument,
+  deleteDocument as deleteDocHelper,
+} from '@/lib/utils/firebase';
 import { removeUndefined } from '@/lib/utils/remove-undfined';
-
-export interface Property {
-  id: string;
-  title: string;
-  description?: string;
-  location: string;
-  price_per_night: number;
-  property_type: string;
-  max_guests: number;
-  bedrooms: number;
-  bathrooms: number;
-  amenities: string[];
-  images: string[];
-  is_active: boolean;
-  host_id: string;
-  created_at: string;
-  updated_at: string;
-}
 
 export const useProperties = () => {
   return useQuery({
     queryKey: ['properties'],
     queryFn: async () => {
-      const propertiesRef = collection(db, COLLECTIONS.properties);
-      const propertiesQuery = query(
-        propertiesRef,
+      const { data, error } = await listDocuments('properties', [
         where('is_active', '==', true),
         orderBy('created_at', 'desc'),
-      );
-      const snapshot = await getDocs(propertiesQuery);
-      return serializeDocs<Property>(snapshot);
+      ]);
+      if (error) throw error;
+      return data ?? [];
     },
   });
 };
@@ -55,12 +31,12 @@ export const useProperty = (id: string) => {
   return useQuery({
     queryKey: ['property', id],
     queryFn: async () => {
-      const propertyRef = doc(db, COLLECTIONS.properties, id);
-      const snapshot = await getDoc(propertyRef);
-      if (!snapshot.exists()) {
+      const { data, error } = await getDocument('properties', id);
+      if (error) throw error;
+      if (!data) {
         throw new Error('Property not found');
       }
-      return serializeDoc<Property>(snapshot);
+      return data;
     },
     enabled: !!id,
   });
@@ -70,14 +46,12 @@ export const useUserProperties = (userId?: string) => {
   return useQuery({
     queryKey: ['user-properties', userId],
     queryFn: async () => {
-      const propertiesRef = collection(db, COLLECTIONS.properties);
-      const userPropertiesQuery = query(
-        propertiesRef,
+      const { data, error } = await listDocuments('properties', [
         where('host_id', '==', userId!),
         orderBy('created_at', 'desc'),
-      );
-      const snapshot = await getDocs(userPropertiesQuery);
-      return serializeDocs<Property>(snapshot);
+      ]);
+      if (error) throw error;
+      return data ?? [];
     },
     enabled: !!userId,
   });
@@ -94,7 +68,6 @@ export const useCreateProperty = () => {
         throw new Error('User must be signed in to create a property.');
       }
 
-      const propertiesRef = collection(db, COLLECTIONS.properties);
       const payload = {
         ...propertyData,
         host_id: currentUser.uid,
@@ -103,14 +76,10 @@ export const useCreateProperty = () => {
         updated_at: serverTimestamp(),
       };
 
-      const docRef = await addDoc(propertiesRef, payload);
-      const snapshot = await getDoc(docRef);
-
-      if (!snapshot.exists()) {
-        throw new Error('Failed to create property');
-      }
-
-      return serializeDoc<Property>(snapshot);
+      const { data, error } = await addDocument('properties', payload as Omit<Property, 'id'>);
+      if (error) throw error;
+      if (!data) throw new Error('Failed to create property');
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['properties'] });
@@ -137,20 +106,17 @@ export const useUpdateProperty = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...updateData }: Partial<Property> & { id: string }) => {
-      const propertyRef = doc(db, COLLECTIONS.properties, id);
       const payload = removeUndefined({
         ...updateData,
         updated_at: serverTimestamp(),
       });
 
-      await updateDoc(propertyRef, payload);
-      const snapshot = await getDoc(propertyRef);
-
-      if (!snapshot.exists()) {
-        throw new Error('Property not found after update');
-      }
-
-      return serializeDoc<Property>(snapshot);
+      const { error } = await setDocument('properties', id, payload);
+      if (error) throw error;
+      const { data, error: fetchError } = await getDocument('properties', id);
+      if (fetchError) throw fetchError;
+      if (!data) throw new Error('Property not found after update');
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['properties'] });
@@ -165,6 +131,34 @@ export const useUpdateProperty = () => {
       toast({
         title: 'Property update failed',
         description: 'There was an error updating your property. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+export const useDeleteProperty = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await deleteDocHelper('properties', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+      queryClient.invalidateQueries({ queryKey: ['user-properties'] });
+      toast({
+        title: 'Property removed',
+        description: 'The property has been deleted.',
+      });
+    },
+    onError: (error) => {
+      console.error('Property delete error:', error);
+      toast({
+        title: 'Property delete failed',
+        description: 'There was an error deleting your property. Please try again.',
         variant: 'destructive',
       });
     },

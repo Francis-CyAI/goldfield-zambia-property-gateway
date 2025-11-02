@@ -1,38 +1,18 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
-import {
-  addDoc,
-  collection,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  where,
-} from 'firebase/firestore';
-import { db, COLLECTIONS } from '@/lib/constants/firebase';
-import { serializeDocs } from '@/lib/utils/firestore-serialize';
-
-export interface PropertyView {
-  id: string;
-  property_id: string;
-  user_id?: string | null;
-  ip_address?: string | null;
-  user_agent?: string | null;
-  referrer?: string | null;
-  viewed_at?: string | null;
-}
+import { orderBy, where, serverTimestamp } from 'firebase/firestore';
+import type { PropertyView } from '@/lib/models';
+import { addDocument, listDocuments } from '@/lib/utils/firebase';
 
 export const usePropertyViews = (propertyId: string) => {
   return useQuery({
     queryKey: ['property-views', propertyId],
     queryFn: async () => {
-      const viewsRef = collection(db, COLLECTIONS.propertyViews);
-      const viewsQuery = query(
-        viewsRef,
+      const { data, error } = await listDocuments('propertyViews', [
         where('property_id', '==', propertyId),
         orderBy('viewed_at', 'desc'),
-      );
-      const snapshot = await getDocs(viewsQuery);
-      return serializeDocs<PropertyView>(snapshot);
+      ]);
+      if (error) throw error;
+      return data ?? [];
     },
     enabled: !!propertyId,
   });
@@ -42,10 +22,9 @@ export const usePropertyAnalytics = (propertyId: string) => {
   return useQuery({
     queryKey: ['property-analytics', propertyId],
     queryFn: async () => {
-      const viewsRef = collection(db, COLLECTIONS.propertyViews);
-      const viewsQuery = query(viewsRef, where('property_id', '==', propertyId));
-      const snapshot = await getDocs(viewsQuery);
-      const views = serializeDocs<PropertyView>(snapshot);
+      const { data, error } = await listDocuments('propertyViews', [where('property_id', '==', propertyId)]);
+      if (error) throw error;
+      const views = data ?? [];
 
       const totalViews = views.length;
       const today = new Date();
@@ -78,7 +57,6 @@ export const usePropertyAnalytics = (propertyId: string) => {
 export const useTrackPropertyView = () => {
   return useMutation({
     mutationFn: async ({ propertyId, userId }: { propertyId: string; userId?: string }) => {
-      const viewsRef = collection(db, COLLECTIONS.propertyViews);
       const payload = {
         property_id: propertyId,
         user_id: userId ?? null,
@@ -87,9 +65,9 @@ export const useTrackPropertyView = () => {
         viewed_at: serverTimestamp(),
         created_at: serverTimestamp(),
       };
-      const docRef = await addDoc(viewsRef, payload);
-      return docRef.id;
+      const { data, error } = await addDocument('propertyViews', payload as Omit<PropertyView, 'id'>);
+      if (error) throw error;
+      return data?.id ?? null;
     },
   });
 };
-

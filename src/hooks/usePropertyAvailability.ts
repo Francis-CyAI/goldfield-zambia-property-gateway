@@ -1,50 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  where,
-} from 'firebase/firestore';
+import { orderBy, where, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { db, COLLECTIONS } from '@/lib/constants/firebase';
-import { serializeDoc, serializeDocs } from '@/lib/utils/firestore-serialize';
+import type { PropertyAvailability } from '@/lib/models';
+import { listDocuments, setDocument, getDocument } from '@/lib/utils/firebase';
 import { removeUndefined } from '@/lib/utils/remove-undfined';
-
-export interface PropertyAvailability {
-  id: string;
-  property_id: string;
-  date: string;
-  is_available: boolean;
-  price_override?: number | null;
-  minimum_stay?: number | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-}
 
 export const usePropertyAvailability = (propertyId: string, startDate?: string, endDate?: string) => {
   return useQuery({
     queryKey: ['property-availability', propertyId, startDate, endDate],
     queryFn: async () => {
-      let availabilityQuery = query(
-        collection(db, COLLECTIONS.propertyAvailability),
+      const constraints = [
         where('property_id', '==', propertyId),
         orderBy('date', 'asc'),
-      );
+        ...(startDate ? [where('date', '>=', startDate)] : []),
+        ...(endDate ? [where('date', '<=', endDate)] : []),
+      ];
 
-      if (startDate) {
-        availabilityQuery = query(availabilityQuery, where('date', '>=', startDate));
-      }
-      if (endDate) {
-        availabilityQuery = query(availabilityQuery, where('date', '<=', endDate));
-      }
-
-      const snapshot = await getDocs(availabilityQuery);
-      return serializeDocs<PropertyAvailability>(snapshot);
+      const { data, error } = await listDocuments('propertyAvailability', constraints);
+      if (error) throw error;
+      return data ?? [];
     },
     enabled: !!propertyId,
   });
@@ -57,22 +31,22 @@ export const useUpdateAvailability = () => {
   return useMutation({
     mutationFn: async (availability: Partial<PropertyAvailability> & { property_id: string; date: string }) => {
       const docId = `${availability.property_id}_${availability.date}`;
-      const availabilityRef = doc(db, COLLECTIONS.propertyAvailability, docId);
-      await setDoc(
-        availabilityRef,
-        removeUndefined({
-          ...availability,
-          updated_at: serverTimestamp(),
-          created_at: availability.id ? undefined : serverTimestamp(),
-        }),
-        { merge: true },
-      );
+      const payload = removeUndefined({
+        ...availability,
+        updated_at: serverTimestamp(),
+        ...(availability.id ? {} : { created_at: serverTimestamp() }),
+      });
 
-      const snapshot = await getDoc(availabilityRef);
-      if (!snapshot.exists()) {
-        throw new Error('Availability not found after update.');
-      }
-      return serializeDoc<PropertyAvailability>(snapshot);
+      const { error } = await setDocument(
+        'propertyAvailability',
+        docId,
+        payload,
+      );
+      if (error) throw error;
+      const { data, error: fetchError } = await getDocument('propertyAvailability', docId);
+      if (fetchError) throw fetchError;
+      if (!data) throw new Error('Availability not found after update.');
+      return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['property-availability', data.property_id] });
@@ -91,4 +65,3 @@ export const useUpdateAvailability = () => {
     },
   });
 };
-
