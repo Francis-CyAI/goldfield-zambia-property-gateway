@@ -1,45 +1,25 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  addDoc,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  updateDoc,
-  where,
-} from 'firebase/firestore';
+import { orderBy, serverTimestamp, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { db, COLLECTIONS } from '@/lib/constants/firebase';
-import { serializeDoc, serializeDocs } from '@/lib/utils/firestore-serialize';
+import type { SavedSearch } from '@/lib/models';
+import {
+  addDocument,
+  setDocument,
+  listDocuments,
+} from '@/lib/utils/firebase';
 import { removeUndefined } from '@/lib/utils/remove-undfined';
-
-export interface SavedSearch {
-  id: string;
-  user_id: string;
-  name: string;
-  search_criteria: Record<string, any>;
-  is_active: boolean;
-  notification_enabled: boolean;
-  created_at?: string | null;
-  updated_at?: string | null;
-}
 
 export const useSavedSearches = (userId?: string) => {
   return useQuery({
     queryKey: ['saved-searches', userId],
     queryFn: async () => {
-      const searchesRef = collection(db, COLLECTIONS.savedSearches);
-      const searchesQuery = query(
-        searchesRef,
+      const { data, error } = await listDocuments('savedSearches', [
         where('user_id', '==', userId!),
         where('is_active', '==', true),
         orderBy('created_at', 'desc'),
-      );
-      const snapshot = await getDocs(searchesQuery);
-      return serializeDocs<SavedSearch>(snapshot);
+      ]);
+      if (error) throw error;
+      return data ?? [];
     },
     enabled: !!userId,
   });
@@ -51,19 +31,14 @@ export const useCreateSavedSearch = () => {
 
   return useMutation({
     mutationFn: async (search: Omit<SavedSearch, 'id' | 'created_at' | 'updated_at'>) => {
-      const searchesRef = collection(db, COLLECTIONS.savedSearches);
-      const docRef = await addDoc(searchesRef, {
+      const { data, error } = await addDocument('savedSearches', {
         ...search,
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
-      });
-
-      const snapshot = await getDoc(docRef);
-      if (!snapshot.exists()) {
-        throw new Error('Failed to create saved search.');
-      }
-
-      return serializeDoc<SavedSearch>(snapshot);
+      } as Omit<SavedSearch, 'id'>);
+      if (error) throw error;
+      if (!data) throw new Error('Failed to create saved search.');
+      return data;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['saved-searches', data.user_id] });
@@ -89,11 +64,16 @@ export const useDeleteSavedSearch = () => {
 
   return useMutation({
     mutationFn: async ({ searchId, userId }: { searchId: string; userId: string }) => {
-      const searchRef = doc(db, COLLECTIONS.savedSearches, searchId);
-      await updateDoc(searchRef, removeUndefined({
+      const { error } = await setDocument(
+        'savedSearches',
+        searchId,
+        removeUndefined({
         is_active: false,
         updated_at: serverTimestamp(),
-      }));
+        }),
+        { merge: true },
+      );
+      if (error) throw error;
       return { userId };
     },
     onSuccess: ({ userId }) => {
@@ -113,4 +93,3 @@ export const useDeleteSavedSearch = () => {
     },
   });
 };
-

@@ -1,17 +1,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  query,
-  serverTimestamp,
-  setDoc,
-  where,
-} from 'firebase/firestore';
+import { serverTimestamp, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { db, COLLECTIONS } from '@/lib/constants/firebase';
+import { listDocuments, setDocument, deleteDocument } from '@/lib/utils/firebase';
 
 export const useWishlist = (userId?: string) => {
   return useQuery({
@@ -20,12 +11,11 @@ export const useWishlist = (userId?: string) => {
       if (!userId) return [];
       
       console.log('Fetching wishlist for user:', userId);
-      const wishlistRef = collection(db, COLLECTIONS.wishlists);
-      const wishlistQuery = query(wishlistRef, where('user_id', '==', userId));
-      const snapshot = await getDocs(wishlistQuery);
+      const { data, error } = await listDocuments('wishlists', [where('user_id', '==', userId)]);
+      if (error) throw error;
 
-      return snapshot.docs
-        .map((docSnapshot) => docSnapshot.get('property_id') as string | undefined)
+      return (data ?? [])
+        .map((entry) => entry.property_id as string | undefined)
         .filter((propertyId): propertyId is string => Boolean(propertyId));
     },
     enabled: !!userId,
@@ -45,16 +35,16 @@ export const useToggleWishlist = () => {
       console.log('Toggling wishlist:', { userId, propertyId, isWishlisted });
       
       if (isWishlisted) {
-        const entryRef = doc(db, COLLECTIONS.wishlists, `${userId}_${propertyId}`);
-        await deleteDoc(entryRef);
+        const { error } = await deleteDocument('wishlists', `${userId}_${propertyId}`);
+        if (error) throw error;
       } else {
-        const entryRef = doc(db, COLLECTIONS.wishlists, `${userId}_${propertyId}`);
-        await setDoc(entryRef, {
+        const { error } = await setDocument('wishlists', `${userId}_${propertyId}`, {
           user_id: userId,
           property_id: propertyId,
           created_at: serverTimestamp(),
           updated_at: serverTimestamp(),
-        }, { merge: true });
+        });
+        if (error) throw error;
       }
     },
     onSuccess: (_, variables) => {
