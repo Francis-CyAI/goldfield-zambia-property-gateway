@@ -1,10 +1,22 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, type FirebaseOptions } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getFirestore } from "firebase/firestore";
+import {
+  collection,
+  CollectionReference,
+  DocumentData,
+  FirestoreDataConverter,
+  getFirestore,
+} from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFunctions } from "firebase/functions";
+import {
+  type BaseDocument,
+  type CollectionKey,
+  type CollectionRecord,
+  type CollectionRecordMap,
+} from "@/lib/models";
 
 const requireEnv = (value: string | undefined, key: string): string => {
   if (value == null || value === "") {
@@ -55,3 +67,49 @@ export const COLLECTIONS = {
 
 export type CollectionName = keyof typeof COLLECTIONS;
 export type CollectionPath = typeof COLLECTIONS[CollectionName];
+
+const createConverter = <T extends BaseDocument>(): FirestoreDataConverter<T> => ({
+  toFirestore: ({ id, ...rest }: T) => rest as DocumentData,
+  fromFirestore: (snapshot, options) => {
+    const data = snapshot.data(options) as DocumentData;
+    return {
+      id: snapshot.id,
+      ...data,
+    } as T;
+  },
+});
+
+const converters: { [K in CollectionKey]: FirestoreDataConverter<CollectionRecordMap[K]> } = {
+  profiles: createConverter(),
+  properties: createConverter(),
+  propertyAvailability: createConverter(),
+  propertyLocations: createConverter(),
+  propertyViews: createConverter(),
+  bookings: createConverter(),
+  bookingRequests: createConverter(),
+  platformCommissions: createConverter(),
+  notifications: createConverter(),
+  messages: createConverter(),
+  savedSearches: createConverter(),
+  reviews: createConverter(),
+  subscriptionTiers: createConverter(),
+  userSubscriptions: createConverter(),
+  partnerSubscriptionTiers: createConverter(),
+  partnerSubscriptions: createConverter(),
+  branches: createConverter(),
+  adminUsers: createConverter(),
+  adminActivityLogs: createConverter(),
+};
+
+type TypedCollectionMap = {
+  [K in CollectionKey]: CollectionReference<CollectionRecordMap[K]>;
+};
+
+const collectionRefs = Object.entries(COLLECTIONS).reduce<TypedCollectionMap>((acc, [key, path]) => {
+  const collectionKey = key as CollectionKey;
+  acc[collectionKey] = collection(db, path).withConverter(converters[collectionKey]);
+  return acc;
+}, {} as TypedCollectionMap);
+
+export const getCollectionRef = <K extends CollectionKey>(key: K): CollectionReference<CollectionRecord<K>> =>
+  collectionRefs[key];

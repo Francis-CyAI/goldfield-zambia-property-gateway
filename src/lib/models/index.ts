@@ -1,0 +1,266 @@
+export interface BaseDocument {
+  id: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface Profile extends BaseDocument {
+  email: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  role?: string | null;
+  phone?: string | null;
+  avatar_url?: string | null;
+  provider?: string | null;
+  branch_location?: string | null;
+}
+
+export interface Property extends BaseDocument {
+  title: string;
+  description?: string | null;
+  location: string;
+  property_type?: string | null;
+  price_per_night?: number | null;
+  sale_price?: number | null;
+  max_guests?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  amenities?: string[];
+  images?: string[];
+  is_active?: boolean;
+  host_id?: string;
+}
+
+export interface PropertyAvailability extends BaseDocument {
+  property_id: string;
+  date: string;
+  is_available: boolean;
+  price_override?: number | null;
+  minimum_stay?: number | null;
+}
+
+export interface PropertyLocation extends BaseDocument {
+  property_id: string;
+  latitude: number;
+  longitude: number;
+  address_line1?: string | null;
+  address_line2?: string | null;
+  city: string;
+  state?: string | null;
+  postal_code?: string | null;
+  country: string;
+}
+
+export interface PropertyView extends BaseDocument {
+  property_id: string;
+  user_id?: string | null;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  referrer?: string | null;
+  viewed_at?: string | null;
+}
+
+export interface Booking extends BaseDocument {
+  property_id: string;
+  host_id?: string | null;
+  guest_id: string;
+  check_in: string;
+  check_out: string;
+  guest_count: number;
+  total_price: number;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+}
+
+export interface BookingRequest extends BaseDocument {
+  property_id: string;
+  guest_id: string;
+  host_id: string;
+  check_in: string;
+  check_out: string;
+  guest_count: number;
+  message?: string | null;
+  status: 'pending' | 'approved' | 'declined' | 'expired';
+  total_price?: number | null;
+  expires_at?: string | null;
+}
+
+export interface Commission extends BaseDocument {
+  booking_id: string;
+  property_id: string;
+  host_id: string;
+  commission_rate: number;
+  booking_amount: number;
+  commission_amount: number;
+  status: 'pending' | 'processed' | 'paid';
+  processed_at?: string | null;
+}
+
+export interface Notification extends BaseDocument {
+  user_id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  is_read: boolean;
+  related_id?: string | null;
+}
+
+export interface Message extends BaseDocument {
+  sender_id: string;
+  recipient_id: string;
+  participants?: string[];
+  property_id?: string | null;
+  booking_id?: string | null;
+  subject?: string | null;
+  content: string;
+  is_read: boolean;
+}
+
+export interface SavedSearch extends BaseDocument {
+  user_id: string;
+  name: string;
+  search_criteria: Record<string, unknown>;
+  is_active: boolean;
+  notification_enabled: boolean;
+}
+
+export interface SubscriptionTier extends BaseDocument {
+  name: string;
+  price: number;
+  features: string[];
+  max_properties: number | null;
+  max_bookings: number | null;
+  priority_support: boolean;
+  analytics_access: boolean;
+}
+
+export interface UserSubscription extends BaseDocument {
+  user_id: string;
+  subscription_tier_id: string;
+  status: string;
+  trial_ends_at: string | null;
+  current_period_start: string;
+  current_period_end: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+}
+
+export interface PartnerSubscriptionTier extends BaseDocument {
+  name: string;
+  monthly_price: number;
+  features: string[];
+  max_listings: number | null;
+  priority_support: boolean;
+  featured_placement: boolean;
+}
+
+export interface PartnerSubscription extends BaseDocument {
+  user_id: string;
+  partner_name: string;
+  business_type: string;
+  subscription_tier: string;
+  monthly_fee: number;
+  status: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  current_period_start: string | null;
+  current_period_end: string | null;
+}
+
+export interface Review extends BaseDocument {
+  property_id: string;
+  guest_id: string;
+  booking_id?: string;
+  rating: number;
+  comment?: string | null;
+  category_ratings?: {
+    cleanliness: number;
+    accuracy: number;
+    checkin: number;
+    communication: number;
+    location: number;
+    value: number;
+  };
+  is_verified_stay?: boolean;
+  host_response?: {
+    message: string;
+    created_at: string;
+    host_name?: string;
+  } | null;
+}
+
+export interface WishlistEntry extends BaseDocument {
+  user_id: string;
+  property_id: string;
+}
+
+export interface AdminActivityLog extends BaseDocument {
+  actor_id: string;
+  actor_email?: string;
+  action: string;
+  entity_type?: string;
+  entity_id?: string;
+  severity?: 'info' | 'warning' | 'critical';
+  metadata?: Record<string, unknown>;
+}
+
+export interface Branch extends BaseDocument {
+  name: string;
+  location: string;
+  manager_name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+}
+
+export interface AdminUser extends BaseDocument {
+  user_id: string;
+  admin_type: string;
+  is_active: boolean;
+  branch_location?: string | null;
+  permissions?: string[];
+}
+
+export type CollectionKey =
+  | 'profiles'
+  | 'properties'
+  | 'propertyAvailability'
+  | 'propertyLocations'
+  | 'propertyViews'
+  | 'bookings'
+  | 'bookingRequests'
+  | 'platformCommissions'
+  | 'notifications'
+  | 'messages'
+  | 'savedSearches'
+  | 'reviews'
+  | 'subscriptionTiers'
+  | 'userSubscriptions'
+  | 'partnerSubscriptionTiers'
+  | 'partnerSubscriptions'
+  | 'branches'
+  | 'adminUsers'
+  | 'adminActivityLogs';
+
+export type CollectionRecordMap = {
+  profiles: Profile;
+  properties: Property;
+  propertyAvailability: PropertyAvailability;
+  propertyLocations: PropertyLocation;
+  propertyViews: PropertyView;
+  bookings: Booking;
+  bookingRequests: BookingRequest;
+  platformCommissions: Commission;
+  notifications: Notification;
+  messages: Message;
+  savedSearches: SavedSearch;
+  reviews: Review;
+  subscriptionTiers: SubscriptionTier;
+  userSubscriptions: UserSubscription;
+  partnerSubscriptionTiers: PartnerSubscriptionTier;
+  partnerSubscriptions: PartnerSubscription;
+  branches: Branch;
+  adminUsers: AdminUser;
+  adminActivityLogs: AdminActivityLog;
+};
+
+export type CollectionRecord<K extends CollectionKey> = CollectionRecordMap[K];
+
