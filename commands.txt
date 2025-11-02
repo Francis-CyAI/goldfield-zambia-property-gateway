@@ -1,2 +1,18 @@
+Firebase setup checklist:
+1. Install the Firebase CLI: `npm install -g firebase-tools`
+2. Authenticate with the project: `firebase login`
+3. Select the active project locally: `firebase use goldfield-8180d`
+4. Verify access (optional): `firebase projects:list`
+5. Run emulators when developing (optional): `firebase emulators:start --only firestore,auth,functions`
+
+Environment variables required in `.env`:
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
+- `VITE_FIREBASE_MEASUREMENT_ID`
+
 Deploy command:
 $ firebase deploy --only hosting:goldfield-zambia-property-gateway

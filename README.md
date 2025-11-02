@@ -60,6 +60,45 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Firebase Setup
+
+### Enable Services in the Console
+- Project: `goldfield-8180d`
+- Turn on **Authentication** with Email/Password and Google providers.
+- Create a **Cloud Firestore** database (production mode, `nam5` region).
+- Enable **Cloud Storage** and set the default bucket.
+- If you plan to use Cloud Functions, upgrade billing as needed and deploy starter functions.
+- Under Authentication → Settings, add local dev origins (e.g. `http://localhost:5173`) to Authorized Domains.
+
+### Bind the Firebase CLI Locally
+```sh
+npm install -g firebase-tools        # Install CLI if needed
+firebase login                       # Authenticate
+firebase use goldfield-8180d         # Set the default project
+firebase projects:list               # Optional sanity check
+```
+
+### Local Development with Emulators
+```sh
+firebase emulators:start --only firestore,auth,functions
+```
+This lets you work offline once your services are configured.
+
+### Required Environment Variables
+Create a `.env` file (see example in the repo) with:
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
+- `VITE_FIREBASE_MEASUREMENT_ID`
+
+### Deployment
+```sh
+firebase deploy --only hosting:goldfield-zambia-property-gateway
+```
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/572aeb3d-2fb2-4f5d-aaf2-34c485c03cfa) and click on Share -> Publish.
