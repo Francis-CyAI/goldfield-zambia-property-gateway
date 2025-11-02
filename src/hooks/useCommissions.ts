@@ -1,56 +1,28 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-  where,
-} from 'firebase/firestore';
+import { orderBy, where } from 'firebase/firestore';
 import { useAuth } from '@/contexts/AuthContext';
-import { db, COLLECTIONS } from '@/lib/constants/firebase';
-import { serializeDoc, serializeDocs } from '@/lib/utils/firestore-serialize';
+import type { Commission, Booking, Property } from '@/lib/models';
+import { listDocuments, getDocument } from '@/lib/utils/firebase';
 
-export interface Commission {
-  id: string;
-  booking_id: string;
-  property_id: string;
-  host_id: string;
-  commission_rate: number;
-  booking_amount: number;
-  commission_amount: number;
-  status: 'pending' | 'processed' | 'paid';
-  processed_at: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-  booking?: {
-    check_in?: string;
-    check_out?: string;
-    guest_count?: number;
-  };
-  property?: {
-    title?: string;
-    location?: string;
-  };
-}
-
-const hydrateCommission = async (commission: Commission) => {
-  const [bookingSnapshot, propertySnapshot] = await Promise.all([
-    commission.booking_id ? getDoc(doc(db, COLLECTIONS.bookings, commission.booking_id)) : Promise.resolve(null),
-    commission.property_id ? getDoc(doc(db, COLLECTIONS.properties, commission.property_id)) : Promise.resolve(null),
+const hydrateCommission = async (commission: Commission): Promise<Commission> => {
+  const [booking, property] = await Promise.all([
+    commission.booking_id ? getDocument('bookings', commission.booking_id) : Promise.resolve({ data: null, error: null }),
+    commission.property_id ? getDocument('properties', commission.property_id) : Promise.resolve({ data: null, error: null }),
   ]);
 
-  if (bookingSnapshot && bookingSnapshot.exists()) {
-    commission.booking = serializeDoc<{ check_in?: string; check_out?: string; guest_count?: number }>(bookingSnapshot);
+  if (booking.data) {
+    commission.booking = booking.data as Booking;
   }
 
-  if (propertySnapshot && propertySnapshot.exists()) {
-    commission.property = serializeDoc<{ title?: string; location?: string }>(propertySnapshot);
+  if (property.data) {
+    commission.property = property.data as Property;
   }
 
   return commission;
 };
+
+const hydrateCommissions = async (records: Commission[]): Promise<Commission[]> =>
+  Promise.all(records.map(hydrateCommission));
 
 export const useHostCommissions = () => {
   const { user } = useAuth();
@@ -60,16 +32,12 @@ export const useHostCommissions = () => {
     queryFn: async () => {
       if (!user) return [];
 
-      const commissionsRef = collection(db, COLLECTIONS.platformCommissions);
-      const commissionsQuery = query(
-        commissionsRef,
+      const { data, error } = await listDocuments('platformCommissions', [
         where('host_id', '==', user.uid),
         orderBy('created_at', 'desc'),
-      );
-
-      const snapshot = await getDocs(commissionsQuery);
-      const commissions = serializeDocs<Commission>(snapshot);
-      return Promise.all(commissions.map(hydrateCommission));
+      ]);
+      if (error) throw error;
+      return hydrateCommissions(data ?? []);
     },
     enabled: !!user,
   });
@@ -79,11 +47,11 @@ export const usePlatformCommissions = () => {
   return useQuery({
     queryKey: ['platform-commissions'],
     queryFn: async () => {
-      const commissionsRef = collection(db, COLLECTIONS.platformCommissions);
-      const commissionsQuery = query(commissionsRef, orderBy('created_at', 'desc'));
-      const snapshot = await getDocs(commissionsQuery);
-      const commissions = serializeDocs<Commission>(snapshot);
-      return Promise.all(commissions.map(hydrateCommission));
+      const { data, error } = await listDocuments('platformCommissions', [
+        orderBy('created_at', 'desc'),
+      ]);
+      if (error) throw error;
+      return hydrateCommissions(data ?? []);
     },
   });
 };
