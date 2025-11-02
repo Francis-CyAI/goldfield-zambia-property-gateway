@@ -1,18 +1,348 @@
-rules_version='2'
+rules_version = '2'
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function profileDoc(uid) {
+      return get(/databases/$(database)/documents/profiles/$(uid));
+    }
+
+    function adminDoc(uid) {
+      return get(/databases/$(database)/documents/admin_users/$(uid));
+    }
+
+    function profileRole(uid) {
+      let doc = profileDoc(uid);
+      return doc.exists() && doc.data.role is string ? doc.data.role : null;
+    }
+
+    function isActiveAdmin(uid) {
+      let doc = adminDoc(uid);
+      return doc.exists() && doc.data.is_active == true;
+    }
+
+    function adminType(uid) {
+      return isActiveAdmin(uid) ? adminDoc(uid).data.admin_type : null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && isActiveAdmin(request.auth.uid);
+    }
+
+    function isHQAdmin() {
+      let type = adminType(request.auth.uid);
+      return isAdmin() && (type == 'hq_admin' || type == 'super_admin');
+    }
+
+    function isSuperAdmin() {
+      return isAdmin() && adminType(request.auth.uid) == 'super_admin';
+    }
+
+    function isHost(uid) {
+      let role = profileRole(uid);
+      return role == 'host' ||
+        role == 'property_owner' ||
+        role == 'institution_admin' ||
+        role == 'super_admin';
+    }
+
+    function ownsProperty(uid, propertyId) {
+      let propertyDoc = get(/databases/$(database)/documents/properties/$(propertyId));
+      return propertyDoc.exists() && propertyDoc.data.host_id == uid;
+    }
+
+    function onlyStatusChanged() {
+      let change = resource.data.diff(request.resource.data);
+      return change.changedKeys().hasOnly(['status', 'updated_at']);
+    }
+
+    function onlyReadFlagChanged() {
+      let change = resource.data.diff(request.resource.data);
+      return change.changedKeys().hasOnly(['is_read', 'updated_at']);
+    }
+
+    function onlySavedSearchDeactivate() {
+      let change = resource.data.diff(request.resource.data);
+      return change.changedKeys().hasOnly(['is_active', 'updated_at']);
+    }
+
+    function guestReviewChange() {
+      let change = resource.data.diff(request.resource.data);
+      return change.changedKeys().hasOnly(['rating', 'comment', 'category_ratings', 'updated_at']);
+    }
+
+    function hostResponseChange() {
+      let change = resource.data.diff(request.resource.data);
+      return change.changedKeys().hasOnly(['host_response', 'updated_at']);
+    }
+
+    function canViewInsights(propertyId) {
+      return isAdmin() || (isSignedIn() && ownsProperty(request.auth.uid, propertyId));
+    }
+
+    match /profiles/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isSignedIn() && (
+        (
+          request.auth.uid == userId &&
+          request.resource.data.role == resource.data.role &&
+          request.resource.data.is_active == resource.data.is_active
+        ) ||
+        isAdmin()
+      );
+      allow delete: if isSuperAdmin();
+    }
+
+    match /properties/{propertyId} {
+      allow read: if true;
+      allow create: if isSignedIn() && (
+        (isHost(request.auth.uid) && request.resource.data.host_id == request.auth.uid) ||
+        isAdmin()
+      );
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (resource.data.host_id == request.auth.uid &&
+          request.resource.data.host_id == resource.data.host_id)
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /property_availability/{availabilityId} {
+      allow read: if true;
+      allow create, update: if isSignedIn() && (
+        isAdmin() ||
+        (
+          ownsProperty(request.auth.uid, request.resource.data.property_id) &&
+          (resource == null || request.resource.data.property_id == resource.data.property_id)
+        )
+      );
+      allow delete: if isAdmin() ||
+        (isSignedIn() && ownsProperty(request.auth.uid, resource.data.property_id));
+    }
+
+    match /property_locations/{propertyId} {
+      allow read: if true;
+      allow create, update: if isSignedIn() && (
+        isAdmin() ||
+        ownsProperty(request.auth.uid, request.resource.data.property_id)
+      );
+      allow delete: if isAdmin() ||
+        (isSignedIn() && ownsProperty(request.auth.uid, resource.data.property_id));
+    }
+
+    match /property_views/{viewId} {
+      allow read: if canViewInsights(resource.data.property_id);
+      allow create: if request.resource.data.property_id is string &&
+        get(/databases/$(database)/documents/properties/$(request.resource.data.property_id)).exists() &&
+        (
+          (request.auth == null && (!('user_id' in request.resource.data) || request.resource.data.user_id == null)) ||
+          (isSignedIn() && (!('user_id' in request.resource.data) || request.resource.data.user_id == request.auth.uid)) ||
+          isAdmin()
+        ) &&
+        request.resource.data.keys().hasOnly([
+          'property_id',
+          'user_id',
+          'ip_address',
+          'user_agent',
+          'referrer',
+          'viewed_at',
+          'created_at'
+        ]);
+      allow delete: if isAdmin();
+      allow update: if false;
+    }
+
+    match /bookings/{bookingId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() &&
+          (request.auth.uid == resource.data.guest_id || request.auth.uid == resource.data.host_id));
+      allow create: if isSignedIn() &&
+        request.resource.data.guest_id == request.auth.uid &&
+        get(/databases/$(database)/documents/properties/$(request.resource.data.property_id)).exists();
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (
+          resource.data.host_id == request.auth.uid &&
+          request.resource.data.host_id == resource.data.host_id &&
+          request.resource.data.guest_id == resource.data.guest_id &&
+          onlyStatusChanged()
+        ) ||
+        (
+          resource.data.guest_id == request.auth.uid &&
+          request.resource.data.guest_id == resource.data.guest_id &&
+          request.resource.data.host_id == resource.data.host_id &&
+          request.resource.data.status == 'cancelled' &&
+          onlyStatusChanged()
+        )
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /booking_requests/{requestId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() &&
+          (request.auth.uid == resource.data.guest_id || request.auth.uid == resource.data.host_id));
+      allow create: if isSignedIn() &&
+        request.resource.data.guest_id == request.auth.uid &&
+        get(/databases/$(database)/documents/properties/$(request.resource.data.property_id)).exists();
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (
+          resource.data.host_id == request.auth.uid &&
+          request.resource.data.host_id == resource.data.host_id &&
+          onlyStatusChanged()
+        )
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /platform_commissions/{commissionId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == resource.data.host_id);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAdmin() || (isSignedIn() && request.auth.uid == resource.data.user_id);
+      allow create: if isAdmin() ||
+        (isSignedIn() && request.resource.data.user_id == request.auth.uid);
+      allow update: if isAdmin() ||
+        (
+          isSignedIn() &&
+          request.auth.uid == resource.data.user_id &&
+          request.resource.data.user_id == resource.data.user_id &&
+          onlyReadFlagChanged()
+        );
+      allow delete: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == resource.data.user_id);
+    }
+
+    match /messages/{messageId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() &&
+          (
+            request.auth.uid == resource.data.sender_id ||
+            request.auth.uid == resource.data.recipient_id ||
+            (resource.data.participants != null &&
+              resource.data.participants.hasAny([request.auth.uid]))
+          ));
+      allow create: if isSignedIn() &&
+        request.resource.data.sender_id == request.auth.uid &&
+        request.resource.data.participants.hasAll([request.auth.uid, request.resource.data.recipient_id]);
+      allow update: if isAdmin() ||
+        (
+          isSignedIn() &&
+          (
+            request.auth.uid == resource.data.recipient_id ||
+            request.auth.uid == resource.data.sender_id
+          ) &&
+          onlyReadFlagChanged()
+        );
+      allow delete: if isAdmin();
+    }
+
+    match /saved_searches/{searchId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == resource.data.user_id);
+      allow create: if isSignedIn() &&
+        request.resource.data.user_id == request.auth.uid;
+      allow update: if isAdmin() ||
+        (
+          isSignedIn() &&
+          request.auth.uid == resource.data.user_id &&
+          request.resource.data.user_id == resource.data.user_id &&
+          onlySavedSearchDeactivate()
+        );
+      allow delete: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == resource.data.user_id);
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn() &&
+        request.resource.data.guest_id == request.auth.uid &&
+        get(/databases/$(database)/documents/properties/$(request.resource.data.property_id)).exists();
+      allow update: if isAdmin() ||
+        (
+          isSignedIn() &&
+          request.auth.uid == resource.data.guest_id &&
+          request.resource.data.guest_id == resource.data.guest_id &&
+          request.resource.data.host_response == resource.data.host_response &&
+          guestReviewChange()
+        ) ||
+        (
+          isSignedIn() &&
+          ownsProperty(request.auth.uid, resource.data.property_id) &&
+          request.resource.data.host_response != null &&
+          request.resource.data.guest_id == resource.data.guest_id &&
+          request.resource.data.property_id == resource.data.property_id &&
+          hostResponseChange()
+        );
+      allow delete: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == resource.data.guest_id);
+    }
+
+    match /subscription_tiers/{tierId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /user_subscriptions/{subscriptionId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == resource.data.user_id);
+      allow create: if isAdmin() ||
+        (isSignedIn() && request.resource.data.user_id == request.auth.uid);
+      allow update: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == resource.data.user_id);
+      allow delete: if isAdmin();
+    }
+
+    match /partner_subscription_tiers/{tierId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /partner_subscriptions/{subscriptionId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == resource.data.user_id);
+      allow create, update: if isAdmin() ||
+        (isSignedIn() && request.resource.data.user_id == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    match /branches/{branchId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isHQAdmin();
+    }
+
+    match /admin_users/{adminId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isSuperAdmin();
+    }
+
+    match /admin_activity_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if false;
+      allow delete: if isSuperAdmin();
+    }
+
+    match /wishlists/{wishlistId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == resource.data.user_id);
+      allow create: if isSignedIn() &&
+        request.resource.data.user_id == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == resource.data.user_id);
+    }
+
     match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2025, 12, 2);
+      allow read, write: if false;
     }
   }
 }

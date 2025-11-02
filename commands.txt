@@ -16,3 +16,13 @@ Environment variables required in `.env`:
 
 Deploy command:
 $ firebase deploy --only hosting:goldfield-zambia-property-gateway
+
+Firebase emulator workflow:
+- Set `VITE_USE_FIREBASE_EMULATOR=true` in a local `.env` override when you want the app to target emulators.
+- Start the emulators in one terminal: `firebase emulators:start --project goldfield-8180d --only auth,firestore,functions`
+- Run `npm run dev` in another terminal; the SDK will automatically connect to the emulators when the flag is enabled.
+- Export state after a session if you want persistent seed data: `firebase emulators:start --import=./.firebase-data --export-on-exit`
+
+Security & index deployments:
+- Rules: `firebase deploy --only firestore:rules,storage:rules`
+- Indexes: `firebase deploy --only firestore:indexes`

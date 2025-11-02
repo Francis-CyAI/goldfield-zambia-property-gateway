@@ -79,10 +79,18 @@ firebase projects:list               # Optional sanity check
 ```
 
 ### Local Development with Emulators
+1. Create a local `.env.local` (ignored by git) and add `VITE_USE_FIREBASE_EMULATOR=true` when you want to target emulators.
+2. Start the emulators in one terminal:
+   ```sh
+   firebase emulators:start --project goldfield-8180d --only auth,firestore,functions --import ./.firebase-data --export-on-exit
+   ```
+   The configuration uses the default ports (Auth `9099`, Firestore `8080`, Functions `5001`) and enables the Emulator UI on `4000`.
+3. Run the Vite dev server in a separate terminal with `npm run dev`. When the flag is set the SDK connects to the local emulators automatically.
+
+To deploy the latest rules and indexes after local changes:
 ```sh
-firebase emulators:start --only firestore,auth,functions
+firebase deploy --only firestore:rules,storage:rules,firestore:indexes
 ```
-This lets you work offline once your services are configured.
 
 ### Required Environment Variables
 Create a `.env` file (see example in the repo) with:

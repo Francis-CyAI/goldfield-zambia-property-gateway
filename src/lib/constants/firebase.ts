@@ -6,11 +6,12 @@ import {
   CollectionReference,
   DocumentData,
   FirestoreDataConverter,
+  connectFirestoreEmulator,
   getFirestore,
 } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFunctions } from "firebase/functions";
+import { connectAuthEmulator, getAuth, GoogleAuthProvider } from "firebase/auth";
+import { connectFunctionsEmulator, getFunctions } from "firebase/functions";
 import {
   type BaseDocument,
   type CollectionKey,
@@ -42,6 +43,19 @@ export const storage = getStorage(app);
 export const auth = getAuth(app);
 export const functions = getFunctions(app);
 export const googleProvider = new GoogleAuthProvider();
+
+const shouldUseEmulators =
+  import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === "true";
+
+if (shouldUseEmulators && typeof window !== "undefined") {
+  const globalScope = globalThis as { __FIREBASE_EMULATORS_ENABLED__?: boolean };
+  if (!globalScope.__FIREBASE_EMULATORS_ENABLED__) {
+    connectFirestoreEmulator(db, "localhost", 8080);
+    connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
+    connectFunctionsEmulator(functions, "localhost", 5001);
+    globalScope.__FIREBASE_EMULATORS_ENABLED__ = true;
+  }
+}
 
 export const COLLECTIONS = {
   profiles: "profiles",
