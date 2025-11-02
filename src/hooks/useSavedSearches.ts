@@ -35,7 +35,7 @@ export const useCreateSavedSearch = () => {
         ...search,
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
-      } as Omit<SavedSearch, 'id'>);
+      });
       if (error) throw error;
       if (!data) throw new Error('Failed to create saved search.');
       return data;

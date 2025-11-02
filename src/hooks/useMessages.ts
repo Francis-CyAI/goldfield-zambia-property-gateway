@@ -47,7 +47,7 @@ export const useSendMessage = () => {
         is_read: false,
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
-      } as Omit<Message, 'id'>);
+      });
       if (error) throw error;
       if (!data) throw new Error('Failed to send message.');
       return data;

@@ -76,7 +76,7 @@ export const useCreateProperty = () => {
         updated_at: serverTimestamp(),
       };
 
-      const { data, error } = await addDocument('properties', payload as Omit<Property, 'id'>);
+      const { data, error } = await addDocument('properties', payload);
       if (error) throw error;
       if (!data) throw new Error('Failed to create property');
       return data;

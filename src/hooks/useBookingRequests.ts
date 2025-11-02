@@ -65,7 +65,7 @@ export const useCreateBookingRequest = () => {
         expires_at: request.expires_at ?? null,
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
-      } as Omit<BookingRequest, 'id' | 'property'>);
+      });
       if (error) throw error;
       if (!data) throw new Error('Failed to create booking request.');
 

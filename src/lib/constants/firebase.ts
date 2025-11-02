@@ -101,15 +101,7 @@ const converters: { [K in CollectionKey]: FirestoreDataConverter<CollectionRecor
   adminActivityLogs: createConverter(),
 };
 
-type TypedCollectionMap = {
-  [K in CollectionKey]: CollectionReference<CollectionRecordMap[K]>;
-};
-
-const collectionRefs = Object.entries(COLLECTIONS).reduce<TypedCollectionMap>((acc, [key, path]) => {
-  const collectionKey = key as CollectionKey;
-  acc[collectionKey] = collection(db, path).withConverter(converters[collectionKey]);
-  return acc;
-}, {} as TypedCollectionMap);
-
-export const getCollectionRef = <K extends CollectionKey>(key: K): CollectionReference<CollectionRecord<K>> =>
-  collectionRefs[key];
+export const getCollectionRef = <K extends CollectionKey>(key: K): CollectionReference<CollectionRecordMap[K]> =>
+  collection(db, COLLECTIONS[key]).withConverter(
+    converters[key] as FirestoreDataConverter<CollectionRecordMap[K]>,
+  );

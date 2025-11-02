@@ -100,7 +100,7 @@ export const useCreateBooking = () => {
         updated_at: serverTimestamp(),
       };
 
-      const { data, error } = await addDocument('bookings', payload as Omit<Booking, 'id'>);
+            const { data, error } = await addDocument('bookings', payload);
       if (error) throw error;
       if (!data) throw new Error('Failed to create booking.');
 

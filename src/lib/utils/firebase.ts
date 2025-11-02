@@ -12,6 +12,7 @@ import {
   serverTimestamp,
   setDoc,
   Transaction,
+  WithFieldValue,
   writeBatch,
   WriteBatch,
 } from "firebase/firestore";
@@ -64,7 +65,7 @@ export const getDocument = async <K extends CollectionKey>(
 export const setDocument = async <K extends CollectionKey>(
   collectionKey: K,
   id: string,
-  value: Partial<CollectionRecord<K>>,
+  value: WithFieldValue<Partial<CollectionRecord<K>>>,
   options: { merge?: boolean } = { merge: true },
 ): Promise<FirestoreResult<void>> => {
   try {
@@ -78,7 +79,7 @@ export const setDocument = async <K extends CollectionKey>(
 
 export const addDocument = async <K extends CollectionKey>(
   collectionKey: K,
-  value: Omit<CollectionRecord<K>, "id">,
+  value: WithFieldValue<Omit<CollectionRecord<K>, "id">>,
 ): Promise<FirestoreResult<CollectionRecord<K>>> => {
   try {
     const ref = await addDoc(getCollectionRef(collectionKey), removeUndefined(value));
@@ -153,7 +154,7 @@ export interface AdminActivityPayload {
 export const logAdminActivity = async (
   payload: AdminActivityPayload,
 ): Promise<FirestoreResult<void>> => {
-  const record = removeUndefined({
+  const record: WithFieldValue<Omit<AdminActivityLog, "id">> = {
     actor_id: payload.actorId,
     actor_email: payload.actorEmail ?? null,
     action: payload.action,
@@ -163,12 +164,11 @@ export const logAdminActivity = async (
     metadata: payload.metadata ?? null,
     created_at: serverTimestamp(),
     updated_at: serverTimestamp(),
-  });
+  };
 
-  const { error } = await addDocument("adminActivityLogs", record as Omit<AdminActivityLog, "id">);
+  const { error } = await addDocument("adminActivityLogs", record);
   if (error) {
     return toResult(undefined, error);
   }
   return toResult(undefined, null);
 };
-

@@ -65,7 +65,7 @@ export const useTrackPropertyView = () => {
         viewed_at: serverTimestamp(),
         created_at: serverTimestamp(),
       };
-      const { data, error } = await addDocument('propertyViews', payload as Omit<PropertyView, 'id'>);
+            const { data, error } = await addDocument('propertyViews', payload);
       if (error) throw error;
       return data?.id ?? null;
     },

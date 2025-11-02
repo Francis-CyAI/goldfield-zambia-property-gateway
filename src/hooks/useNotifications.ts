@@ -82,7 +82,7 @@ export const useCreateNotification = () => {
         is_read: false,
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
-      } as Omit<Notification, 'id'>);
+      });
       if (error) throw error;
       if (!data) throw new Error('Failed to create notification.');
       return data;
