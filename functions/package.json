@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "firebase-admin": "^12.6.0",
-    "firebase-functions": "^5.1.1"
+    "firebase-functions": "^5.1.1",
+    "vite_react_shadcn_ts": "file:.."
   },
   "devDependencies": {
     "eslint": "^9.9.0",
