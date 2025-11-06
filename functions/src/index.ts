@@ -37,6 +37,7 @@ type SubscriptionCheckoutPayload = {
 type PartnerCheckoutPayload = {
   userId: string;
   partnerName: string;
+  businessType: string;
   subscriptionTier: string;
   amount: number;
   currency?: string;
