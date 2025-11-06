@@ -314,6 +314,18 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /subscription_payments/{paymentId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == resource.data.user_id);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /partner_payments/{paymentId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && request.auth.uid == resource.data.user_id);
+      allow create, update, delete: if isAdmin();
+    }
+
     match /branches/{branchId} {
       allow read: if isAdmin();
       allow create, update, delete: if isHQAdmin();
@@ -339,6 +351,15 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if isAdmin() ||
         (isSignedIn() && request.auth.uid == resource.data.user_id);
+    }
+
+    match /contact_messages/{contactId} {
+      allow read: if isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /notification_queue/{notificationId} {
+      allow read, write: if isSuperAdmin();
     }
 
     match /{document=**} {

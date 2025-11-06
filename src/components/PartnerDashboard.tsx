@@ -12,12 +12,13 @@ import {
   AlertCircle,
   RefreshCw
 } from 'lucide-react';
-import { usePartnerSubscription, usePartnerCustomerPortal } from '@/hooks/usePartnerSubscription';
+import { usePartnerSubscription, usePartnerCustomerPortal, useCheckPartnerSubscription } from '@/hooks/usePartnerSubscription';
 import { format } from 'date-fns';
 
 const PartnerDashboard = () => {
-  const { data: subscriptionData, isLoading, refetch } = usePartnerSubscription();
+  const { data: subscription, isLoading, refetch } = usePartnerSubscription();
   const customerPortal = usePartnerCustomerPortal();
+  const checkSubscription = useCheckPartnerSubscription();
 
   if (isLoading) {
     return (
@@ -27,7 +28,7 @@ const PartnerDashboard = () => {
     );
   }
 
-  if (!subscriptionData?.hasActiveSubscription) {
+  if (!subscription) {
     return (
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
@@ -48,7 +49,6 @@ const PartnerDashboard = () => {
     );
   }
 
-  const subscription = subscriptionData.subscription;
   const isActive = subscription.status === 'active';
 
   return (
@@ -86,7 +86,9 @@ const PartnerDashboard = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Business Type</p>
-                <p className="font-semibold capitalize">{subscription.business_type.replace('_', ' ')}</p>
+                <p className="font-semibold capitalize">
+                  {subscription.business_type?.replace('_', ' ') || '—'}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-600">Subscription Plan</p>
@@ -104,13 +106,21 @@ const PartnerDashboard = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Monthly Fee</p>
-                <p className="font-semibold text-primary">${subscription.monthly_fee}</p>
+                <p className="font-semibold text-primary">K{subscription.monthly_fee}</p>
               </div>
               {subscription.current_period_end && (
                 <div>
                   <p className="text-sm text-gray-600">Next Billing Date</p>
                   <p className="font-semibold">
                     {format(new Date(subscription.current_period_end), 'MMM dd, yyyy')}
+                  </p>
+                </div>
+              )}
+              {subscription.last_payment_status && (
+                <div>
+                  <p className="text-sm text-gray-600">Last Payment Status</p>
+                  <p className="font-semibold capitalize">
+                    {subscription.last_payment_status.toLowerCase()}
                   </p>
                 </div>
               )}
@@ -155,6 +165,28 @@ const PartnerDashboard = () => {
             </p>
             <Button variant="outline" className="w-full">
               Manage Services
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <RefreshCw className="h-5 w-5" />
+              Sync Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 mb-3">
+              Check the latest payment status from Lenco and refresh your subscription record.
+            </p>
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={checkSubscription.isPending}
+              onClick={() => checkSubscription.mutate(undefined, { onSuccess: () => refetch() })}
+            >
+              {checkSubscription.isPending ? 'Checking...' : 'Sync with Lenco'}
             </Button>
           </CardContent>
         </Card>

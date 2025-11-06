@@ -107,6 +107,24 @@ Create a `.env` file (see example in the repo) with:
 firebase deploy --only hosting:goldfield-zambia-property-gateway
 ```
 
+### Cloud Functions & Payments
+Install function dependencies locally before deploying:
+```sh
+npm install --prefix functions
+```
+Configure required Lenco and notification secrets:
+```sh
+firebase functions:config:set \
+  lenco.api_key="YOUR_LENCO_KEY" \
+  lenco.base_url="https://sandbox.lenco.ng/api/v2" \
+  lenco.business_id="YOUR_BUSINESS_ID" \
+  notifications.contact_recipient="support@example.com"
+```
+Deploy callable and scheduled functions:
+```sh
+firebase deploy --only functions
+```
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/572aeb3d-2fb2-4f5d-aaf2-34c485c03cfa) and click on Share -> Publish.

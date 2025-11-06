@@ -26,3 +26,9 @@ Firebase emulator workflow:
 Security & index deployments:
 - Rules: `firebase deploy --only firestore:rules,storage:rules`
 - Indexes: `firebase deploy --only firestore:indexes`
+
+Functions setup:
+- Install dependencies: `npm install --prefix functions`
+- Set required config values (example): \
+  `firebase functions:config:set lenco.api_key=\"<api-key>\" lenco.base_url=\"https://sandbox.lenco.ng/api/v2\" lenco.business_id=\"<business-id>\" notifications.contact_recipient=\"team@example.com\"`
+- Deploy callable/cron functions: `firebase deploy --only functions`

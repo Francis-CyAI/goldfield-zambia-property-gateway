@@ -136,12 +136,19 @@ export interface SubscriptionTier extends BaseDocument {
 export interface UserSubscription extends BaseDocument {
   user_id: string;
   subscription_tier_id: string;
+  subscription_tier_name?: string | null;
   status: string;
-  trial_ends_at: string | null;
-  current_period_start: string;
-  current_period_end: string;
-  stripe_customer_id: string | null;
-  stripe_subscription_id: string | null;
+  trial_ends_at?: string | null;
+  current_period_start?: string | null;
+  current_period_end?: string | null;
+  lenco_payment_reference?: string | null;
+  lenco_payment_id?: string | null;
+  lenco_customer_id?: string | null;
+  last_payment_status?: string | null;
+  last_payment_at?: string | null;
+  next_billing_at?: string | null;
+  mobile_money_network?: string | null;
+  mobile_money_number_masked?: string | null;
 }
 
 export interface PartnerSubscriptionTier extends BaseDocument {
@@ -160,10 +167,44 @@ export interface PartnerSubscription extends BaseDocument {
   subscription_tier: string;
   monthly_fee: number;
   status: string;
-  stripe_customer_id: string | null;
-  stripe_subscription_id: string | null;
+  lenco_payment_reference?: string | null;
+  lenco_payment_id?: string | null;
+  lenco_customer_id?: string | null;
+  last_payment_status?: string | null;
+  mobile_money_network?: string | null;
+  mobile_money_number_masked?: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
+}
+
+export interface SubscriptionPayment extends BaseDocument {
+  user_id: string;
+  subscription_tier_id: string;
+  subscription_tier_name?: string | null;
+  amount: number;
+  currency: string;
+  network: string;
+  msisdn: string;
+  payment_id?: string | null;
+  reference: string;
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'CANCELLED';
+  customer_id?: string | null;
+  kind?: string | null;
+}
+
+export interface PartnerPayment extends BaseDocument {
+  user_id: string;
+  subscription_tier_id: string;
+  subscription_tier_name?: string | null;
+  amount: number;
+  currency: string;
+  network: string;
+  msisdn: string;
+  payment_id?: string | null;
+  reference: string;
+  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'CANCELLED';
+  customer_id?: string | null;
+  partner_name?: string | null;
 }
 
 export interface Review extends BaseDocument {
@@ -238,7 +279,9 @@ export type CollectionKey =
   | 'partnerSubscriptions'
   | 'branches'
   | 'adminUsers'
-  | 'adminActivityLogs';
+  | 'adminActivityLogs'
+  | 'subscriptionPayments'
+  | 'partnerPayments';
 
 export type CollectionRecordMap = {
   profiles: Profile;
@@ -260,7 +303,8 @@ export type CollectionRecordMap = {
   branches: Branch;
   adminUsers: AdminUser;
   adminActivityLogs: AdminActivityLog;
+  subscriptionPayments: SubscriptionPayment;
+  partnerPayments: PartnerPayment;
 };
 
 export type CollectionRecord<K extends CollectionKey> = CollectionRecordMap[K];
-

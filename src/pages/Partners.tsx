@@ -10,7 +10,7 @@ import { useState } from 'react';
 
 const Partners = () => {
   const { user } = useAuth();
-  const { data: subscriptionData, isLoading } = usePartnerSubscription();
+  const { data: subscription, isLoading } = usePartnerSubscription();
   const [showSubscriptionForm, setShowSubscriptionForm] = useState(false);
 
   const partners = [
@@ -92,13 +92,21 @@ const Partners = () => {
     }
   ];
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   // Show subscription form if user wants to become a partner
   if (showSubscriptionForm) {
     return <PartnerSubscriptionForm />;
   }
 
   // Show partner dashboard if user has an active subscription
-  if (user && subscriptionData?.hasActiveSubscription) {
+  if (user && subscription) {
     return <PartnerDashboard />;
   }
 

@@ -1,0 +1,21 @@
+{
+  "name": "goldfield-cloud-functions",
+  "description": "Firebase Functions for Goldfield Zambia Property Gateway",
+  "type": "module",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "lint": "eslint . --ext .ts",
+    "deploy": "npm run build"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.6.0",
+    "firebase-functions": "^5.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^9.9.0",
+    "typescript": "^5.5.3"
+  }
+}

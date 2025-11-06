@@ -4,12 +4,10 @@ import {
   doc,
   getDoc,
   getDocs,
-  limit,
   orderBy,
   query,
   serverTimestamp,
   updateDoc,
-  where,
 } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions, COLLECTIONS } from '@/lib/constants/firebase';
@@ -36,16 +34,25 @@ export interface UserSubscription {
   id: string;
   user_id: string;
   subscription_tier_id: string;
+  subscription_tier_name?: string | null;
   status: string;
-  trial_ends_at: string | null;
-  current_period_start: string;
-  current_period_end: string;
-  stripe_customer_id: string | null;
-  stripe_subscription_id: string | null;
+  trial_ends_at?: string | null;
+  current_period_start?: string | null;
+  current_period_end?: string | null;
+  lenco_payment_reference?: string | null;
+  lenco_payment_id?: string | null;
+  lenco_customer_id?: string | null;
+  last_payment_status?: string | null;
+  last_payment_at?: string | null;
+  next_billing_at?: string | null;
+  mobile_money_network?: string | null;
+  mobile_money_number_masked?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
   subscription_tier?: SubscriptionTier;
 }
+
+export type MobileMoneyNetwork = 'AIRTEL' | 'MTN' | 'ZAMTEL';
 
 export const useSubscriptionTiers = () => {
   return useQuery({
@@ -67,20 +74,13 @@ export const useUserSubscription = () => {
     queryFn: async () => {
       if (!user) return null;
 
-      const userSubscriptionsRef = collection(db, COLLECTIONS.userSubscriptions);
-      const activeSubscriptionQuery = query(
-        userSubscriptionsRef,
-        where('user_id', '==', user.uid),
-        where('status', '==', 'active'),
-        limit(1),
-      );
-
-      const snapshot = await getDocs(activeSubscriptionQuery);
-      if (snapshot.empty) {
+      const subscriptionRef = doc(db, COLLECTIONS.userSubscriptions, user.uid);
+      const snapshot = await getDoc(subscriptionRef);
+      if (!snapshot.exists()) {
         return null;
       }
 
-      const subscription = serializeDoc<UserSubscription>(snapshot.docs[0]);
+      const subscription = serializeDoc<UserSubscription>(snapshot);
       if (subscription.subscription_tier_id) {
         const tierSnapshot = await getDoc(doc(db, COLLECTIONS.subscriptionTiers, subscription.subscription_tier_id));
         if (tierSnapshot.exists()) {
@@ -101,33 +101,22 @@ export const useUpdateSubscription = () => {
   return useMutation({
     mutationFn: async (data: {
       subscriptionTierId: string;
-      stripeCustomerId?: string;
-      stripeSubscriptionId?: string;
+      subscriptionTierName?: string;
     }) => {
       const currentUser = auth.currentUser;
       if (!currentUser) throw new Error('User must be signed in to update subscription.');
 
-      const userSubscriptionsRef = collection(db, COLLECTIONS.userSubscriptions);
-      const currentQuery = query(
-        userSubscriptionsRef,
-        where('user_id', '==', currentUser.uid),
-        limit(1),
-      );
-      const snapshot = await getDocs(currentQuery);
-
-      if (snapshot.empty) {
+      const subscriptionRef = doc(db, COLLECTIONS.userSubscriptions, currentUser.uid);
+      const existingSnapshot = await getDoc(subscriptionRef);
+      if (!existingSnapshot.exists()) {
         throw new Error('User subscription record not found.');
       }
-
-      const subscriptionDoc = snapshot.docs[0];
-      const subscriptionRef = subscriptionDoc.ref;
 
       await updateDoc(
         subscriptionRef,
         removeUndefined({
           subscription_tier_id: data.subscriptionTierId,
-          stripe_customer_id: data.stripeCustomerId ?? null,
-          stripe_subscription_id: data.stripeSubscriptionId ?? null,
+          subscription_tier_name: data.subscriptionTierName ?? null,
           updated_at: serverTimestamp(),
         }),
       );
@@ -158,12 +147,30 @@ export const useUpdateSubscription = () => {
 
 export const useSubscriptionCheckout = () => {
   return useMutation({
-    mutationFn: async (payload: { subscriptionTierId: string }) => {
+    mutationFn: async (payload: {
+      subscriptionTierId: string;
+      subscriptionTierName: string;
+      amount: number;
+      msisdn: string;
+      mobileMoneyNetwork: MobileMoneyNetwork;
+      currency?: string;
+    }) => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error('User must be signed in to start a checkout.');
       if (!functions) throw new Error('Firebase functions not initialized.');
       const checkoutFn = httpsCallable(functions, 'createSubscriptionCheckout');
-      const result = await checkoutFn(payload);
-      return result.data as { url?: string };
+      const result = await checkoutFn({
+        ...payload,
+        userId: currentUser.uid,
+      });
+      return result.data as {
+        success: boolean;
+        paymentReference: string;
+        paymentId: string;
+        status: string;
+        customerId?: string | null;
+        intentPath?: string;
+      };
     },
   });
 };
-

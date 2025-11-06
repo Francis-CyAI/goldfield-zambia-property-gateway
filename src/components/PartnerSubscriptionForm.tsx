@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,22 +8,35 @@ import { Select, SelectContent, SelectValue, SelectTrigger, SelectItem } from '@
 import { Badge } from '@/components/ui/badge';
 import { Check, Crown, Star, Zap } from 'lucide-react';
 import { usePartnerSubscriptionTiers, useCreatePartnerCheckout } from '@/hooks/usePartnerSubscription';
+import type { MobileMoneyNetwork } from '@/hooks/useSubscription';
 
 const PartnerSubscriptionForm = () => {
   const [partnerName, setPartnerName] = useState('');
   const [businessType, setBusinessType] = useState('');
-  const [selectedTier, setSelectedTier] = useState('');
+  const [selectedTierId, setSelectedTierId] = useState('');
+  const [mobileMoneyNumber, setMobileMoneyNumber] = useState('');
+  const [mobileMoneyNetwork, setMobileMoneyNetwork] = useState<MobileMoneyNetwork | ''>('');
   const { data: tiers, isLoading: tiersLoading } = usePartnerSubscriptionTiers();
   const createCheckout = useCreatePartnerCheckout();
 
+  const selectedTier = useMemo(
+    () => tiers?.find((tier) => tier.id === selectedTierId),
+    [selectedTierId, tiers],
+  );
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!partnerName || !businessType || !selectedTier) return;
+    if (!partnerName || !businessType || !selectedTier || !mobileMoneyNumber || !mobileMoneyNetwork) return;
 
     createCheckout.mutate({
       partnerName,
       businessType,
-      subscriptionTier: selectedTier,
+      subscriptionTierId: selectedTier.id,
+      subscriptionTierName: selectedTier.name,
+      amount: selectedTier.monthly_price,
+      currency: 'ZMW',
+      msisdn: mobileMoneyNumber,
+      mobileMoneyNetwork,
     });
   };
 
@@ -56,11 +69,11 @@ const PartnerSubscriptionForm = () => {
           <Card 
             key={tier.id} 
             className={`cursor-pointer transition-all duration-300 hover:shadow-lg ${
-              selectedTier === tier.name 
+              selectedTierId === tier.id 
                 ? 'ring-2 ring-primary shadow-lg' 
                 : 'hover:shadow-md'
             }`}
-            onClick={() => setSelectedTier(tier.name)}
+            onClick={() => setSelectedTierId(tier.id)}
           >
             <CardHeader className="text-center pb-2">
               <div className="flex items-center justify-center mb-2">
@@ -68,7 +81,7 @@ const PartnerSubscriptionForm = () => {
               </div>
               <CardTitle className="text-xl">{tier.name}</CardTitle>
               <div className="text-3xl font-bold text-primary">
-                ${tier.monthly_price}
+                K{tier.monthly_price}
                 <span className="text-sm text-gray-500 font-normal">/month</span>
               </div>
             </CardHeader>
@@ -134,17 +147,56 @@ const PartnerSubscriptionForm = () => {
             {selectedTier && (
               <div className="p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600 mb-1">Selected Plan:</p>
-                <p className="font-semibold">{selectedTier}</p>
+                <p className="font-semibold">{selectedTier.name}</p>
                 <p className="text-sm text-primary">
-                  ${tiers?.find(t => t.name === selectedTier)?.monthly_price}/month
+                  K{selectedTier.monthly_price}/month
                 </p>
               </div>
             )}
 
+            <div>
+              <Label htmlFor="mobileMoneyNumber">Mobile Money Number *</Label>
+              <Input
+                id="mobileMoneyNumber"
+                value={mobileMoneyNumber}
+                onChange={(e) => setMobileMoneyNumber(e.target.value)}
+                placeholder="+2607XXXXXXXX"
+                required
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                We’ll send a payment prompt to this number.
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="mobileMoneyNetwork">Mobile Money Network *</Label>
+              <Select
+                value={mobileMoneyNetwork}
+                onValueChange={(value) => setMobileMoneyNetwork(value as MobileMoneyNetwork)}
+                required
+              >
+                <SelectTrigger id="mobileMoneyNetwork">
+                  <SelectValue placeholder="Select network" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="AIRTEL">Airtel Money</SelectItem>
+                  <SelectItem value="MTN">MTN MoMo</SelectItem>
+                  <SelectItem value="ZAMTEL">Zamtel</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={!partnerName || !businessType || !selectedTier || createCheckout.isPending}
+              disabled={
+                !partnerName ||
+                !businessType ||
+                !selectedTier ||
+                !mobileMoneyNumber ||
+                !mobileMoneyNetwork ||
+                createCheckout.isPending
+              }
             >
               {createCheckout.isPending ? 'Processing...' : 'Subscribe & Pay'}
             </Button>

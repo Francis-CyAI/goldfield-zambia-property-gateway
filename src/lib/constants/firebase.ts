@@ -77,6 +77,8 @@ export const COLLECTIONS = {
   branches: "branches",
   adminUsers: "admin_users",
   adminActivityLogs: "admin_activity_logs",
+  subscriptionPayments: "subscription_payments",
+  partnerPayments: "partner_payments",
 } as const;
 
 export type CollectionName = keyof typeof COLLECTIONS;
@@ -113,6 +115,8 @@ const converters: { [K in CollectionKey]: FirestoreDataConverter<CollectionRecor
   branches: createConverter(),
   adminUsers: createConverter(),
   adminActivityLogs: createConverter(),
+  subscriptionPayments: createConverter(),
+  partnerPayments: createConverter(),
 };
 
 export const getCollectionRef = <K extends CollectionKey>(key: K): CollectionReference<CollectionRecordMap[K]> =>

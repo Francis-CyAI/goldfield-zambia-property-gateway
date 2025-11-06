@@ -27,10 +27,12 @@ const SubscriptionManagement = () => {
   }
 
   const currentTier = userSubscription?.subscription_tier;
-  const isTrialActive = userSubscription?.trial_ends_at && new Date(userSubscription.trial_ends_at) > new Date();
-  const trialDaysLeft = isTrialActive 
-    ? Math.ceil((new Date(userSubscription.trial_ends_at!).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+  const trialEndDate = userSubscription?.trial_ends_at ? new Date(userSubscription.trial_ends_at) : null;
+  const isTrialActive = trialEndDate ? trialEndDate > new Date() : false;
+  const trialDaysLeft = isTrialActive && trialEndDate
+    ? Math.ceil((trialEndDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
     : 0;
+  const nextBillingDate = userSubscription?.current_period_end ? new Date(userSubscription.current_period_end) : null;
 
   const getTierIcon = (tierName: string) => {
     switch (tierName.toLowerCase()) {
@@ -80,7 +82,7 @@ const SubscriptionManagement = () => {
                       </span>
                     ) : (
                       <span>
-                        Next billing: {format(new Date(userSubscription.current_period_end), 'MMM dd, yyyy')}
+                        Next billing: {nextBillingDate ? format(nextBillingDate, 'MMM dd, yyyy') : 'Pending confirmation'}
                       </span>
                     )}
                   </CardDescription>
