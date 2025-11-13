@@ -92,6 +92,15 @@ To deploy the latest rules and indexes after local changes:
 firebase deploy --only firestore:rules,storage:rules,firestore:indexes
 ```
 
+### Storage CORS
+Uploads from localhost/prod require explicit CORS headers on the Storage bucket. Update `storage-cors.json` (origins already include `localhost:5173`, `localhost:8080`, and the hosted app) and apply it with:
+```sh
+npx firebase-tools storage:cors:set storage-cors.json --project goldfield-8180d
+# or (with gcloud)
+gsutil cors set storage-cors.json gs://goldfield-8180d.firebasestorage.app
+```
+Run the command from an authenticated shell (WSL2/macOS/Linux recommended).
+
 ### Required Environment Variables
 Create a single `.env` file at the project root (the file in the repo is the canonical template). It is loaded by both Vite and the Cloud Functions build.
 

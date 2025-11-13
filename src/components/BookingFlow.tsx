@@ -48,6 +48,10 @@ const BookingFlow = ({ property, onClose }: BookingFlowProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const createBooking = useCreateBooking();
+
+  console.log(
+    "User object is: ", user
+  )
   
   const [currentStep, setCurrentStep] = useState<BookingStep>('dates');
   const [bookingData, setBookingData] = useState({
@@ -55,8 +59,8 @@ const BookingFlow = ({ property, onClose }: BookingFlowProps) => {
     checkOut: '',
     guests: 1,
     guestDetails: {
-      firstName: '',
-      lastName: '',
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
       email: user?.email || '',
       phone: '',
       specialRequests: ''

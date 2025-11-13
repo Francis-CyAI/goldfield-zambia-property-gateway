@@ -30,6 +30,9 @@ Firebase emulator workflow:
 Security & index deployments:
 - Rules: `firebase deploy --only firestore:rules,storage:rules`
 - Indexes: `firebase deploy --only firestore:indexes`
+- Update Storage CORS (allows localhost + prod uploads):
+  - Edit `storage-cors.json` if origins change.
+  - Apply with `npx firebase-tools storage:cors:set storage-cors.json --project goldfield-8180d` (requires Firebase CLI auth in a WSL2/Unix shell) or `gsutil cors set storage-cors.json gs://goldfield-8180d.firebasestorage.app`.
 
 Functions setup:
 - Install dependencies: `npm install --prefix functions`
