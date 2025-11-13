@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Heart, Star, MapPin, Users, Bed, Bath, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import BookingFlow from './BookingFlow';
-import { Property } from '@/types/property';
+import type { Property } from '@/lib/models';
 
 interface PropertyCardProps {
   property: Property & { isWishlisted?: boolean };
@@ -15,6 +15,8 @@ interface PropertyCardProps {
 const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
   const [showBookingFlow, setShowBookingFlow] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(property.isWishlisted || false);
+  const listingType = property.listing_type ?? (property.sale_price ? 'sale' : 'rental');
+  const mainImage = property.images?.[0] || '/placeholder.svg';
 
   const handleWishlistToggle = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -24,7 +26,7 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
 
   const handleBookNow = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (property.listing_type === 'rental' && property.price_per_night) {
+    if (listingType === 'rental' && property.price_per_night) {
       setShowBookingFlow(true);
     }
   };
@@ -41,7 +43,7 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
         <div className="relative">
           <div className="aspect-[4/3] overflow-hidden">
             <img
-              src={property.images[0] || '/placeholder.svg'}
+              src={mainImage}
               alt={property.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
             />
@@ -69,8 +71,8 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
 
           {/* Listing Type Badge */}
           <div className="absolute top-3 left-3">
-            <Badge variant={property.listing_type === 'sale' ? 'default' : 'secondary'}>
-              {property.listing_type === 'sale' ? 'For Sale' : 'For Rent'}
+            <Badge variant={listingType === 'sale' ? 'default' : 'secondary'}>
+              {listingType === 'sale' ? 'For Sale' : 'For Rent'}
             </Badge>
           </div>
         </div>
@@ -91,19 +93,19 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
 
             <div className="flex items-center justify-between text-sm text-gray-600">
               <div className="flex items-center space-x-4">
-                {property.listing_type === 'rental' && property.max_guests && (
+                {listingType === 'rental' && property.max_guests && (
                   <div className="flex items-center">
                     <Users className="h-4 w-4 mr-1" />
                     <span>{property.max_guests} guests</span>
                   </div>
                 )}
-                {property.bedrooms > 0 && (
+                {(property.bedrooms ?? 0) > 0 && (
                   <div className="flex items-center">
                     <Bed className="h-4 w-4 mr-1" />
                     <span>{property.bedrooms} bed</span>
                   </div>
                 )}
-                {property.bathrooms > 0 && (
+                {(property.bathrooms ?? 0) > 0 && (
                   <div className="flex items-center">
                     <Bath className="h-4 w-4 mr-1" />
                     <span>{property.bathrooms} bath</span>
@@ -120,7 +122,7 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
 
             <div className="flex items-center justify-between">
               <div>
-                {property.listing_type === 'sale' ? (
+                {listingType === 'sale' ? (
                   <>
                     <span className="text-xl font-bold">ZMW {property.sale_price?.toLocaleString()}</span>
                     <span className="text-gray-600 text-sm block">Sale Price</span>
@@ -133,7 +135,7 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
                 )}
               </div>
               
-              {property.listing_type === 'sale' ? (
+                  {listingType === 'sale' ? (
                 <Button 
                   onClick={handleInquiry}
                   size="sm"
@@ -163,7 +165,7 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
         </CardContent>
       </Card>
 
-      {showBookingFlow && property.listing_type === 'rental' && property.price_per_night && (
+      {showBookingFlow && listingType === 'rental' && property.price_per_night && (
         <BookingFlow 
           property={{
             ...property,

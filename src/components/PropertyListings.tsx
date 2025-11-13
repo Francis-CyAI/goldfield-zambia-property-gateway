@@ -19,7 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Property } from '@/hooks/useProperties';
+import type { Property } from '@/lib/models';
 
 interface PropertyListingsProps {
   properties: Property[];

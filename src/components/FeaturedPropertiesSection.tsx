@@ -1,91 +1,39 @@
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useMemo, useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import PropertyCard from './PropertyCard';
 import { Zap, TrendingUp } from 'lucide-react';
-
-// Mock data - this would come from your API
-const featuredProperties = [
-  {
-    id: '1',
-    title: 'Luxury Villa in Lusaka',
-    location: 'Kabulonga, Lusaka',
-    price_per_night: 450,
-    max_guests: 8,
-    bedrooms: 4,
-    bathrooms: 3,
-    property_type: 'villa',
-    amenities: ['WiFi', 'Pool', 'Garden', 'Parking'],
-    images: ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop'],
-    rating: 4.9,
-    reviewCount: 47,
-    cleaningFee: 50,
-    serviceFee: 25,
-    listing_type: 'rental' as const
-  },
-  {
-    id: '2',
-    title: 'Modern Apartment Downtown',
-    location: 'Cairo Road, Lusaka',
-    price_per_night: 180,
-    max_guests: 4,
-    bedrooms: 2,
-    bathrooms: 2,
-    property_type: 'apartment',
-    amenities: ['WiFi', 'Kitchen', 'Balcony'],
-    images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop'],
-    rating: 4.7,
-    reviewCount: 32,
-    cleaningFee: 30,
-    serviceFee: 15,
-    listing_type: 'rental' as const
-  },
-  {
-    id: '3',
-    title: 'Safari Lodge Experience',
-    location: 'South Luangwa National Park',
-    price_per_night: 650,
-    max_guests: 6,
-    bedrooms: 3,
-    bathrooms: 2,
-    property_type: 'lodge',
-    amenities: ['Full Board', 'Game Drives', 'Pool', 'Spa'],
-    images: ['https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop'],
-    rating: 5.0,
-    reviewCount: 89,
-    cleaningFee: 75,
-    serviceFee: 35,
-    listing_type: 'rental' as const
-  },
-  {
-    id: '4',
-    title: 'Lakeside Cottage',
-    location: 'Lake Kariba',
-    price_per_night: 320,
-    max_guests: 5,
-    bedrooms: 2,
-    bathrooms: 1,
-    property_type: 'cottage',
-    amenities: ['WiFi', 'Lakefront', 'Boat Access', 'BBQ'],
-    images: ['https://images.unsplash.com/photo-1544077960-604201fe74bc?w=800&h=600&fit=crop'],
-    rating: 4.8,
-    reviewCount: 23,
-    cleaningFee: 40,
-    serviceFee: 20,
-    listing_type: 'rental' as const
-  }
-];
+import { Skeleton } from '@/components/ui/skeleton';
+import { useProperties } from '@/hooks/useProperties';
 
 const FeaturedPropertiesSection = () => {
+  const { data: properties = [], isLoading } = useProperties();
   const [wishlistedProperties, setWishlistedProperties] = useState<string[]>([]);
 
+  const featuredProperties = useMemo(() => properties.slice(0, 4), [properties]);
+
   const handleWishlistToggle = (propertyId: string) => {
-    setWishlistedProperties(prev => 
-      prev.includes(propertyId) 
-        ? prev.filter(id => id !== propertyId)
-        : [...prev, propertyId]
+    setWishlistedProperties((prev) =>
+      prev.includes(propertyId) ? prev.filter((id) => id !== propertyId) : [...prev, propertyId],
     );
   };
+
+  const renderSkeletonCards = () =>
+    Array.from({ length: 4 }, (_, index) => (
+      <Card key={index} className="overflow-hidden">
+        <Skeleton className="h-48 w-full" />
+        <CardContent className="space-y-3 pt-4">
+          <Skeleton className="h-5 w-3/4" />
+          <Skeleton className="h-4 w-1/2" />
+          <Skeleton className="h-4 w-2/3" />
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-16" />
+          </div>
+        </CardContent>
+      </Card>
+    ));
 
   return (
     <section className="py-16 bg-gray-50">
@@ -96,30 +44,56 @@ const FeaturedPropertiesSection = () => {
             <h2 className="text-3xl font-bold text-gray-900">Featured Properties</h2>
           </div>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Discover handpicked accommodations across Zambia with instant booking and secure payments
+            Discover handpicked listings added by property owners across Zambia. New uploads appear here
+            automatically.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredProperties.map((property) => (
-            <div key={property.id} className="relative">
-              <PropertyCard 
-                property={{
-                  ...property,
-                  isWishlisted: wishlistedProperties.includes(property.id)
-                }}
-                onWishlistToggle={handleWishlistToggle}
-              />
-              {property.rating >= 4.8 && (
-                <div className="absolute -top-2 -right-2 z-10">
-                  <div className="bg-primary text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center space-x-1">
-                    <Zap className="h-3 w-3" />
-                    <span>Popular</span>
-                  </div>
+          {isLoading && renderSkeletonCards()}
+
+          {!isLoading && featuredProperties.length > 0 && (
+            <>
+              {featuredProperties.map((property) => (
+                <div key={property.id} className="relative">
+                  <PropertyCard
+                    property={{
+                      ...property,
+                      listing_type: property.listing_type ?? (property.sale_price ? 'sale' : 'rental'),
+                      isWishlisted: wishlistedProperties.includes(property.id),
+                    }}
+                    onWishlistToggle={handleWishlistToggle}
+                  />
+                  {(property.rating ?? 0) >= 4.8 && (
+                    <div className="absolute -top-2 -right-2 z-10">
+                      <div className="bg-primary text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center space-x-1">
+                        <Zap className="h-3 w-3" />
+                        <span>Popular</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+              ))}
+            </>
+          )}
+
+          {!isLoading && featuredProperties.length === 0 && (
+            <Card className="p-8 text-center col-span-full">
+              <div className="flex flex-col items-center space-y-4">
+                <Zap className="h-10 w-10 text-primary" />
+                <div>
+                  <h3 className="text-xl font-semibold">No featured listings yet</h3>
+                  <p className="text-gray-600 max-w-lg">
+                    Once hosts start uploading properties, they will automatically appear here for renters and
+                    buyers.
+                  </p>
+                </div>
+                <Button onClick={() => (window.location.href = '/list-property')}>
+                  List your first property
+                </Button>
+              </div>
+            </Card>
+          )}
         </div>
 
         <div className="text-center mt-12">

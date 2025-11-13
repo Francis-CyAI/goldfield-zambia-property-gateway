@@ -22,6 +22,7 @@ export interface Property extends BaseDocument {
   property_type?: string | null;
   price_per_night?: number | null;
   sale_price?: number | null;
+  listing_type?: 'rental' | 'sale';
   max_guests?: number | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
@@ -29,6 +30,11 @@ export interface Property extends BaseDocument {
   images?: string[];
   is_active?: boolean;
   host_id?: string;
+  size_acres?: number | null;
+  rating?: number | null;
+  reviewCount?: number | null;
+  cleaningFee?: number | null;
+  serviceFee?: number | null;
 }
 
 export interface PropertyAvailability extends BaseDocument {
