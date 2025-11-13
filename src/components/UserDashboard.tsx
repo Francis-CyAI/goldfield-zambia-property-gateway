@@ -38,9 +38,9 @@ const UserDashboard = () => {
     return 'Good Evening';
   };
 
-  const displayName = profile?.first_name 
-    ? `${profile.first_name} ${profile.last_name || ''}`.trim()
-    : user?.email?.split('@')[0] || 'User';
+  const displayName = user?.displayName
+    || (profile?.first_name ? `${profile.first_name} ${profile.last_name || ''}`.trim() : undefined)
+    || user?.email?.split('@')[0] || 'User';
 
   // Get subscription limits
   const currentTier = userSubscription?.subscription_tier;

@@ -44,11 +44,18 @@ const AuthButton = () => {
 
   const displayName = profile?.first_name && profile?.last_name 
     ? `${profile.first_name} ${profile.last_name}`
-    : user.email;
+    : undefined;
 
-  const initials = profile?.first_name && profile?.last_name
-    ? `${profile.first_name[0]}${profile.last_name[0]}`
-    : user.email?.[0]?.toUpperCase() || 'U';
+  const computedDisplayName = user.displayName || displayName || user.email?.split('@')[0] || 'User';
+
+  const nameForInitials = user.displayName || (profile?.first_name ? `${profile.first_name} ${profile.last_name || ''}`.trim() : user.email || 'User');
+  const initials = nameForInitials
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -85,7 +92,7 @@ const AuthButton = () => {
             <AvatarFallback className="text-sm">{initials}</AvatarFallback>
           </Avatar>
           <div className="hidden md:flex flex-col items-start">
-            <span className="text-sm font-medium">{displayName}</span>
+            <span className="text-sm font-medium">{computedDisplayName}</span>
             {profile?.role && (
               <Badge className={`text-xs ${getRoleBadgeColor(profile.role)}`}>
                 {getRoleDisplayName(profile.role)}
@@ -97,8 +104,8 @@ const AuthButton = () => {
       
       <DropdownMenuContent align="end" className="w-56">
         <div className="flex flex-col space-y-1 p-2">
-          <p className="text-sm font-medium">{displayName}</p>
-          <p className="text-xs text-gray-500">{user.email}</p>
+          <p className="text-sm font-medium">{computedDisplayName}</p>
+          <p className="text-xs text-gray-500">{user.displayName || profile?.first_name || user.email?.split('@')[0] || ''}</p>
           {profile?.role && (
             <Badge className={`text-xs w-fit ${getRoleBadgeColor(profile.role)}`}>
               {getRoleDisplayName(profile.role)}

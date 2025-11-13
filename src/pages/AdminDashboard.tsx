@@ -15,6 +15,7 @@ import {
   Settings
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
 import AdminUserManagement from '@/components/admin/AdminUserManagement';
 import AdminPropertyManagement from '@/components/admin/AdminPropertyManagement';
 import AdminCommissionTracking from '@/components/admin/AdminCommissionTracking';
@@ -25,6 +26,7 @@ import { useAdminStatus } from '@/hooks/useAdminStatus';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
+  const { data: profile } = useProfile(user?.uid);
   const { data: adminStatus, isLoading } = useAdminStatus();
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -63,7 +65,7 @@ const AdminDashboard = () => {
             <div>
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
               <p className="text-gray-600 mt-1 text-xs sm:text-sm lg:text-base">
-                Welcome back, {user?.email}
+                Welcome back, {user?.displayName || profile?.first_name || user?.email?.split('@')[0]}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
