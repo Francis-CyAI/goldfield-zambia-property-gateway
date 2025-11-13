@@ -1,10 +1,11 @@
 # Firebase Core Setup Audit
 
 ## Environment Variables
-- `.env` now contains only Firebase keys required by Vite.
+- `.env` is the single source for both Vite and Cloud Functions (loaded in `functions/src/env.ts`).
 - Keep these values in sync with the Firebase console (`Project settings` → `General`).
+- Required keys now cover Firebase (`VITE_FIREBASE_*`, `VITE_USE_FIREBASE_EMULATOR`) plus backend-only secrets (`LENCO_*`, `CONTACT_*`).
 - Rotate credentials through the console and update `.env` when necessary.
-- Verified usage: `src/lib/constants/firebase.ts` is the single entry point that reads `import.meta.env.VITE_FIREBASE_*`, enforcing validation through `requireEnv`.
+- Verified usage: `src/lib/constants/firebase.ts` gate-keeps all `import.meta.env.VITE_FIREBASE_*` reads and `functions/src/config.ts` only references `process.env`.
 - Supabase-specific utilities and edge functions have been removed. Firebase handles auth, data, storage, and functions.
 
 ## Current Commands

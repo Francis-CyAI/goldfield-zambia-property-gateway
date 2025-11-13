@@ -93,7 +93,9 @@ firebase deploy --only firestore:rules,storage:rules,firestore:indexes
 ```
 
 ### Required Environment Variables
-Create a `.env` file (see example in the repo) with:
+Create a single `.env` file at the project root (the file in the repo is the canonical template). It is loaded by both Vite and the Cloud Functions build.
+
+Frontend (Vite) values:
 - `VITE_FIREBASE_API_KEY`
 - `VITE_FIREBASE_AUTH_DOMAIN`
 - `VITE_FIREBASE_PROJECT_ID`
@@ -101,6 +103,15 @@ Create a `.env` file (see example in the repo) with:
 - `VITE_FIREBASE_MESSAGING_SENDER_ID`
 - `VITE_FIREBASE_APP_ID`
 - `VITE_FIREBASE_MEASUREMENT_ID`
+- `VITE_USE_FIREBASE_EMULATOR` (optional flag for local emulators)
+
+Functions / shared backend values:
+- `LENCO_API_KEY`
+- `LENCO_BASE_URL` (optional, defaults to the sandbox URL)
+- `LENCO_BUSINESS_ID`
+- `LENCO_PARTNER_PORTAL_URL` (optional, used in notification payloads)
+- `CONTACT_RECIPIENT`
+- `CONTACT_CC` (optional list of comma-separated emails)
 
 ### Deployment
 ```sh
@@ -112,13 +123,10 @@ Install function dependencies locally before deploying:
 ```sh
 npm install --prefix functions
 ```
-Configure required Lenco and notification secrets:
+The functions import the shared `.env` at runtime (see `functions/src/env.ts`), so the same file drives both the frontend and backend. When deploying to Firebase, surface the same variables as standard environment variables or secrets before running `firebase deploy`, e.g. in CI:
 ```sh
-firebase functions:config:set \
-  lenco.api_key="YOUR_LENCO_KEY" \
-  lenco.base_url="https://sandbox.lenco.ng/api/v2" \
-  lenco.business_id="YOUR_BUSINESS_ID" \
-  notifications.contact_recipient="support@example.com"
+export $(grep -v '^#' .env | xargs)
+firebase deploy --only functions
 ```
 Deploy callable and scheduled functions:
 ```sh
