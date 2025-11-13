@@ -195,7 +195,7 @@ const Header = () => {
             </Button>
           )}
 
-          <AuthButton />
+          <AuthButton showName={false} />
 
           {/* Mobile menu */}
           <Sheet>

@@ -15,7 +15,7 @@ import { useProfile } from '@/hooks/useProfile';
 import { Link } from 'react-router-dom';
 import { User, LogOut, Settings, Building, Heart } from 'lucide-react';
 
-const AuthButton = () => {
+const AuthButton = ({ showName = true }: { showName?: boolean }) => {
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile(user?.uid);
   const [isLoading, setIsLoading] = useState(false);
@@ -86,19 +86,24 @@ const AuthButton = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="flex items-center space-x-2 p-2">
+        <Button
+          variant="ghost"
+          className={showName ? 'flex items-center space-x-2 p-2' : 'p-0'}
+        >
           <Avatar className="h-8 w-8">
             <AvatarImage src="" />
             <AvatarFallback className="text-sm">{initials}</AvatarFallback>
           </Avatar>
-          <div className="hidden md:flex flex-col items-start">
-            <span className="text-sm font-medium">{computedDisplayName}</span>
-            {profile?.role && (
-              <Badge className={`text-xs ${getRoleBadgeColor(profile.role)}`}>
-                {getRoleDisplayName(profile.role)}
-              </Badge>
-            )}
-          </div>
+          {showName && (
+            <div className="hidden md:flex flex-col items-start">
+              <span className="text-sm font-medium truncate max-w-[160px]">{computedDisplayName}</span>
+              {profile?.role && (
+                <Badge className={`text-xs ${getRoleBadgeColor(profile.role)}`}>
+                  {getRoleDisplayName(profile.role)}
+                </Badge>
+              )}
+            </div>
+          )}
         </Button>
       </DropdownMenuTrigger>
       
