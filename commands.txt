@@ -15,11 +15,8 @@ Environment variables required in `.env` (shared by Vite + Functions):
 - `VITE_FIREBASE_MEASUREMENT_ID`
 - `VITE_USE_FIREBASE_EMULATOR` (optional)
 - `LENCO_API_KEY`
-- `LENCO_BASE_URL` (optional, defaults to sandbox)
-- `LENCO_BUSINESS_ID`
-- `LENCO_PARTNER_PORTAL_URL` (optional)
+- `LENCO_BASE_URL` (optional, defaults to `https://api.lenco.co/access/v2`)
 - `CONTACT_RECIPIENT`
-- `CONTACT_CC` (optional)
 
 Deploy command:
 $ firebase deploy --only hosting:goldfield-zambia-property-gateway

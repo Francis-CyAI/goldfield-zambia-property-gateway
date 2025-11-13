@@ -57,7 +57,6 @@ export const acceptPayment = async (
 ): Promise<LencoPaymentResponse> => {
   const endpoint = `${config.lenco.baseUrl}/accept-payments`;
   const body = {
-    businessId: config.lenco.businessId,
     amount: payload.amount,
     currency: payload.currency,
     narration: payload.narration,

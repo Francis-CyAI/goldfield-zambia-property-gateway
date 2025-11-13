@@ -79,7 +79,6 @@ export const sendContactEmail = onCall<ContactPayload>(async (request) => {
     type: "contact",
     contact_id: docRef.id,
     to: config.notifications.contactRecipient,
-    cc: config.notifications.contactCc || null,
     payload: {
       name: data.name,
       email: data.email,
@@ -274,17 +273,6 @@ export const createPartnerCheckout = onCall<PartnerCheckoutPayload>(async (reque
     status: payment.status,
     customerId: payment.customerId ?? null,
     intentPath: intentRef.path,
-  };
-});
-
-export const partnerCustomerPortal = onCall(async () => {
-  if (!config.lenco.partnerPortalUrl) {
-    throw new HttpsError("failed-precondition", "Partner portal URL is not configured.");
-  }
-
-  return {
-    success: true,
-    url: config.lenco.partnerPortalUrl,
   };
 });
 

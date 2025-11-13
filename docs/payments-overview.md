@@ -4,21 +4,13 @@ The Firebase backend replaces the previous Supabase Edge Functions and Stripe fl
 
 ## Environment Variables
 
-Configure the following Firebase Functions environment variables (`firebase functions:config:set ...`):
+All Firebase Functions read from the shared project `.env`. Populate at least:
 
 | Key | Purpose |
 | --- | --- |
-| `lenco.api_key` | Bearer token for Lenco API requests. |
-| `lenco.base_url` | Base URL for the Lenco API (e.g. `https://sandbox.lenco.ng`). |
-| `lenco.business_id` | Identifier of the business/merchant account running payments. |
-| `notifications.contact_recipient` | Email address that should receive contact form submissions. |
-| `notifications.contact_cc` | Optional CC address for contact messages. |
-
-Optional extras:
-
-| Key | Purpose |
-| --- | --- |
-| `lenco.partner_portal_url` | Custom URL for partner self-service portals (if provided by back-office tooling). |
+| `LENCO_API_KEY` | Bearer token for Lenco API requests. |
+| `LENCO_BASE_URL` | Base URL for the Lenco API (defaults to `https://api.lenco.co/access/v2`). |
+| `CONTACT_RECIPIENT` | Email address that should receive contact form submissions. |
 
 ## Callable Functions
 
@@ -28,7 +20,6 @@ Optional extras:
 | `createSubscriptionCheckout` | Initiates a Lenco mobile money payment for a platform subscription, storing the payment intent and returning tracking metadata to the client. |
 | `checkPartnerSubscription` | Confirms the latest Lenco payment status for partner subscriptions and reconciles the Firestore documents. |
 | `createPartnerCheckout` | Starts a partner subscription payment (pay-as-you-go or tiered) and records the payment reference for follow-up. |
-| `partnerCustomerPortal` | Returns a URL that partners can open to manage their billing (configurable via Functions config). |
 
 ## Background Automation
 

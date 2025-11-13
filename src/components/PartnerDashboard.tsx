@@ -3,21 +3,12 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Building2, 
-  Calendar, 
-  CreditCard, 
-  Settings,
-  CheckCircle,
-  AlertCircle,
-  RefreshCw
-} from 'lucide-react';
-import { usePartnerSubscription, usePartnerCustomerPortal, useCheckPartnerSubscription } from '@/hooks/usePartnerSubscription';
+import { Building2, Settings, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { usePartnerSubscription, useCheckPartnerSubscription } from '@/hooks/usePartnerSubscription';
 import { format } from 'date-fns';
 
 const PartnerDashboard = () => {
   const { data: subscription, isLoading, refetch } = usePartnerSubscription();
-  const customerPortal = usePartnerCustomerPortal();
   const checkSubscription = useCheckPartnerSubscription();
 
   if (isLoading) {
@@ -131,27 +122,6 @@ const PartnerDashboard = () => {
 
       {/* Quick Actions */}
       <div className="grid md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <CreditCard className="h-5 w-5" />
-              Billing
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 mb-3">
-              Manage your payment methods and billing history
-            </p>
-            <Button 
-              onClick={() => customerPortal.mutate()}
-              disabled={customerPortal.isPending}
-              className="w-full"
-            >
-              {customerPortal.isPending ? 'Loading...' : 'Manage Billing'}
-            </Button>
-          </CardContent>
-        </Card>
-
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">

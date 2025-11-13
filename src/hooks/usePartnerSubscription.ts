@@ -131,32 +131,6 @@ export const useCreatePartnerCheckout = () => {
   });
 };
 
-export const usePartnerCustomerPortal = () => {
-  const { toast } = useToast();
-
-  return useMutation({
-    mutationFn: async () => {
-      if (!functions) throw new Error('Firebase functions not initialized.');
-      const portalFn = httpsCallable(functions, 'partnerCustomerPortal');
-      const result = await portalFn();
-      return result.data as { url?: string };
-    },
-    onSuccess: (data) => {
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    },
-    onError: (error) => {
-      console.error('Error accessing customer portal:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to access customer portal. Please try again.',
-        variant: 'destructive',
-      });
-    },
-  });
-};
-
 export const useCheckPartnerSubscription = () => {
   const { toast } = useToast();
 

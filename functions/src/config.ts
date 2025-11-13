@@ -21,12 +21,9 @@ const required = (envKey: string): string => {
 export const config = {
   lenco: {
     apiKey: required("LENCO_API_KEY"),
-    baseUrl: readEnvValue("LENCO_BASE_URL") ?? "https://sandbox.lenco.ng/api/v2",
-    businessId: required("LENCO_BUSINESS_ID"),
-    partnerPortalUrl: readEnvValue("LENCO_PARTNER_PORTAL_URL"),
+    baseUrl: readEnvValue("LENCO_BASE_URL") ?? "https://api.lenco.co/access/v2",
   },
   notifications: {
     contactRecipient: required("CONTACT_RECIPIENT"),
-    contactCc: readEnvValue("CONTACT_CC"),
   },
 };

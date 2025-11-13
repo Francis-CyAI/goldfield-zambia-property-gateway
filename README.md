@@ -107,11 +107,8 @@ Frontend (Vite) values:
 
 Functions / shared backend values:
 - `LENCO_API_KEY`
-- `LENCO_BASE_URL` (optional, defaults to the sandbox URL)
-- `LENCO_BUSINESS_ID`
-- `LENCO_PARTNER_PORTAL_URL` (optional, used in notification payloads)
+- `LENCO_BASE_URL` (optional, defaults to `https://api.lenco.co/access/v2`)
 - `CONTACT_RECIPIENT`
-- `CONTACT_CC` (optional list of comma-separated emails)
 
 ### Deployment
 ```sh
