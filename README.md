@@ -98,6 +98,8 @@ Uploads from localhost/prod require explicit CORS headers on the Storage bucket.
 npx firebase-tools storage:cors:set storage-cors.json --project goldfield-8180d
 # or (with gcloud)
 gsutil cors set storage-cors.json gs://goldfield-8180d.firebasestorage.app
+# rerun this whenever you change cors.json
+gsutil cors set storage-cors.json gs://goldfield-8180d.firebasestorage.app
 ```
 Run the command from an authenticated shell (WSL2/macOS/Linux recommended).
 

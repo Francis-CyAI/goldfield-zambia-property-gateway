@@ -2,27 +2,9 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isAdmin() {
-      return isSignedIn() && (
-        let adminSnapshot = firestore.get(/databases/(default)/documents/admin_users/$(request.auth.uid));
-        adminSnapshot != null &&
-        adminSnapshot.data != null &&
-        adminSnapshot.data.is_active == true
-      );
-    }
-
-    match /property-images/{userId}/{allPaths=**} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      allow write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-      allow delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());
-    }
-
     match /{allPaths=**} {
-      allow read, write: if false;
+      allow read: if true;
+      allow write: if request.auth != null;
     }
   }
 }
