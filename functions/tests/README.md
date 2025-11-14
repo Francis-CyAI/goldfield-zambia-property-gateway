@@ -37,3 +37,24 @@ Environment variables let you point to a non-default emulator host:
 | `FUNCTIONS_EMULATOR_PORT` | `5001` |
 
 The script prints both the payload it is sending and the parsed response, so you can quickly verify flows such as mobile money initiation and repeated status checks while the UI is still under development.
+
+## `mobileMoney.test.mjs`
+
+End-to-end smoke tests for the booking mobile money flow. It initiates a payment and immediately calls the verification function twice (by reference and by booking ID).
+
+```bash
+firebase emulators:start --only functions
+# in another terminal
+node tests/mobileMoney.test.mjs
+```
+
+Optional env vars customize the payload:
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `TEST_BOOKING_ID` | Booking ID used during test | `test-booking-<timestamp>` |
+| `TEST_MSISDN` | Phone number passed to Lenco | `0976000000` |
+| `TEST_OPERATOR` | Mobile money operator (`airtel`, `mtn`, `zamtel`) | `airtel` |
+| `TEST_AMOUNT` | Payment amount | `10` |
+
+The script prints JSON responses for each step and exits non-zero if any call fails.
