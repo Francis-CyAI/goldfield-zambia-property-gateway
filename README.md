@@ -141,6 +141,17 @@ Deploy callable and scheduled functions:
 firebase deploy --only functions
 ```
 
+### Local development loop
+- **After every code change inside `functions/src`, rebuild the TypeScript output** so the emulator picks up the latest JavaScript:
+  ```sh
+  npm --prefix functions run build
+  ```
+- **To keep rebuilding automatically while you work**, start a watch process in a separate terminal:
+  ```sh
+  npm --prefix functions run build:watch
+  ```
+  Leave that running, then launch the emulator (`firebase emulators:start --only functions`) in another terminal. Every saved change in `functions/src` triggers a rebuild, and the emulator reloads the updated code.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/572aeb3d-2fb2-4f5d-aaf2-34c485c03cfa) and click on Share -> Publish.

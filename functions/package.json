@@ -8,6 +8,7 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc --project tsconfig.json",
+    "build:watch": "tsc --project tsconfig.json --watch --preserveWatchOutput",
     "lint": "eslint . --ext .ts",
     "deploy": "npm run build"
   },
