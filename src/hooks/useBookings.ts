@@ -69,18 +69,24 @@ export const useHostBookings = (userId?: string) => {
   });
 };
 
+type CreateBookingInput = {
+  property_id: string;
+  check_in: string;
+  check_out: string;
+  guest_count: number;
+  total_price: number;
+  payment_reference?: string;
+  payment_status?: string;
+  payment_method?: string;
+  payment_metadata?: Record<string, unknown> | null;
+};
+
 export const useCreateBooking = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
-    mutationFn: async (bookingData: {
-      property_id: string;
-      check_in: string;
-      check_out: string;
-      guest_count: number;
-      total_price: number;
-    }) => {
+    mutationFn: async (bookingData: CreateBookingInput) => {
       const currentUser = auth.currentUser;
       if (!currentUser) {
         throw new Error('User must be signed in to create a booking.');
@@ -95,7 +101,11 @@ export const useCreateBooking = () => {
         ...bookingData,
         guest_id: currentUser.uid,
         host_id: (property as Property).host_id ?? null,
-        status: 'pending',
+        status: bookingData.payment_status === 'successful' ? 'confirmed' : 'pending',
+        payment_reference: bookingData.payment_reference ?? null,
+        payment_status: bookingData.payment_status ?? null,
+        payment_method: bookingData.payment_method ?? null,
+        payment_metadata: bookingData.payment_metadata ?? null,
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
       };

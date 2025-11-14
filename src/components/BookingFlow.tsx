@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +23,8 @@ import { format, differenceInDays } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCreateBooking } from '@/hooks/useBookings';
 import { useToast } from '@/hooks/use-toast';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/lib/constants/firebase';
 
 interface Property {
   id: string;
@@ -43,6 +45,83 @@ interface BookingFlowProps {
 }
 
 type BookingStep = 'dates' | 'guests' | 'details' | 'payment' | 'confirmation';
+type MobileMoneyProvider = 'airtel' | 'mtn';
+type PaymentPhase = 'idle' | 'initiating' | 'polling' | 'success' | 'failed' | 'timeout';
+
+interface InitiateBookingPaymentRequest {
+  bookingId: string;
+  amount: number;
+  msisdn: string;
+  operator: MobileMoneyProvider | 'zamtel';
+  metadata?: Record<string, unknown>;
+}
+
+interface InitiateBookingPaymentResponse {
+  success: boolean;
+  reference: string;
+  status: string;
+  lencoCollectionId?: string;
+  lencoReference?: string;
+  checkWindowMs: number;
+  expiresAt?: string;
+  amount: number;
+  currency: string;
+}
+
+interface BookingPaymentStatusRequest {
+  reference?: string;
+  bookingId?: string;
+  forceCheck?: boolean;
+}
+
+interface BookingPaymentStatusResponse {
+  success: boolean;
+  reference: string;
+  status: string;
+  inCheckWindow: boolean;
+  manualCheck?: boolean;
+  expiresAt?: string;
+  initiatedAt?: string | null;
+  completedAt?: string | null;
+  lencoCollectionId?: string;
+  lencoReference?: string;
+  checkWindowMs?: number;
+}
+
+interface PendingPaymentSession {
+  bookingId: string;
+  reference: string;
+  lencoCollectionId?: string;
+  lencoReference?: string;
+  checkWindowMs: number;
+  expiresAt?: string;
+  bookingPayload: {
+    check_in: string;
+    check_out: string;
+    guest_count: number;
+    total_price: number;
+  };
+}
+
+interface PaymentProgressState {
+  phase: PaymentPhase;
+  message?: string;
+  reference?: string;
+  attempts: number;
+  status?: string;
+  expiresAt?: string;
+  inCheckWindow?: boolean;
+  manualCheckAllowed: boolean;
+  error?: string;
+}
+
+const sanitizePhoneNumber = (value: string) => value.replace(/[^0-9]/g, '');
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+const isFailureStatus = (status?: string) => {
+  if (!status) return false;
+  const normalized = status.toLowerCase();
+  return normalized === 'failed' || normalized === 'cancelled' || normalized === 'canceled';
+};
 
 const BookingFlow = ({ property, onClose }: BookingFlowProps) => {
   const { user } = useAuth();
@@ -65,13 +144,174 @@ const BookingFlow = ({ property, onClose }: BookingFlowProps) => {
       phone: '',
       specialRequests: ''
     },
-    paymentMethod: 'card' as 'card' | 'mobile_money',
-    mobileMoneyProvider: 'airtel' as 'airtel' | 'mtn',
+    paymentMethod: 'mobile_money' as 'card' | 'mobile_money',
+    mobileMoneyProvider: 'airtel' as MobileMoneyProvider,
     phoneNumber: ''
   });
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [bookingConfirmed, setBookingConfirmed] = useState(false);
+  const [paymentProgress, setPaymentProgress] = useState<PaymentProgressState>({
+    phase: 'idle',
+    attempts: 0,
+    manualCheckAllowed: false,
+  });
+  const [pendingPayment, setPendingPayment] = useState<PendingPaymentSession | null>(null);
+  const [manualCheckLoading, setManualCheckLoading] = useState(false);
+
+  const finalizeBooking = async (session: PendingPaymentSession) => {
+    await createBooking.mutateAsync({
+      property_id: property.id,
+      ...session.bookingPayload,
+      total_price: session.bookingPayload.total_price,
+      payment_reference: session.reference,
+      payment_status: 'successful',
+      payment_method: 'mobile_money',
+      payment_metadata: {
+        lenco_collection_id: session.lencoCollectionId ?? null,
+        lenco_reference: session.lencoReference ?? null,
+        booking_session_id: session.bookingId,
+        expires_at: session.expiresAt ?? null,
+      },
+    });
+
+    setBookingConfirmed(true);
+    setCurrentStep('confirmation');
+    setPaymentProgress((prev) => ({
+      ...prev,
+      phase: 'success',
+      message: 'Payment confirmed!',
+      manualCheckAllowed: false,
+    }));
+    setPendingPayment(null);
+  };
+
+  const pollPaymentStatus = async (reference: string, checkWindowMs: number) => {
+    const endTime = Date.now() + checkWindowMs;
+    const delayMs = Math.min(5000, Math.max(2000, Math.floor(checkWindowMs / 20)));
+    let attempt = 0;
+    let lastResponse: BookingPaymentStatusResponse | null = null;
+
+    while (Date.now() < endTime) {
+      attempt += 1;
+      const response = await checkPaymentCallable({ reference });
+      const data = response.data;
+      lastResponse = data;
+      const status = data.status?.toLowerCase() ?? 'pending';
+
+      setPaymentProgress((prev) => ({
+        ...prev,
+        attempts: attempt,
+        status,
+        reference: data.reference ?? prev.reference,
+        inCheckWindow: data.inCheckWindow ?? prev.inCheckWindow,
+        expiresAt: data.expiresAt ?? prev.expiresAt,
+        message: status === 'successful' ? 'Payment confirmed!' : 'Awaiting payment confirmation...',
+      }));
+
+      if (status === 'successful') {
+        return { success: true, data };
+      }
+
+      if (isFailureStatus(status)) {
+        return { success: false, data };
+      }
+
+      await wait(delayMs);
+    }
+
+    return { success: false, data: lastResponse, timedOut: true as const };
+  };
+
+  const handleManualVerification = async () => {
+    if (!pendingPayment?.reference) {
+      toast({
+        title: 'No payment to verify',
+        description: 'Please initiate a payment first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setManualCheckLoading(true);
+    try {
+      const response = await checkPaymentCallable({
+        reference: pendingPayment.reference,
+        forceCheck: true,
+      });
+      const data = response.data;
+      const status = data.status?.toLowerCase() ?? 'pending';
+
+      setPaymentProgress((prev) => ({
+        ...prev,
+        attempts: prev.attempts + 1,
+        status,
+        phase: status === 'successful' ? 'success' : prev.phase,
+        manualCheckAllowed: status !== 'successful',
+        message:
+          status === 'successful'
+            ? 'Payment confirmed!'
+            : 'Still waiting for payment confirmation. Please try again shortly.',
+      }));
+
+      if (status === 'successful') {
+        await finalizeBooking(pendingPayment);
+        toast({
+          title: 'Payment verified',
+          description: 'We confirmed your payment. Finalizing reservation...',
+        });
+      } else if (isFailureStatus(status)) {
+        setPendingPayment(null);
+        setPaymentProgress((prev) => ({
+          ...prev,
+          phase: 'failed',
+          manualCheckAllowed: false,
+          message: 'Payment failed. Please try again.',
+        }));
+        toast({
+          title: 'Payment failed',
+          description: 'We could not confirm your payment. Please try again.',
+          variant: 'destructive',
+        });
+      } else {
+        setPaymentProgress((prev) => ({
+          ...prev,
+          phase: 'polling',
+        }));
+        toast({
+          title: 'Still pending',
+          description: 'Your payment is still being processed. Please try again in a moment.',
+        });
+      }
+    } catch (error) {
+      console.error('Manual verification error:', error);
+      toast({
+        title: 'Verification failed',
+        description: 'Unable to verify payment at this time. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setManualCheckLoading(false);
+    }
+  };
+
+  const initiatePaymentCallable = useMemo(
+    () =>
+      httpsCallable<InitiateBookingPaymentRequest, InitiateBookingPaymentResponse>(
+        functions,
+        'initiateBookingMobileMoneyPayment',
+      ),
+    [],
+  );
+
+  const checkPaymentCallable = useMemo(
+    () =>
+      httpsCallable<BookingPaymentStatusRequest, BookingPaymentStatusResponse>(
+        functions,
+        'checkBookingMobileMoneyPaymentStatus',
+      ),
+    [],
+  );
 
   const nights = bookingData.checkIn && bookingData.checkOut 
     ? differenceInDays(new Date(bookingData.checkOut), new Date(bookingData.checkIn)) 
@@ -118,15 +358,17 @@ const BookingFlow = ({ property, onClose }: BookingFlowProps) => {
                bookingData.guestDetails.email;
       case 'payment':
         if (bookingData.paymentMethod === 'mobile_money') {
-          return bookingData.phoneNumber.length >= 10;
+          return sanitizePhoneNumber(bookingData.phoneNumber).length >= 9;
         }
-        return true;
+        return false;
       default:
         return true;
     }
   };
 
   const handlePayment = async () => {
+    if (!validateCurrentStep()) return;
+
     if (!user) {
       toast({
         title: 'Authentication required',
@@ -136,38 +378,136 @@ const BookingFlow = ({ property, onClose }: BookingFlowProps) => {
       return;
     }
 
+    if (bookingData.paymentMethod !== 'mobile_money') {
+      toast({
+        title: 'Payment method unavailable',
+        description: 'Only mobile money payments are supported at this time.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const msisdn = sanitizePhoneNumber(bookingData.phoneNumber);
+    if (msisdn.length < 9) {
+      toast({
+        title: 'Invalid phone number',
+        description: 'Enter the mobile money number you plan to use for this payment.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsProcessing(true);
+    setPaymentProgress({
+      phase: 'initiating',
+      message: 'Initiating mobile money payment...',
+      attempts: 0,
+      reference: undefined,
+      status: 'pending',
+      manualCheckAllowed: false,
+    });
 
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const bookingSessionId = `booking_${property.id}_${Date.now()}`;
+      const paymentAmount = Math.round(totalPrice * 100) / 100;
 
-      await createBooking.mutateAsync({
-        property_id: property.id,
-        check_in: bookingData.checkIn,
-        check_out: bookingData.checkOut,
-        guest_count: bookingData.guests,
-        total_price: totalPrice,
+      const response = await initiatePaymentCallable({
+        bookingId: bookingSessionId,
+        amount: paymentAmount,
+        msisdn,
+        operator: bookingData.mobileMoneyProvider,
+        metadata: {
+          propertyId: property.id,
+          guestId: user.uid,
+          checkIn: bookingData.checkIn,
+          checkOut: bookingData.checkOut,
+        },
       });
 
-      setBookingConfirmed(true);
-      setCurrentStep('confirmation');
-      
-      toast({
-        title: 'Booking confirmed!',
-        description: 'Your reservation has been successfully processed.',
-      });
+      const data = response.data;
+      if (!data?.success || !data.reference) {
+        throw new Error('Failed to initiate payment.');
+      }
+
+      const session: PendingPaymentSession = {
+        bookingId: bookingSessionId,
+        reference: data.reference,
+        lencoCollectionId: data.lencoCollectionId,
+        lencoReference: data.lencoReference,
+        checkWindowMs: data.checkWindowMs ?? 180000,
+        expiresAt: data.expiresAt,
+        bookingPayload: {
+          check_in: bookingData.checkIn,
+          check_out: bookingData.checkOut,
+          guest_count: bookingData.guests,
+          total_price: totalPrice,
+        },
+      };
+
+      setPendingPayment(session);
+      setPaymentProgress((prev) => ({
+        ...prev,
+        phase: 'polling',
+        reference: data.reference,
+        status: data.status ?? 'pending',
+        message: 'Awaiting payment confirmation...',
+        expiresAt: data.expiresAt ?? prev.expiresAt,
+        inCheckWindow: true,
+      }));
+
+      const pollResult = await pollPaymentStatus(session.reference, session.checkWindowMs);
+      if (pollResult.success) {
+        await finalizeBooking(session);
+        toast({
+          title: 'Booking confirmed!',
+          description: 'Your reservation has been successfully processed.',
+        });
+      } else if (pollResult.timedOut) {
+        setPaymentProgress((prev) => ({
+          ...prev,
+          phase: 'timeout',
+          manualCheckAllowed: true,
+          inCheckWindow: false,
+          message:
+            'We could not confirm payment automatically. Approve the prompt on your phone then confirm below.',
+        }));
+        toast({
+          title: 'Awaiting payment confirmation',
+          description: 'Click "I have paid" once you approve the mobile money prompt.',
+        });
+      } else {
+        setPendingPayment(null);
+        setPaymentProgress((prev) => ({
+          ...prev,
+          phase: 'failed',
+          manualCheckAllowed: false,
+          message: 'Payment failed. Please try again.',
+        }));
+        toast({
+          title: 'Payment failed',
+          description: 'We could not confirm your payment. Please try again.',
+          variant: 'destructive',
+        });
+      }
     } catch (error) {
-      console.error('Booking error:', error);
+      console.error('Booking payment error:', error);
+      setPendingPayment(null);
+      setPaymentProgress({
+        phase: 'failed',
+        attempts: 0,
+        manualCheckAllowed: false,
+        message: 'Unable to initiate payment. Please try again.',
+        error: error instanceof Error ? error.message : 'Payment error',
+      });
       toast({
-        title: 'Booking failed',
-        description: 'There was an error processing your booking. Please try again.',
+        title: 'Payment error',
+        description: 'We were unable to start the payment. Please try again.',
         variant: 'destructive',
       });
     } finally {
       setIsProcessing(false);
     }
-  };
+};
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -369,9 +709,9 @@ const BookingFlow = ({ property, onClose }: BookingFlowProps) => {
                       onValueChange={(value) => setBookingData({...bookingData, paymentMethod: value as 'card' | 'mobile_money'})}
                     >
                       <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="card" className="flex items-center space-x-2">
+                        <TabsTrigger value="card" className="flex items-center space-x-2" disabled>
                           <CreditCard className="h-4 w-4" />
-                          <span>Card Payment</span>
+                          <span>Card (coming soon)</span>
                         </TabsTrigger>
                         <TabsTrigger value="mobile_money" className="flex items-center space-x-2">
                           <Smartphone className="h-4 w-4" />
@@ -381,16 +721,10 @@ const BookingFlow = ({ property, onClose }: BookingFlowProps) => {
 
                       <TabsContent value="card" className="space-y-4">
                         <div className="p-4 bg-blue-50 rounded-lg">
-                          <div className="flex items-center space-x-2">
-                            <Shield className="h-5 w-5 text-blue-600" />
-                            <span className="text-sm font-medium text-blue-800">
-                              Secure payment with Visa, Mastercard, or Verve
-                            </span>
-                          </div>
+                          <p className="text-sm text-blue-800">
+                            Card payments are not available yet. Please use mobile money to confirm your reservation.
+                          </p>
                         </div>
-                        <p className="text-sm text-gray-600">
-                          You'll be redirected to a secure payment page to complete your transaction.
-                        </p>
                       </TabsContent>
 
                       <TabsContent value="mobile_money" className="space-y-4">
@@ -398,6 +732,7 @@ const BookingFlow = ({ property, onClose }: BookingFlowProps) => {
                           <Label>Mobile Money Provider</Label>
                           <div className="grid grid-cols-2 gap-4 mt-2">
                             <Button
+                              type="button"
                               variant={bookingData.mobileMoneyProvider === 'airtel' ? 'default' : 'outline'}
                               onClick={() => setBookingData({...bookingData, mobileMoneyProvider: 'airtel'})}
                               className="h-12"
@@ -405,6 +740,7 @@ const BookingFlow = ({ property, onClose }: BookingFlowProps) => {
                               Airtel Money
                             </Button>
                             <Button
+                              type="button"
                               variant={bookingData.mobileMoneyProvider === 'mtn' ? 'default' : 'outline'}
                               onClick={() => setBookingData({...bookingData, mobileMoneyProvider: 'mtn'})}
                               className="h-12"
@@ -414,19 +750,61 @@ const BookingFlow = ({ property, onClose }: BookingFlowProps) => {
                           </div>
                         </div>
                         <div>
-                          <Label htmlFor="mobilePhone">Mobile Number</Label>
+                          <Label htmlFor="phoneNumber">Mobile Money Number</Label>
                           <Input
-                            id="mobilePhone"
-                            placeholder="0977123456"
+                            id="phoneNumber"
+                            type="tel"
                             value={bookingData.phoneNumber}
                             onChange={(e) => setBookingData({...bookingData, phoneNumber: e.target.value})}
+                            placeholder="Enter the number registered for mobile money"
                           />
                           <p className="text-sm text-gray-500 mt-1">
-                            Enter your {bookingData.mobileMoneyProvider === 'airtel' ? 'Airtel' : 'MTN'} mobile money number
+                            We'll send a payment prompt to this number. Standard carrier charges may apply.
                           </p>
                         </div>
                       </TabsContent>
                     </Tabs>
+
+                    {paymentProgress.phase !== 'idle' && (
+                      <div className="mt-6 rounded-lg border p-4 space-y-3 bg-gray-50">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-gray-600">Payment status</p>
+                            <p className="text-base font-semibold capitalize">{paymentProgress.status ?? paymentProgress.phase}</p>
+                          </div>
+                          {paymentProgress.reference && (
+                            <div className="text-right">
+                              <p className="text-xs text-gray-500">Reference</p>
+                              <p className="text-sm font-mono">{paymentProgress.reference}</p>
+                            </div>
+                          )}
+                        </div>
+                        {paymentProgress.message && (
+                          <p className="text-sm text-gray-600">{paymentProgress.message}</p>
+                        )}
+                        <div className="flex items-center justify-between text-xs text-gray-500">
+                          <span>Attempts: {paymentProgress.attempts}</span>
+                          {paymentProgress.expiresAt && (
+                            <span>Check window ends: {format(new Date(paymentProgress.expiresAt), 'MMM dd, HH:mm')}</span>
+                          )}
+                        </div>
+                        {paymentProgress.manualCheckAllowed && (
+                          <div className="pt-2 border-t border-dashed">
+                            <p className="text-sm text-gray-600 mb-2">
+                              Approved the payment on your phone? Let us know and we'll re-check instantly.
+                            </p>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              disabled={manualCheckLoading}
+                              onClick={handleManualVerification}
+                            >
+                              {manualCheckLoading ? 'Verifying...' : "I've paid – verify now"}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
