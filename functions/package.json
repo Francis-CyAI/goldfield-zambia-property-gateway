@@ -5,6 +5,7 @@
   "engines": {
     "node": "20"
   },
+  "main": "lib/index.js",
   "scripts": {
     "build": "tsc --project tsconfig.json",
     "lint": "eslint . --ext .ts",

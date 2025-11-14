@@ -1,9 +1,9 @@
-import { initializeApp } from "firebase-admin/app";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { logger, setGlobalOptions } from "firebase-functions/v2";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { config } from "./config.js";
+import "./firebaseApp.js";
 import {
   acceptPayment,
   getCollectionById,
@@ -14,8 +14,6 @@ import {
   MobileMoneyOperator,
 } from "./lencoClient.js";
 import { db, serverTimestamp } from "./firestore.js";
-
-initializeApp();
 setGlobalOptions({
   region: "africa-south1",
   memory: "256MiB",
