@@ -9,6 +9,19 @@ const readEnvValue = (envKey: string): string | undefined => {
   return undefined;
 };
 
+const readPositiveNumber = (envKey: string, fallback: number): number => {
+  const raw = readEnvValue(envKey);
+  if (!raw) {
+    return fallback;
+  }
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    logger.warn(`Invalid numeric value for ${envKey}. Using fallback ${fallback}.`);
+    return fallback;
+  }
+  return parsed;
+};
+
 const required = (envKey: string): string => {
   const value = readEnvValue(envKey);
   if (!value) {
@@ -22,6 +35,8 @@ export const config = {
   lenco: {
     apiKey: required("LENCO_API_KEY"),
     baseUrl: readEnvValue("LENCO_BASE_URL") ?? "https://api.lenco.co/access/v2",
+    collectionStatusCheckDurationMs:
+      readPositiveNumber("LENCO_COLLECTION_CHECK_DURATION_SECONDS", 180) * 1000,
   },
   notifications: {
     contactRecipient: required("CONTACT_RECIPIENT"),

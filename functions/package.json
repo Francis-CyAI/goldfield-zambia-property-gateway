@@ -13,7 +13,7 @@
   "dependencies": {
     "dotenv": "^16.6.1",
     "firebase-admin": "^12.6.0",
-    "firebase-functions": "^5.1.1",
+    "firebase-functions": "^7.0.0",
     "vite_react_shadcn_ts": "file:.."
   },
   "devDependencies": {

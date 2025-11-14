@@ -1,10 +1,18 @@
 import { initializeApp } from "firebase-admin/app";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { logger, setGlobalOptions } from "firebase-functions/v2";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { config } from "./config.js";
-import { acceptPayment, getPaymentStatus, MobileMoneyNetwork } from "./lencoClient.js";
+import {
+  acceptPayment,
+  getCollectionById,
+  getCollectionStatusByReference,
+  getPaymentStatus,
+  initiateMobileMoneyCollection,
+  MobileMoneyNetwork,
+  MobileMoneyOperator,
+} from "./lencoClient.js";
 import { db, serverTimestamp } from "./firestore.js";
 
 initializeApp();
@@ -45,6 +53,26 @@ type PartnerCheckoutPayload = {
   msisdn: string;
 };
 
+type BookingPaymentPayload = {
+  bookingId: string;
+  amount: number;
+  msisdn: string;
+  operator: string;
+  country?: string;
+  bearer?: "merchant" | "customer";
+  currency?: string;
+  reference?: string;
+  metadata?: Record<string, unknown>;
+};
+
+type BookingPaymentStatusPayload = {
+  reference?: string;
+  bookingId?: string;
+  forceCheck?: boolean;
+};
+
+const BOOKING_PAYMENTS_COLLECTION = "booking_payments";
+
 const validateNetwork = (network: string): MobileMoneyNetwork => {
   const upper = network.toUpperCase();
   if (upper !== "AIRTEL" && upper !== "MTN" && upper !== "ZAMTEL") {
@@ -54,6 +82,45 @@ const validateNetwork = (network: string): MobileMoneyNetwork => {
 };
 
 const maskPhone = (value: string) => value.replace(/.(?=.{4})/g, "*");
+
+const normalizeOperator = (value: string): MobileMoneyOperator => {
+  const lower = value.toLowerCase();
+  if (lower !== "airtel" && lower !== "mtn" && lower !== "zamtel") {
+    throw new HttpsError("invalid-argument", "Unsupported mobile money operator");
+  }
+  return lower as MobileMoneyOperator;
+};
+
+const resolveBookingPaymentDoc = async (payload: BookingPaymentStatusPayload) => {
+  if (payload.reference) {
+    const doc = await db.collection(BOOKING_PAYMENTS_COLLECTION).doc(payload.reference).get();
+    if (doc.exists) {
+      return doc;
+    }
+  }
+
+  if (payload.bookingId) {
+    const snapshot = await db
+      .collection(BOOKING_PAYMENTS_COLLECTION)
+      .where("booking_id", "==", payload.bookingId)
+      .orderBy("initiated_at", "desc")
+      .limit(1)
+      .get();
+
+    if (!snapshot.empty) {
+      return snapshot.docs[0];
+    }
+  }
+
+  throw new HttpsError("not-found", "Booking payment not found.");
+};
+
+const computeExpiry = (initiatedAt?: Timestamp | null) => {
+  const base =
+    initiatedAt instanceof Timestamp ? initiatedAt : Timestamp.fromMillis(Date.now());
+
+  return Timestamp.fromMillis(base.toMillis() + config.lenco.collectionStatusCheckDurationMs);
+};
 
 export const sendContactEmail = onCall<ContactPayload>(async (request) => {
   const { data } = request;
@@ -160,6 +227,182 @@ const createPaymentIntent = async (
     intentRef: docRef,
   };
 };
+
+export const initiateBookingMobileMoneyPayment = onCall<BookingPaymentPayload>(async (request) => {
+  const data = request.data ?? {};
+  if (!data.bookingId || typeof data.bookingId !== "string") {
+    throw new HttpsError("invalid-argument", "bookingId is required.");
+  }
+  if (typeof data.amount !== "number" || data.amount <= 0) {
+    throw new HttpsError("invalid-argument", "amount must be a positive number.");
+  }
+  if (!data.msisdn || typeof data.msisdn !== "string") {
+    throw new HttpsError("invalid-argument", "msisdn is required.");
+  }
+  if (!data.operator || typeof data.operator !== "string") {
+    throw new HttpsError("invalid-argument", "operator is required.");
+  }
+
+  const operator = normalizeOperator(data.operator);
+  const reference =
+    data.reference?.trim().length && data.reference.length >= 3
+      ? data.reference.trim()
+      : `booking_${data.bookingId}_${Date.now()}`;
+
+  try {
+    const initiatedAt = Timestamp.now();
+    const expiresAt = computeExpiry(initiatedAt);
+
+    const collection = await initiateMobileMoneyCollection({
+      amount: data.amount,
+      reference,
+      phone: data.msisdn,
+      operator,
+      country: data.country ?? "zm",
+      bearer: data.bearer ?? "merchant",
+    });
+
+    const docRef = db.collection(BOOKING_PAYMENTS_COLLECTION).doc(reference);
+    await docRef.set({
+      booking_id: data.bookingId,
+      amount: data.amount,
+      currency: data.currency ?? collection.currency ?? "ZMW",
+      country: (data.country ?? "zm").toLowerCase(),
+      bearer: data.bearer ?? "merchant",
+      operator,
+      msisdn: data.msisdn,
+      msisdn_masked: maskPhone(data.msisdn),
+      metadata: data.metadata ?? {},
+      reference,
+      lenco_collection_id: collection.id,
+      lenco_reference: collection.lencoReference,
+      status: collection.status,
+      last_known_status: collection.status,
+      initiated_at: initiatedAt,
+      expires_at: expiresAt,
+      check_window_ms: config.lenco.collectionStatusCheckDurationMs,
+      created_at: serverTimestamp(),
+      updated_at: serverTimestamp(),
+      last_status_synced_at: serverTimestamp(),
+    });
+
+    logger.info("Booking payment initiated", {
+      bookingId: data.bookingId,
+      reference,
+      operator,
+      amount: data.amount,
+    });
+
+    return {
+      success: true,
+      reference,
+      lencoCollectionId: collection.id,
+      lencoReference: collection.lencoReference,
+      status: collection.status,
+      amount: collection.amount,
+      currency: collection.currency,
+      initiatedAt: initiatedAt.toDate().toISOString(),
+      expiresAt: expiresAt.toDate().toISOString(),
+      checkWindowMs: config.lenco.collectionStatusCheckDurationMs,
+    };
+  } catch (error) {
+    logger.error("Failed to initiate booking payment", {
+      bookingId: data.bookingId,
+      reference,
+      error,
+    });
+    throw new HttpsError("internal", "Failed to initiate mobile money payment.");
+  }
+});
+
+export const checkBookingMobileMoneyPaymentStatus = onCall<BookingPaymentStatusPayload>(
+  async (request) => {
+    const payload = request.data ?? {};
+    if (!payload.reference && !payload.bookingId) {
+      throw new HttpsError("invalid-argument", "Provide reference or bookingId.");
+    }
+
+    const doc = await resolveBookingPaymentDoc(payload);
+    const record = doc.data() ?? {};
+    const reference = record.reference ?? doc.id;
+    const forceCheck = payload.forceCheck === true;
+    const initiatedAt =
+      record.initiated_at instanceof Timestamp ? (record.initiated_at as Timestamp) : null;
+
+    const expiresAt =
+      record.expires_at instanceof Timestamp
+        ? (record.expires_at as Timestamp)
+        : computeExpiry(initiatedAt);
+
+    const now = Timestamp.now();
+    const inCheckWindow = expiresAt ? now.toMillis() <= expiresAt.toMillis() : true;
+
+    if (!inCheckWindow && !forceCheck) {
+      return {
+        success: true,
+        reference,
+        status: record.last_known_status ?? record.status ?? "pending",
+        inCheckWindow: false,
+        requiresManualConfirmation: true,
+        expiresAt: expiresAt.toDate().toISOString(),
+        checkWindowMs: config.lenco.collectionStatusCheckDurationMs,
+        amount: record.amount,
+        currency: record.currency ?? "ZMW",
+      };
+    }
+
+    try {
+      let status;
+      if (reference) {
+        status = await getCollectionStatusByReference(reference);
+      } else if (record.lenco_collection_id) {
+        status = await getCollectionById(record.lenco_collection_id);
+      } else {
+        throw new Error("Unable to determine Lenco reference for booking payment.");
+      }
+
+      await doc.ref.set(
+        {
+          status: status.status,
+          last_known_status: status.status,
+          lenco_reference: status.lencoReference,
+          completed_at: status.completedAt ?? null,
+          updated_at: serverTimestamp(),
+          last_status_synced_at: serverTimestamp(),
+        },
+        { merge: true },
+      );
+
+      logger.info("Booking payment checked", {
+        reference,
+        status: status.status,
+        manualCheck: forceCheck && !inCheckWindow,
+      });
+
+      return {
+        success: true,
+        reference,
+        status: status.status,
+        amount: status.amount,
+        currency: status.currency,
+        inCheckWindow,
+        manualCheck: forceCheck && !inCheckWindow,
+        expiresAt: expiresAt.toDate().toISOString(),
+        initiatedAt: status.initiatedAt ?? initiatedAt?.toDate().toISOString() ?? null,
+        completedAt: status.completedAt ?? null,
+        checkWindowMs: config.lenco.collectionStatusCheckDurationMs,
+        lencoCollectionId: status.id,
+        lencoReference: status.lencoReference,
+      };
+    } catch (error) {
+      logger.error("Failed to check booking payment status", {
+        reference,
+        error,
+      });
+      throw new HttpsError("internal", "Failed to verify booking payment.");
+    }
+  },
+);
 
 export const createSubscriptionCheckout = onCall<SubscriptionCheckoutPayload>(async (request) => {
   const data = request.data;

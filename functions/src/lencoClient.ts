@@ -2,6 +2,14 @@ import { logger } from "firebase-functions";
 import { config } from "./config.js";
 
 export type MobileMoneyNetwork = "AIRTEL" | "MTN" | "ZAMTEL";
+export type MobileMoneyOperator = "airtel" | "mtn" | "zamtel";
+export type LencoCollectionStatus =
+  | "pending"
+  | "successful"
+  | "failed"
+  | "otp-required"
+  | "pay-offline"
+  | "3ds-auth-required";
 
 export interface AcceptPaymentPayload {
   amount: number;
@@ -31,6 +39,38 @@ export interface LencoPaymentStatus extends LencoPaymentResponse {
   raw?: unknown;
 }
 
+export interface MobileMoneyCollectionPayload {
+  amount: number;
+  reference: string;
+  phone: string;
+  operator: MobileMoneyOperator;
+  country?: string;
+  bearer?: "merchant" | "customer";
+}
+
+export interface LencoCollection {
+  id: string;
+  lencoReference: string;
+  reference?: string | null;
+  status: LencoCollectionStatus;
+  amount: number;
+  currency: string;
+  initiatedAt?: string;
+  completedAt?: string | null;
+  message?: string;
+  bearer?: "merchant" | "customer";
+  fee?: number | null;
+  settlementStatus?: "pending" | "settled" | null;
+  settlement?: unknown;
+  mobileMoneyDetails?: {
+    country?: string;
+    phone?: string;
+    operator?: string;
+    accountName?: string | null;
+  };
+  raw?: unknown;
+}
+
 const headers = () => ({
   Authorization: `Bearer ${config.lenco.apiKey}`,
   "Content-Type": "application/json",
@@ -50,6 +90,86 @@ const handleResponse = async (response: Response) => {
     logger.error("Failed to parse Lenco response", { text, error });
     throw new Error("Failed to parse Lenco API response");
   }
+};
+
+const normalizeAmount = (value: unknown): number => {
+  if (typeof value === "number") {
+    return value;
+  }
+  const parsed = Number(value);
+  if (Number.isFinite(parsed)) {
+    return parsed;
+  }
+  return 0;
+};
+
+const mapCollection = (payload: Record<string, any>): LencoCollection => {
+  if (!payload) {
+    throw new Error("Empty collection payload from Lenco");
+  }
+
+  return {
+    id: payload.id ?? payload.reference ?? "",
+    lencoReference: payload.lencoReference ?? payload.reference ?? "",
+    reference: payload.reference ?? null,
+    status: (payload.status ?? "pending") as LencoCollectionStatus,
+    amount: normalizeAmount(payload.amount),
+    currency: payload.currency ?? "ZMW",
+    initiatedAt: payload.initiatedAt,
+    completedAt: payload.completedAt ?? null,
+    message: payload.message ?? payload.statusMessage,
+    bearer: payload.bearer,
+    fee: payload.fee != null ? normalizeAmount(payload.fee) : null,
+    settlementStatus: payload.settlementStatus ?? payload.settlement?.status ?? null,
+    settlement: payload.settlement,
+    mobileMoneyDetails: payload.mobileMoneyDetails ?? undefined,
+    raw: payload,
+  };
+};
+
+export const initiateMobileMoneyCollection = async (
+  payload: MobileMoneyCollectionPayload,
+): Promise<LencoCollection> => {
+  const endpoint = `${config.lenco.baseUrl}/collections/mobile-money`;
+  const body = {
+    amount: payload.amount,
+    reference: payload.reference,
+    phone: payload.phone,
+    operator: payload.operator,
+    country: payload.country ?? "zm",
+    bearer: payload.bearer ?? "merchant",
+  };
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify(body),
+  });
+
+  const data = await handleResponse(response);
+  return mapCollection(data?.data ?? data);
+};
+
+export const getCollectionStatusByReference = async (reference: string): Promise<LencoCollection> => {
+  const endpoint = `${config.lenco.baseUrl}/collections/status/${reference}`;
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers: headers(),
+  });
+
+  const data = await handleResponse(response);
+  return mapCollection(data?.data ?? data);
+};
+
+export const getCollectionById = async (id: string): Promise<LencoCollection> => {
+  const endpoint = `${config.lenco.baseUrl}/collections/${id}`;
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers: headers(),
+  });
+
+  const data = await handleResponse(response);
+  return mapCollection(data?.data ?? data);
 };
 
 export const acceptPayment = async (
