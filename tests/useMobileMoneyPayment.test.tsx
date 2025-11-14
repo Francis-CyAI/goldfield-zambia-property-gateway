@@ -9,7 +9,7 @@ function TestInitiate() {
     <div>
       <div>status:{status}</div>
       <div>ref:{reference ?? 'none'}</div>
-      <button onClick={() => void initiate({ msisdn: '0972000000', operator: 'airtel', amount: 10 })}>start</button>
+      <button onClick={() => void initiate({ msisdn: '0976271799', operator: 'airtel', amount: 10 })}>start</button>
     </div>
   );
 }
