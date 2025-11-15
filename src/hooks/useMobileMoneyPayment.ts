@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/lib/constants/firebase';
 
 type PaymentStatus = 'idle' | 'initiated' | 'pending' | 'success' | 'failed';
 
@@ -26,23 +28,15 @@ export const useMobileMoneyPayment = () => {
   };
 
   const callCallable = async (functionName: string, data: any) => {
-    const url = buildCallableUrl(functionName);
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data }),
-    });
-
-    const text = await res.text();
-    let parsed: any = null;
-    try { parsed = JSON.parse(text); } catch { parsed = null; }
-
-    if (!res.ok) {
-      const err = parsed ? JSON.stringify(parsed) : text;
-      throw new Error(err);
+    // Use Firebase Functions SDK to call callable functions (avoids CORS issues)
+    try {
+      const fn = httpsCallable(functions as any, functionName) as any;
+      const res = await fn(data);
+      return res?.data ?? res;
+    } catch (err: any) {
+      // normalize error
+      throw err;
     }
-
-    return parsed?.result ?? parsed ?? text;
   };
 
   const initiate = async (opts: { msisdn: string; operator: string; amount: number; bookingId?: string }) => {
