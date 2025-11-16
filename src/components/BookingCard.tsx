@@ -127,6 +127,7 @@ const BookingCard = ({ property, onBooking }: BookingCardProps) => {
         payment_reference: paymentReference,
         payment_method: 'mobile_money',
       };
+      // console.log('[BookingCard] booking payload:', payload);
 
       await createBooking.mutateAsync(payload);
 
@@ -159,7 +160,9 @@ const BookingCard = ({ property, onBooking }: BookingCardProps) => {
     try {
       const msisdn = localMsisdn;
       const operator = localOperator;
-      const res: any = await initiatePaymentHook({ msisdn, operator, amount: totalPrice });
+      const payload = { msisdn, operator, amount: totalPrice };
+      console.log('[BookingCard] initiating payment payload:', payload);
+      const res: any = await initiatePaymentHook(payload);
       const ref = res?.reference ?? null;
       if (ref) {
         // start polling in background
