@@ -156,6 +156,7 @@ Frontend (Vite) values:
 - `VITE_FIREBASE_MESSAGING_SENDER_ID`
 - `VITE_FIREBASE_APP_ID`
 - `VITE_FIREBASE_MEASUREMENT_ID`
+- `VITE_FIREBASE_REGION` (region where your callable Functions live, e.g. `africa-south1`)
 - `VITE_USE_FIREBASE_EMULATOR` (optional flag for local emulators)
 
 Functions / shared backend values:
