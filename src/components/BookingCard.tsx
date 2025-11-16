@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,44 +88,64 @@ const BookingCard = ({ property, onBooking }: BookingCardProps) => {
       return;
     }
 
-    // Ensure payment completed before creating booking
+    // If payment has not yet succeeded, initiate or wait for mobile money payment first.
     if (paymentStatus !== 'success') {
-      toast({
-        title: 'Payment required',
-        description: 'Please complete the mobile money payment before confirming the booking.',
-        variant: 'destructive',
-      });
+      // Start a new payment flow if idle/failed; otherwise just inform user we're waiting.
+      if (paymentStatus === 'idle' || paymentStatus === 'failed') {
+        try {
+          await handleInitiatePayment();
+          toast({
+            title: 'Payment initiated',
+            description: 'Please confirm the mobile money payment on your phone. Once confirmed, click "Reserve" again to complete your booking.',
+          });
+        } catch (err: any) {
+          toast({
+            title: 'Payment initiation failed',
+            description: err?.message ?? 'Unable to start mobile money payment. Please try again.',
+            variant: 'destructive',
+          });
+        }
+      } else {
+        toast({
+          title: 'Awaiting payment confirmation',
+          description: 'We are waiting for your mobile money payment to be confirmed. Please complete it on your phone before proceeding.',
+        });
+      }
       return;
     }
 
+    // At this point paymentStatus === 'success' – proceed with booking.
     setIsBooking(true);
 
     try {
-      await createBooking.mutateAsync({
+      const payload: any = {
         property_id: property.id,
         check_in: checkIn,
         check_out: checkOut,
         guest_count: guests,
         total_price: totalPrice,
-      });
+        payment_reference: paymentReference,
+        payment_method: 'mobile_money',
+      };
 
-      // Call the callback if provided
+      await createBooking.mutateAsync(payload);
+
       if (onBooking) {
-        onBooking({
-          property_id: property.id,
-          check_in: checkIn,
-          check_out: checkOut,
-          guest_count: guests,
-          total_price: totalPrice,
-        });
+        onBooking(payload);
       }
 
       // Reset form
       setCheckIn('');
       setCheckOut('');
       setGuests(1);
-    } catch (error) {
+      resetPaymentHook();
+    } catch (error: any) {
       console.error('Booking error:', error);
+      toast({
+        title: 'Booking failed',
+        description: error?.message ?? 'Failed to create booking after payment.',
+        variant: 'destructive',
+      });
     } finally {
       setIsBooking(false);
     }
@@ -179,53 +199,6 @@ const BookingCard = ({ property, onBooking }: BookingCardProps) => {
     resetPaymentHook();
     await handleInitiatePayment();
   };
-
-  // Auto-create booking once payment is confirmed (Option A - defer booking until payment success)
-  useEffect(() => {
-    const createAfterPayment = async () => {
-      if (paymentStatus !== 'success' || !paymentReference) return;
-
-      if (!user) {
-        toast({ title: 'Authentication required', description: 'Please log in to complete booking after payment.', variant: 'destructive' });
-        return;
-      }
-
-      if (!checkIn || !checkOut) {
-        toast({ title: 'Missing dates', description: 'Please select check-in and check-out dates before paying.', variant: 'destructive' });
-        return;
-      }
-
-      setIsBooking(true);
-      try {
-        const payload = {
-          property_id: property.id,
-          check_in: checkIn,
-          check_out: checkOut,
-          guest_count: guests,
-          total_price: totalPrice,
-          payment_reference: paymentReference,
-          payment_method: 'mobile_money',
-        } as any;
-
-        await createBooking.mutateAsync(payload);
-
-        if (onBooking) onBooking(payload);
-
-        // Reset form after successful booking
-        setCheckIn('');
-        setCheckOut('');
-        setGuests(1);
-      } catch (err: any) {
-        console.error('Error creating booking after payment', err);
-        toast({ title: 'Booking failed', description: err?.message ?? 'Failed to create booking after payment.', variant: 'destructive' });
-      } finally {
-        setIsBooking(false);
-      }
-    };
-
-    void createAfterPayment();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paymentStatus, paymentReference]);
 
   // Payment actions are provided by `useMobileMoneyPayment` hook; UI uses the hook state/functions below
 
@@ -371,7 +344,7 @@ const BookingCard = ({ property, onBooking }: BookingCardProps) => {
         {/* Booking Button */}
         <Button 
           onClick={handleBooking}
-          disabled={!checkIn || !checkOut || nights <= 0 || isBooking || createBooking.isPending || paymentStatus !== 'success'}
+          disabled={!checkIn || !checkOut || nights <= 0 || isBooking || createBooking.isPending || isInitiatingPayment}
           className="w-full"
           size="lg"
         >
