@@ -69,7 +69,7 @@ const callFunction = async (functionName, data) => {
 
 const ctx = {
   bookingId: process.env.TEST_BOOKING_ID ?? `test-booking-${Date.now()}`,
-  msisdn: process.env.TEST_MSISDN ?? "0972333053",
+  msisdn: process.env.TEST_MSISDN ?? "0976271799",
   operator: (process.env.TEST_OPERATOR ?? "airtel").toLowerCase(),
   amount: toNumber(process.env.TEST_AMOUNT, 10),
   reference: null,
