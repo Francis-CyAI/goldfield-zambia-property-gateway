@@ -10,6 +10,7 @@ import { format, differenceInDays, addDays } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCreateBooking } from '@/hooks/useBookings';
 import { useToast } from '@/hooks/use-toast';
+import useMobileMoneyPayment from '@/hooks/useMobileMoneyPayment';
 
 interface Property {
   id: string;
@@ -36,6 +37,22 @@ const BookingCard = ({ property, onBooking }: BookingCardProps) => {
   const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState(1);
   const [isBooking, setIsBooking] = useState(false);
+
+  // Payment-related state (local inputs)
+  const [localMsisdn, setLocalMsisdn] = useState('');
+  const [localOperator, setLocalOperator] = useState('airtel');
+
+  // Hook that encapsulates mobile money calls + polling
+  const {
+    status: paymentStatus,
+    reference: paymentReference,
+    isInitiating: isInitiatingPayment,
+    error: paymentError,
+    initiate: initiatePaymentHook,
+    poll: pollPaymentHook,
+    check: checkPaymentHook,
+    reset: resetPaymentHook,
+  } = useMobileMoneyPayment();
 
   const nights = checkIn && checkOut ? differenceInDays(new Date(checkOut), new Date(checkIn)) : 0;
   const basePrice = nights * property.price;
@@ -71,34 +88,64 @@ const BookingCard = ({ property, onBooking }: BookingCardProps) => {
       return;
     }
 
+    // If payment has not yet succeeded, initiate or wait for mobile money payment first.
+    if (paymentStatus !== 'success') {
+      // Start a new payment flow if idle/failed; otherwise just inform user we're waiting.
+      if (paymentStatus === 'idle' || paymentStatus === 'failed') {
+        try {
+          await handleInitiatePayment();
+          toast({
+            title: 'Payment initiated',
+            description: 'Please confirm the mobile money payment on your phone. Once confirmed, click "Reserve" again to complete your booking.',
+          });
+        } catch (err: any) {
+          toast({
+            title: 'Payment initiation failed',
+            description: err?.message ?? 'Unable to start mobile money payment. Please try again.',
+            variant: 'destructive',
+          });
+        }
+      } else {
+        toast({
+          title: 'Awaiting payment confirmation',
+          description: 'We are waiting for your mobile money payment to be confirmed. Please complete it on your phone before proceeding.',
+        });
+      }
+      return;
+    }
+
+    // At this point paymentStatus === 'success' – proceed with booking.
     setIsBooking(true);
 
     try {
-      await createBooking.mutateAsync({
+      const payload: any = {
         property_id: property.id,
         check_in: checkIn,
         check_out: checkOut,
         guest_count: guests,
         total_price: totalPrice,
-      });
+        payment_reference: paymentReference,
+        payment_method: 'mobile_money',
+      };
 
-      // Call the callback if provided
+      await createBooking.mutateAsync(payload);
+
       if (onBooking) {
-        onBooking({
-          property_id: property.id,
-          check_in: checkIn,
-          check_out: checkOut,
-          guest_count: guests,
-          total_price: totalPrice,
-        });
+        onBooking(payload);
       }
 
       // Reset form
       setCheckIn('');
       setCheckOut('');
       setGuests(1);
-    } catch (error) {
+      resetPaymentHook();
+    } catch (error: any) {
       console.error('Booking error:', error);
+      toast({
+        title: 'Booking failed',
+        description: error?.message ?? 'Failed to create booking after payment.',
+        variant: 'destructive',
+      });
     } finally {
       setIsBooking(false);
     }
@@ -106,6 +153,54 @@ const BookingCard = ({ property, onBooking }: BookingCardProps) => {
 
   const today = format(new Date(), 'yyyy-MM-dd');
   const tomorrow = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+
+  // Wrapper handlers that use the hook
+  const handleInitiatePayment = async () => {
+    try {
+      const msisdn = localMsisdn;
+      const operator = localOperator;
+      const res: any = await initiatePaymentHook({ msisdn, operator, amount: totalPrice });
+      const ref = res?.reference ?? null;
+      if (ref) {
+        // start polling in background
+        void pollPaymentHook(ref);
+      }
+    } catch (err: any) {
+      console.error('initiate payment failed', err);
+    }
+  };
+
+  const handleManualVerify = async () => {
+    try {
+      if (!paymentReference) {
+        // nothing to verify
+        return;
+      }
+      const result: any = await checkPaymentHook({ reference: paymentReference });
+      if (result?.success) {
+        // hook will reflect state as well; show toast
+        toast({ title: 'Payment confirmed', description: 'Payment was successful.' });
+      } else {
+        toast({ title: 'Payment pending', description: 'Payment not completed yet.' });
+      }
+    } catch (err: any) {
+      console.error('manual verify failed', err);
+    }
+  };
+
+  const handleCancelPayment = () => {
+    // allow user to cancel/clear pending payment state locally
+    resetPaymentHook();
+    toast({ title: 'Payment cancelled', description: 'Payment attempt cancelled.' });
+  };
+
+  const handleRetryPayment = async () => {
+    // Clear previous reference and restart
+    resetPaymentHook();
+    await handleInitiatePayment();
+  };
+
+  // Payment actions are provided by `useMobileMoneyPayment` hook; UI uses the hook state/functions below
 
   return (
     <Card className="sticky top-8">
@@ -198,10 +293,58 @@ const BookingCard = ({ property, onBooking }: BookingCardProps) => {
           </div>
         )}
 
+        {/* Payment controls */}
+        <div className="space-y-2">
+          {/* MSISDN / Operator inputs (if not provided elsewhere) */}
+          <div className="grid grid-cols-1 gap-2">
+            <div>
+              <Label htmlFor="msisdn">Phone number</Label>
+              <Input id="msisdn" value={localMsisdn} onChange={(e) => setLocalMsisdn(e.target.value)} placeholder="0972123456" />
+            </div>
+            <div>
+              <Label htmlFor="operator">Operator</Label>
+              <select id="operator" className="input" value={localOperator} onChange={(e) => setLocalOperator(e.target.value)}>
+                <option value="airtel">Airtel</option>
+                <option value="mtc">MTC</option>
+                <option value="zatel">Zamtel</option>
+              </select>
+            </div>
+          </div>
+          {paymentError && <p className="text-sm text-red-600">{paymentError}</p>}
+
+          <div className="flex items-center justify-between">
+            <div className="text-sm">
+              <div className="font-medium">Payment status</div>
+              <div className="text-gray-600">{paymentStatus}</div>
+            </div>
+            <div className="flex space-x-2">
+              {paymentStatus === 'idle' || paymentStatus === 'failed' ? (
+                <Button onClick={handleInitiatePayment} disabled={isInitiatingPayment || nights <= 0}>
+                  {isInitiatingPayment ? 'Initiating...' : 'Pay with Mobile Money'}
+                </Button>
+              ) : null}
+
+              {paymentStatus === 'pending' && (
+                <>
+                  <Button onClick={handleManualVerify} disabled={isInitiatingPayment} variant="secondary">
+                    Verify Payment
+                  </Button>
+                  <Button onClick={handleRetryPayment} disabled={isInitiatingPayment} variant="ghost">
+                    Retry
+                  </Button>
+                  <Button onClick={handleCancelPayment} disabled={isInitiatingPayment} variant="destructive">
+                    Cancel
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* Booking Button */}
         <Button 
           onClick={handleBooking}
-          disabled={!checkIn || !checkOut || nights <= 0 || isBooking || createBooking.isPending}
+          disabled={!checkIn || !checkOut || nights <= 0 || isBooking || createBooking.isPending || isInitiatingPayment}
           className="w-full"
           size="lg"
         >
