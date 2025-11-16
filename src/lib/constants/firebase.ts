@@ -45,15 +45,35 @@ export const auth = getAuth(app);
 export const functions = getFunctions(app, "africa-south1");
 export const googleProvider = new GoogleAuthProvider();
 
-const shouldUseEmulators =
+// Legacy single switch (kept for compatibility)
+const legacyUseAllEmulators =
   import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === "true";
 
-if (shouldUseEmulators && typeof window !== "undefined") {
+// Per-service emulator switches (dev only)
+const useFirestoreEmulator =
+  legacyUseAllEmulators ||
+  (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_FIRESTORE_EMULATOR === "true");
+
+const useAuthEmulator =
+  legacyUseAllEmulators ||
+  (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_AUTH_EMULATOR === "true");
+
+const useFunctionsEmulator =
+  legacyUseAllEmulators ||
+  (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_FUNCTIONS_EMULATOR === "true");
+
+if (typeof window !== "undefined") {
   const globalScope = globalThis as { __FIREBASE_EMULATORS_ENABLED__?: boolean };
   if (!globalScope.__FIREBASE_EMULATORS_ENABLED__) {
-    connectFirestoreEmulator(db, "localhost", 8080);
-    connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
-    connectFunctionsEmulator(functions, "localhost", 5001);
+    if (useFirestoreEmulator) {
+      connectFirestoreEmulator(db, "localhost", 8080);
+    }
+    if (useAuthEmulator) {
+      connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
+    }
+    if (useFunctionsEmulator) {
+      connectFunctionsEmulator(functions, "localhost", 5001);
+    }
     globalScope.__FIREBASE_EMULATORS_ENABLED__ = true;
   }
 }
