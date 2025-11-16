@@ -44,15 +44,25 @@ export const auth = getAuth(app);
 export const functions = getFunctions(app);
 export const googleProvider = new GoogleAuthProvider();
 
-const shouldUseEmulators =
-  import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === "true";
+// Emulator flags (supports granular toggles and a legacy single flag)
+const legacyEmulatorFlag = import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === "true";
+const useFirestoreEmulator = legacyEmulatorFlag || (import.meta.env.DEV && import.meta.env.VITE_USE_FIRESTORE_EMULATOR === "true");
+const useAuthEmulator = legacyEmulatorFlag || (import.meta.env.DEV && import.meta.env.VITE_USE_AUTH_EMULATOR === "true");
+const useFunctionsEmulator = legacyEmulatorFlag || (import.meta.env.DEV && import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === "true");
 
-if (shouldUseEmulators && typeof window !== "undefined") {
+if (typeof window !== "undefined") {
   const globalScope = globalThis as { __FIREBASE_EMULATORS_ENABLED__?: boolean };
   if (!globalScope.__FIREBASE_EMULATORS_ENABLED__) {
-    connectFirestoreEmulator(db, "localhost", 8080);
-    connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
-    connectFunctionsEmulator(functions, "localhost", 5001);
+    if (useFirestoreEmulator) {
+      connectFirestoreEmulator(db, "localhost", 8080);
+    }
+    if (useAuthEmulator) {
+      connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
+    }
+    if (useFunctionsEmulator) {
+      connectFunctionsEmulator(functions, "localhost", 5001);
+    }
+    // Mark emulators as enabled to avoid repeated connections in HMR
     globalScope.__FIREBASE_EMULATORS_ENABLED__ = true;
   }
 }

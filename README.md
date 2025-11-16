@@ -92,6 +92,48 @@ To deploy the latest rules and indexes after local changes:
 firebase deploy --only firestore:rules,storage:rules,firestore:indexes
 ```
 
+### Emulator Flags (granular control)
+
+This project supports granular emulator toggles so you can run only the emulator(s) you need. Use a local `.env.local` (ignored by git) to override the defaults used in the repository `.env`.
+
+- `VITE_USE_FIREBASE_EMULATOR` (legacy): when set to `true` in development, this enables all emulators (Firestore, Auth, Functions). Kept for backwards compatibility.
+- `VITE_USE_FIRESTORE_EMULATOR`: enable just the Firestore emulator (localhost:8080).
+- `VITE_USE_AUTH_EMULATOR`: enable just the Auth emulator (localhost:9099).
+- `VITE_USE_FUNCTIONS_EMULATOR`: enable just the Functions emulator (localhost:5001).
+
+Example: run only the Functions emulator while using production Firestore and Auth
+
+1. Create `.env.local` at the repository root with:
+```
+VITE_USE_FIRESTORE_EMULATOR=false
+VITE_USE_AUTH_EMULATOR=false
+VITE_USE_FUNCTIONS_EMULATOR=true
+```
+
+2. Start just the Functions emulator (PowerShell):
+```powershell
+npx firebase emulators:start --only functions
+```
+
+3. Rebuild and run the frontend (if required):
+```powershell
+# If the frontend is running, restart it so the new .env.local is picked up
+npm run dev
+```
+
+Verification
+
+- Open browser DevTools ▶ Network tab.
+  - Firestore requests should go to the production host (`firestore.googleapis.com`) when `VITE_USE_FIRESTORE_EMULATOR=false`.
+  - Functions requests should go to `http://localhost:5001` when `VITE_USE_FUNCTIONS_EMULATOR=true`.
+- Console logs: the app will connect to emulators only when the corresponding flags are `true`; if you see empty datasets in the UI while the app targets `localhost:8080`, the emulator Firestore is empty (seed or import data as needed).
+
+Notes and best practices
+
+- Never commit `.env.local` or other local overrides to source control — it may contain secrets.
+- Use the Functions emulator when iterating on server logic (callables / HTTP endpoints) while keeping Firestore in production to avoid an empty local DB.
+- If you need to seed the Firestore emulator, use `firebase emulators:export` and `--import` options or write a small seeding script that runs against the emulator endpoint.
+
 ### Storage CORS
 Uploads from localhost/prod require explicit CORS headers on the Storage bucket. Update `storage-cors.json` (origins already include `localhost:5173`, `localhost:8080`, and the hosted app) and apply it with:
 ```sh
