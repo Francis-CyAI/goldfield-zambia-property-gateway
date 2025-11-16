@@ -41,7 +41,8 @@ export const analytics = typeof window !== "undefined" ? getAnalytics(app) : und
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const auth = getAuth(app);
-export const functions = getFunctions(app);
+// Use the same region as the deployed Cloud Functions (see functions/src/index.ts setGlobalOptions)
+export const functions = getFunctions(app, "africa-south1");
 export const googleProvider = new GoogleAuthProvider();
 
 const shouldUseEmulators =
