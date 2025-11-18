@@ -42,7 +42,9 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const auth = getAuth(app);
 // Use the same region as the deployed Cloud Functions (see functions/src/index.ts setGlobalOptions)
-export const functions = getFunctions(app, "africa-south1");
+const functionsRegion = import.meta.env.VITE_FIREBASE_REGION ?? "africa-south1";
+const functionsOrigin = import.meta.env.VITE_FUNCTIONS_ORIGIN;
+export const functions = getFunctions(app, functionsRegion);
 export const googleProvider = new GoogleAuthProvider();
 
 // Legacy single switch (kept for compatibility)
@@ -60,7 +62,25 @@ const useAuthEmulator =
 
 const useFunctionsEmulator =
   legacyUseAllEmulators ||
-  (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_FUNCTIONS_EMULATOR === "true");
+  import.meta.env.VITE_USE_FIREBASE_FUNCTIONS_EMULATOR === "true";
+
+const resolveFunctionsHostPort = () => {
+  if (functionsOrigin) {
+    try {
+      const url = new URL(functionsOrigin);
+      return {
+        host: url.hostname || "127.0.0.1",
+        port: parseInt(url.port || "5001", 10),
+      };
+    } catch (error) {
+      // Fall through to defaults below if parsing fails
+    }
+  }
+  return {
+    host: import.meta.env.VITE_FUNCTIONS_EMULATOR_HOST || "127.0.0.1",
+    port: parseInt(import.meta.env.VITE_FUNCTIONS_EMULATOR_PORT || "5001", 10),
+  };
+};
 
 if (typeof window !== "undefined") {
   const globalScope = globalThis as { __FIREBASE_EMULATORS_ENABLED__?: boolean };
@@ -72,7 +92,8 @@ if (typeof window !== "undefined") {
       connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
     }
     if (useFunctionsEmulator) {
-      connectFunctionsEmulator(functions, "localhost", 5001);
+      const { host, port } = resolveFunctionsHostPort();
+      connectFunctionsEmulator(functions, host, port);
     }
     globalScope.__FIREBASE_EMULATORS_ENABLED__ = true;
   }
