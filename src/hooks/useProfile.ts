@@ -37,12 +37,12 @@ export const useProfile = (userId?: string) => {
       const snapshot = await getDoc(profileRef);
 
       if (!snapshot.exists()) {
-        console.warn('Profile not found for user:', userId);
+        // console.warn('Profile not found for user:', userId);
         return null;
       }
 
       const profile = serializeDoc<UserProfile>(snapshot);
-      console.log('Profile fetched:', profile);
+      // console.log('Profile fetched:', profile);
       return profile;
     },
     enabled: !!userId,
@@ -58,7 +58,7 @@ export const useUpdateProfile = () => {
       userId: string;
       updates: Partial<Omit<UserProfile, 'id' | 'created_at' | 'updated_at'>>;
     }) => {
-      console.log('Updating profile:', { userId, updates });
+      // console.log('Updating profile:', { userId, updates });
 
       const profileRef = doc(db, 'profiles', userId);
       const payload = removeUndefined({

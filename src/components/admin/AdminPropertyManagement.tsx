@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { MapPin, Home, Users, DollarSign, RefreshCw } from 'lucide-react';
+import { MapPin, Home, Users, DollarSign, RefreshCw, Check, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { listDocuments, setDocument, logAdminActivity } from '@/lib/utils/firebase';
@@ -46,8 +46,8 @@ const AdminPropertyManagement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
       toast({
-        title: 'Property status updated',
-        description: 'The property has been updated successfully.',
+        title: 'Property visibility updated',
+        description: 'The property visibility has been updated successfully.',
       });
     },
     onError: (error) => {
@@ -55,6 +55,72 @@ const AdminPropertyManagement = () => {
       toast({
         title: 'Error',
         description: 'Failed to update property status. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: async ({ propertyId, notes }: { propertyId: string; notes?: string }) => {
+      await setDocument('properties', propertyId, {
+        approval_status: 'approved',
+        approval_notes: notes ?? null,
+        is_active: true,
+        reviewed_by: user?.uid ?? null,
+        updated_at: serverTimestamp(),
+      });
+
+      await logAdminActivity({
+        actorId: user?.uid ?? 'system',
+        actorEmail: user?.email ?? undefined,
+        action: 'Approved property listing',
+        entityType: 'property',
+        entityId: propertyId,
+        metadata: { approval_status: 'approved', notes },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+      toast({ title: 'Listing approved', description: 'The property is now active.' });
+    },
+    onError: (error) => {
+      console.error('Error approving property:', error);
+      toast({
+        title: 'Approval failed',
+        description: 'Could not approve the property. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const declineMutation = useMutation({
+    mutationFn: async ({ propertyId, reason }: { propertyId: string; reason?: string }) => {
+      await setDocument('properties', propertyId, {
+        approval_status: 'declined',
+        approval_notes: reason ?? null,
+        is_active: false,
+        reviewed_by: user?.uid ?? null,
+        updated_at: serverTimestamp(),
+      });
+
+      await logAdminActivity({
+        actorId: user?.uid ?? 'system',
+        actorEmail: user?.email ?? undefined,
+        action: 'Declined property listing',
+        entityType: 'property',
+        entityId: propertyId,
+        metadata: { approval_status: 'declined', reason },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+      toast({ title: 'Listing declined', description: 'The lister will be notified.' });
+    },
+    onError: (error) => {
+      console.error('Error declining property:', error);
+      toast({
+        title: 'Decline failed',
+        description: 'Could not decline the property. Please try again.',
         variant: 'destructive',
       });
     },
@@ -111,6 +177,7 @@ const AdminPropertyManagement = () => {
                 <TableHead>Location</TableHead>
                 <TableHead>Details</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Approval</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -129,7 +196,9 @@ const AdminPropertyManagement = () => {
                   </TableCell>
                 </TableRow>
               )}
-              {filteredProperties.map((property: Property) => (
+              {filteredProperties.map((property: Property) => {
+                const approvalStatus = property.approval_status ?? 'pending';
+                return (
                 <TableRow key={property.id}>
                   <TableCell>
                     <div className="font-medium">{property.title}</div>
@@ -164,7 +233,51 @@ const AdminPropertyManagement = () => {
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell>
+                    {approvalStatus === 'approved' && (
+                      <Badge className="bg-green-50 text-green-700 border-green-200">Approved</Badge>
+                    )}
+                    {approvalStatus === 'pending' && (
+                      <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200">
+                        Pending
+                      </Badge>
+                    )}
+                    {approvalStatus === 'declined' && (
+                      <Badge variant="destructive" className="bg-red-50 text-red-700 border-red-200">
+                        Declined
+                      </Badge>
+                    )}
+                    {property.approval_notes && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {property.approval_notes}
+                      </div>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right space-x-2">
+                    {approvalStatus !== 'approved' && (
+                      <Button
+                        size="sm"
+                        onClick={() => approveMutation.mutate({ propertyId: property.id })}
+                        disabled={approveMutation.isPending}
+                      >
+                        <Check className="h-3 w-3 mr-1" />
+                        Approve
+                      </Button>
+                    )}
+                    {approvalStatus !== 'declined' && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => {
+                          const reason = window.prompt('Provide a reason for declining (optional):') || undefined;
+                          declineMutation.mutate({ propertyId: property.id, reason });
+                        }}
+                        disabled={declineMutation.isPending}
+                      >
+                        <XCircle className="h-3 w-3 mr-1" />
+                        Decline
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
@@ -177,7 +290,7 @@ const AdminPropertyManagement = () => {
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))}
+              )})}
             </TableBody>
           </Table>
         </div>
@@ -187,4 +300,3 @@ const AdminPropertyManagement = () => {
 };
 
 export default AdminPropertyManagement;
-

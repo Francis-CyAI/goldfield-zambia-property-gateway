@@ -158,6 +158,8 @@ Frontend (Vite) values:
 - `VITE_FIREBASE_MEASUREMENT_ID`
 - `VITE_FIREBASE_REGION` (region where your callable Functions live, e.g. `africa-south1`)
 - `VITE_USE_FIREBASE_EMULATOR` (optional flag for local emulators)
+- `VITE_USE_FIREBASE_FUNCTIONS_EMULATOR=true` (use local Functions)
+- `VITE_FUNCTIONS_EMULATOR_HOST=127.0.0.1` (WSL/Windows friendly; defaults to localhost if omitted)
 
 Functions / shared backend values:
 - `LENCO_API_KEY`
@@ -194,6 +196,24 @@ firebase deploy --only functions
   npm --prefix functions run build:watch
   ```
   Leave that running, then launch the emulator (`firebase emulators:start --only functions`) in another terminal. Every saved change in `functions/src` triggers a rebuild, and the emulator reloads the updated code.
+
+### Functions emulator quickstart (Mobile Money callables)
+1. Authenticate Firebase CLI if prompted: `firebase login --reauth`.
+2. From `functions/`: install deps once with `npm install`, then rebuild when code changes with `npm run build` (or `npm run build:watch`).
+3. From project root: start Functions emulator `firebase emulators:start --only functions`.
+4. From another terminal: start Vite dev server `npm run dev`.
+5. Health check the callable:
+   ```sh
+   curl -i http://127.0.0.1:5001/goldfield-8180d/africa-south1/initiateBookingMobileMoneyPayment \
+     -X POST -H "Content-Type: application/json" \
+     -d '{"data":{"bookingId":"probe","amount":10,"msisdn":"0976000000","operator":"airtel"}}'
+   ```
+   (PowerShell 5.1: use `Invoke-WebRequest` without `-SkipHttpErrorCheck`, wrapping the body under `"data":{...}`.)
+
+Notes:
+- Keep the `.env` in repo up to date; `functions/src/env.ts` loads it for both frontend and functions so you don’t need duplicate env files.
+- On WSL/Windows, `VITE_FUNCTIONS_EMULATOR_HOST=127.0.0.1` avoids host resolution quirks; removing `VITE_FUNCTIONS_ORIGIN` prevents mismatched hosts.
+- If the emulator warns about Node version mismatch (expects 20, host is 22), switch to Node 20 for a quieter startup.
 
 ## How can I deploy this project?
 

@@ -128,9 +128,7 @@ const BookingFlow = ({ property, onClose }: BookingFlowProps) => {
   const { toast } = useToast();
   const createBooking = useCreateBooking();
 
-  console.log(
-    "User object is: ", user
-  )
+  // console.log("User object is: ", user)
   
   const [currentStep, setCurrentStep] = useState<BookingStep>('dates');
   const [bookingData, setBookingData] = useState({
@@ -160,7 +158,7 @@ const BookingFlow = ({ property, onClose }: BookingFlowProps) => {
   const [manualCheckLoading, setManualCheckLoading] = useState(false);
 
   const finalizeBooking = async (session: PendingPaymentSession) => {
-    await createBooking.mutateAsync({
+    const bookingPayload = {
       property_id: property.id,
       ...session.bookingPayload,
       total_price: session.bookingPayload.total_price,
@@ -173,7 +171,9 @@ const BookingFlow = ({ property, onClose }: BookingFlowProps) => {
         booking_session_id: session.bookingId,
         expires_at: session.expiresAt ?? null,
       },
-    });
+    };
+    // console.log('[BookingFlow] booking payload:', bookingPayload);
+    await createBooking.mutateAsync(bookingPayload);
 
     setBookingConfirmed(true);
     setCurrentStep('confirmation');
@@ -411,7 +411,7 @@ const BookingFlow = ({ property, onClose }: BookingFlowProps) => {
       const bookingSessionId = `booking_${property.id}_${Date.now()}`;
       const paymentAmount = Math.round(totalPrice * 100) / 100;
 
-      const response = await initiatePaymentCallable({
+      const initiatePayload = {
         bookingId: bookingSessionId,
         amount: paymentAmount,
         msisdn,
@@ -422,7 +422,10 @@ const BookingFlow = ({ property, onClose }: BookingFlowProps) => {
           checkIn: bookingData.checkIn,
           checkOut: bookingData.checkOut,
         },
-      });
+      };
+      // console.log('[BookingFlow] initiate payment payload:', initiatePayload);
+
+      const response = await initiatePaymentCallable(initiatePayload);
 
       const data = response.data;
       if (!data?.success || !data.reference) {

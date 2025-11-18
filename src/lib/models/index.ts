@@ -20,6 +20,9 @@ export interface Property extends BaseDocument {
   description?: string | null;
   location: string;
   property_type?: string | null;
+  approval_status?: 'pending' | 'approved' | 'declined';
+  approval_notes?: string | null;
+  reviewed_by?: string | null;
   price_per_night?: number | null;
   sale_price?: number | null;
   listing_type?: 'rental' | 'sale';

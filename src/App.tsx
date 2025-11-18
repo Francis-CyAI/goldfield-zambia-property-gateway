@@ -29,6 +29,7 @@ import News from "./pages/News";
 import FAQSection from "./components/FAQSection";
 import Setup from "./pages/Setup";
 import NotFound from "./pages/NotFound";
+import AdminRoute from "./components/routes/AdminRoute";
 
 const queryClient = new QueryClient();
 
@@ -53,7 +54,14 @@ const App = () => (
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/admin" element={<AdminDashboard />} />
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  }
+                />
                 <Route path="/property-owner-dashboard" element={<PropertyOwnerDashboard />} />
                 <Route path="/real-estate-services" element={<RealEstateServicesDashboard />} />
                 <Route path="/user-dashboard" element={<UserDashboard />} />

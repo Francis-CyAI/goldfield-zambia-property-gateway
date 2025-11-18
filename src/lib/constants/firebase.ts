@@ -61,14 +61,46 @@ export const analytics = typeof window !== "undefined" ? getAnalytics(app) : und
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const auth = getAuth(app);
-export const functions = getFunctions(app, firebaseRegion);
+// Use the same region as the deployed Cloud Functions (see functions/src/index.ts setGlobalOptions)
+const functionsRegion = import.meta.env.VITE_FIREBASE_REGION ?? "africa-south1";
+const functionsOrigin = import.meta.env.VITE_FUNCTIONS_ORIGIN;
+export const functions = getFunctions(app, functionsRegion);
 export const googleProvider = new GoogleAuthProvider();
 
-// Emulator flags (supports granular toggles and a legacy single flag)
-const legacyEmulatorFlag = import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === "true";
-const useFirestoreEmulator = legacyEmulatorFlag || (import.meta.env.DEV && import.meta.env.VITE_USE_FIRESTORE_EMULATOR === "true");
-const useAuthEmulator = legacyEmulatorFlag || (import.meta.env.DEV && import.meta.env.VITE_USE_AUTH_EMULATOR === "true");
-const useFunctionsEmulator = legacyEmulatorFlag || (import.meta.env.DEV && import.meta.env.VITE_USE_FUNCTIONS_EMULATOR === "true");
+// Legacy single switch (kept for compatibility)
+const legacyUseAllEmulators =
+  import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === "true";
+
+// Per-service emulator switches (dev only)
+const useFirestoreEmulator =
+  legacyUseAllEmulators ||
+  (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_FIRESTORE_EMULATOR === "true");
+
+const useAuthEmulator =
+  legacyUseAllEmulators ||
+  (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_AUTH_EMULATOR === "true");
+
+const useFunctionsEmulator =
+  legacyUseAllEmulators ||
+  import.meta.env.VITE_USE_FIREBASE_FUNCTIONS_EMULATOR === "true";
+
+const resolveFunctionsHostPort = () => {
+  if (functionsOrigin) {
+    try {
+      const url = new URL(functionsOrigin);
+      return {
+        host: url.hostname || "127.0.0.1",
+        port: parseInt(url.port || "5001", 10),
+      };
+    } catch (error) {
+      // Fall through to defaults below if parsing fails
+    }
+  }
+  return {
+    host: import.meta.env.VITE_FUNCTIONS_EMULATOR_HOST || "127.0.0.1",
+    port: parseInt(import.meta.env.VITE_FUNCTIONS_EMULATOR_PORT || "5001", 10),
+  };
+};
 
 if (typeof window !== "undefined") {
   const globalScope = globalThis as { __FIREBASE_EMULATORS_ENABLED__?: boolean };
@@ -80,9 +112,9 @@ if (typeof window !== "undefined") {
       connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
     }
     if (useFunctionsEmulator) {
-      connectFunctionsEmulator(functions, "localhost", 5001);
+      const { host, port } = resolveFunctionsHostPort();
+      connectFunctionsEmulator(functions, host, port);
     }
-    // Mark emulators as enabled to avoid repeated connections in HMR
     globalScope.__FIREBASE_EMULATORS_ENABLED__ = true;
   }
 }

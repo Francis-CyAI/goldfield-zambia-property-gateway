@@ -96,7 +96,8 @@ const PropertyListingForm = () => {
         bathrooms: data.bathrooms,
         amenities: data.amenities,
         images: data.images,
-        is_active: true,
+        is_active: false,
+        approval_status: 'pending',
       });
 
       // Redirect to property owner dashboard after successful listing
