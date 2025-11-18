@@ -36,6 +36,26 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
+const EMULATOR_COOKIE_KEY = "__FIREBASE_DEFAULTS__";
+const firebaseRegion = import.meta.env.VITE_FIREBASE_REGION ?? "africa-south1";
+
+const clearEmulatorOverrides = (): void => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const globalScope = globalThis as { __FIREBASE_DEFAULTS__?: unknown };
+  if (globalScope.__FIREBASE_DEFAULTS__ != null) {
+    delete globalScope.__FIREBASE_DEFAULTS__;
+  }
+
+  if (typeof document !== "undefined") {
+    document.cookie = `${EMULATOR_COOKIE_KEY}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+  }
+};
+
+clearEmulatorOverrides();
+
 const app = initializeApp(firebaseConfig);
 export const analytics = typeof window !== "undefined" ? getAnalytics(app) : undefined;
 export const db = getFirestore(app);
