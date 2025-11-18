@@ -9,9 +9,22 @@
  */
 import fs from 'node:fs';
 import readline from 'node:readline';
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { createRequire } from 'node:module';
+
+const rootRequire = createRequire(import.meta.url);
+const functionsRequire = createRequire(new URL('../functions/package.json', import.meta.url));
+
+const loadAdminModule = (specifier) => {
+  try {
+    return rootRequire(specifier);
+  } catch (_) {
+    return functionsRequire(specifier);
+  }
+};
+
+const { initializeApp, cert, getApps } = loadAdminModule('firebase-admin/app');
+const { getAuth } = loadAdminModule('firebase-admin/auth');
+const { getFirestore, FieldValue } = loadAdminModule('firebase-admin/firestore');
 
 const serviceAccountPath =
   process.env.GOOGLE_APPLICATION_CREDENTIALS || process.env.FIREBASE_SERVICE_ACCOUNT;
