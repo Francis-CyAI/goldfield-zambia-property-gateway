@@ -19,6 +19,7 @@ export const useProperties = () => {
     queryFn: async () => {
       const { data, error } = await listDocuments('properties', [
         where('is_active', '==', true),
+        where('approval_status', '==', 'approved'),
         orderBy('created_at', 'desc'),
       ]);
       if (error) throw error;
@@ -71,7 +72,8 @@ export const useCreateProperty = () => {
       const payload = {
         ...propertyData,
         host_id: currentUser.uid,
-        is_active: propertyData.is_active ?? true,
+        is_active: propertyData.is_active ?? false,
+        approval_status: propertyData.approval_status ?? 'pending',
         created_at: serverTimestamp(),
         updated_at: serverTimestamp(),
       };
@@ -85,8 +87,8 @@ export const useCreateProperty = () => {
       queryClient.invalidateQueries({ queryKey: ['properties'] });
       queryClient.invalidateQueries({ queryKey: ['user-properties'] });
       toast({
-        title: 'Property created',
-        description: 'Your property has been listed successfully.',
+        title: 'Property submitted',
+        description: 'Your property has been submitted for review.',
       });
     },
     onError: (error) => {

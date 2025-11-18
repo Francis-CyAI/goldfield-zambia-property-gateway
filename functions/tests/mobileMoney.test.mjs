@@ -71,7 +71,7 @@ const ctx = {
   bookingId: process.env.TEST_BOOKING_ID ?? `test-booking-${Date.now()}`,
   msisdn: process.env.TEST_MSISDN ?? "0976271799",
   operator: (process.env.TEST_OPERATOR ?? "airtel").toLowerCase(),
-  amount: toNumber(process.env.TEST_AMOUNT, 10),
+  amount: toNumber(process.env.TEST_AMOUNT, 10000),
   reference: null,
 };
 
@@ -88,6 +88,7 @@ const tests = [
           triggeredBy: "mobileMoney.test.mjs",
         },
       };
+      console.log("[mobileMoney.test] initiate payload:", payload);
 
       const result = await callFunction("initiateBookingMobileMoneyPayment", payload);
       if (!result?.success || !result?.reference) {
@@ -104,6 +105,7 @@ const tests = [
         throw new Error("No reference recorded from initiation step.");
       }
       const payload = { reference: ctx.reference };
+      console.log("[mobileMoney.test] check-by-reference payload:", payload);
       const result = await callFunction("checkBookingMobileMoneyPaymentStatus", payload);
       if (!result?.success) {
         throw new Error("checkBookingMobileMoneyPaymentStatus did not succeed");
@@ -118,6 +120,7 @@ const tests = [
         bookingId: ctx.bookingId,
         forceCheck: true,
       };
+      console.log("[mobileMoney.test] check-by-booking payload:", payload);
       const result = await callFunction("checkBookingMobileMoneyPaymentStatus", payload);
       if (!result?.success) {
         throw new Error("Manual bookingId verification failed");
