@@ -1,8 +1,8 @@
 # Project TODOs
 
-- [ ] Admin access & UI  
-  - [ ] Add role-based admin gate (e.g., `isAdmin` claim/field) and protect an Admin Dashboard route.  
-  - [ ] Build Admin Dashboard UI: listing submissions table, filtering/search, detail view, approve/decline actions (with decline message).
+- [x] Admin access & UI  
+  - [x] Add role-based admin gate (e.g., `isAdmin` claim/field) and protect an Admin Dashboard route.  
+  - [x] Build Admin Dashboard UI: listing submissions table, filtering/search, detail view, approve/decline actions (with decline message).
 
 - [ ] Listing submission flow  
   - [ ] Ensure new listings are stored as “pending” with submitter info.  
