@@ -31,7 +31,13 @@ const PropertyOwnerDashboard = () => {
   const { data: properties = [], isLoading: propertiesLoading } = useUserProperties(user?.uid);
   const { data: bookings = [], isLoading: bookingsLoading } = useHostBookings(user?.uid);
 
-  const activeProperties = properties.filter(p => p.is_active);
+  const activeProperties = properties.filter(
+    (p) => p.is_active && (p.approval_status ?? 'pending') === 'approved',
+  );
+  const pendingProperties = properties.filter(
+    (p) => (p.approval_status ?? 'pending') === 'pending',
+  );
+  const declinedProperties = properties.filter((p) => p.approval_status === 'declined');
   const totalBookings = bookings.length;
   const pendingBookings = bookings.filter(b => b.status === 'pending').length;
   const confirmedBookings = bookings.filter(b => b.status === 'confirmed').length;
@@ -84,13 +90,13 @@ const PropertyOwnerDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Properties</CardTitle>
+                  <CardTitle className="text-sm font-medium">Live Listings</CardTitle>
                   <Building className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{activeProperties.length}</div>
                   <p className="text-xs text-muted-foreground">
-                    {properties.length - activeProperties.length} inactive
+                    {pendingProperties.length} pending approval
                   </p>
                 </CardContent>
               </Card>
@@ -119,22 +125,53 @@ const PropertyOwnerDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="lg:col-span-2">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Quick Actions</CardTitle>
                   <Plus className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <Button 
-                    onClick={() => navigate('/list-property')} 
-                    className="w-full"
-                    size="sm"
-                  >
-                    Add Property
-                  </Button>
+                  <div className="flex flex-col gap-3">
+                    <Button 
+                      onClick={() => navigate('/list-property')} 
+                      className="w-full"
+                      size="sm"
+                    >
+                      Add Property
+                    </Button>
+                    <p className="text-xs text-muted-foreground text-center">
+                      New listings stay pending until reviewed by our team.
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Listing Review Status</CardTitle>
+                <CardDescription>Track pending or declined submissions.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="rounded-lg border p-4">
+                    <p className="text-sm text-muted-foreground">Pending Review</p>
+                    <p className="text-2xl font-bold">{pendingProperties.length}</p>
+                    <p className="text-xs text-muted-foreground">We will notify you once approved.</p>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <p className="text-sm text-muted-foreground">Approved</p>
+                    <p className="text-2xl font-bold">{activeProperties.length}</p>
+                    <p className="text-xs text-muted-foreground">Live on the marketplace.</p>
+                  </div>
+                  <div className="rounded-lg border p-4">
+                    <p className="text-sm text-muted-foreground">Declined</p>
+                    <p className="text-2xl font-bold">{declinedProperties.length}</p>
+                    <p className="text-xs text-muted-foreground">See feedback on each listing card.</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Recent Activity */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

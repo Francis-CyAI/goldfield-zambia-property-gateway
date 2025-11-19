@@ -143,6 +143,13 @@ const PropertyListingForm = () => {
         </p>
       </div>
 
+      <div className="bg-blue-50 border border-blue-100 text-blue-800 rounded-lg p-4 text-sm">
+        <p>
+          Listings are reviewed by our team before they go live. Once submitted, your property will remain
+          <span className="font-semibold"> pending approval</span> until an admin verifies the details.
+        </p>
+      </div>
+
       {/* Qualification Status */}
       <QualificationCard form={form} />
 
