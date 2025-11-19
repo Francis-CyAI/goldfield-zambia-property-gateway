@@ -18,7 +18,7 @@ const CTASection = () => {
               Get Started Today
             </Button>
           </Link>
-          <Link to="/login">
+          <Link to="/auth">
             <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-primary">
               Client Portal
             </Button>

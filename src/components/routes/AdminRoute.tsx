@@ -21,7 +21,7 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/auth" replace state={{ from: location.pathname }} />;
   }
 
   if (!adminStatus?.isAdmin) {
