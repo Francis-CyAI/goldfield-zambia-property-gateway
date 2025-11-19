@@ -17,12 +17,12 @@
   - [x] Build functions to send email for: listing submitted (to admin), listing approved/declined (to lister, with feedback on decline), booking payout updates.  
   - [x] Add a simple UI toggle in user settings for email/web notifications.
 
-- [ ] Admin actions backend  
-  - [ ] Create callable HTTPS functions:  
-    - [ ] `approveListing(listingId, adminId, message?)`  
-    - [ ] `declineListing(listingId, adminId, reason)`  
-  - [ ] Each updates listing status, writes notifications for admin/lister, triggers email if opted in.  
-  - [ ] Add Firestore triggers (or within callables) to ensure atomic status + notification writes.
+- [x] Admin actions backend  
+  - [x] Create callable HTTPS functions:  
+    - [x] `approveListing(listingId, adminId, message?)`  
+    - [x] `declineListing(listingId, adminId, reason)`  
+  - [x] Each updates listing status, writes notifications for admin/lister, triggers email if opted in.  
+  - [x] Add Firestore triggers (or within callables) to ensure atomic status + notification writes.
 
 - [ ] Revenue tracking per lister  
   - [ ] Schema: per-lister earnings aggregate (e.g., `lister_earnings` doc) and per-booking ledger entries (gross, platform_fee, lenco_fee, net).  

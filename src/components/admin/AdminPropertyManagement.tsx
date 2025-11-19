@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { orderBy, serverTimestamp } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,8 @@ import { MapPin, Home, Users, DollarSign, RefreshCw, Check, XCircle } from 'luci
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { listDocuments, setDocument, logAdminActivity } from '@/lib/utils/firebase';
+import { httpsCallable } from 'firebase/functions';
+import { functions } from '@/lib/constants/firebase';
 import type { Property } from '@/lib/models';
 
 const AdminPropertyManagement = () => {
@@ -17,6 +19,8 @@ const AdminPropertyManagement = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = React.useState('');
+  const approveListingFn = useMemo(() => httpsCallable(functions, 'approveListing'), []);
+  const declineListingFn = useMemo(() => httpsCallable(functions, 'declineListing'), []);
 
   const { data: properties = [], isLoading } = useQuery({
     queryKey: ['admin-properties'],
@@ -62,22 +66,7 @@ const AdminPropertyManagement = () => {
 
   const approveMutation = useMutation({
     mutationFn: async ({ propertyId, notes }: { propertyId: string; notes?: string }) => {
-      await setDocument('properties', propertyId, {
-        approval_status: 'approved',
-        approval_notes: notes ?? null,
-        is_active: true,
-        reviewed_by: user?.uid ?? null,
-        updated_at: serverTimestamp(),
-      });
-
-      await logAdminActivity({
-        actorId: user?.uid ?? 'system',
-        actorEmail: user?.email ?? undefined,
-        action: 'Approved property listing',
-        entityType: 'property',
-        entityId: propertyId,
-        metadata: { approval_status: 'approved', notes },
-      });
+      await approveListingFn({ propertyId, notes });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
@@ -95,22 +84,7 @@ const AdminPropertyManagement = () => {
 
   const declineMutation = useMutation({
     mutationFn: async ({ propertyId, reason }: { propertyId: string; reason?: string }) => {
-      await setDocument('properties', propertyId, {
-        approval_status: 'declined',
-        approval_notes: reason ?? null,
-        is_active: false,
-        reviewed_by: user?.uid ?? null,
-        updated_at: serverTimestamp(),
-      });
-
-      await logAdminActivity({
-        actorId: user?.uid ?? 'system',
-        actorEmail: user?.email ?? undefined,
-        action: 'Declined property listing',
-        entityType: 'property',
-        entityId: propertyId,
-        metadata: { approval_status: 'declined', reason },
-      });
+      await declineListingFn({ propertyId, reason });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-properties'] });

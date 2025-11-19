@@ -28,7 +28,7 @@
 - [ ] Confirm `public/firebase-messaging-sw.js` is served (Vite copies files from `public/`).
 - [ ] Deploy security rules and messaging functions together:
   ```sh
-  firebase deploy --only firestore:rules,functions:saveUserMessagingToken,functions:sendPushForNotification
+  firebase deploy --only firestore:rules,functions:saveUserMessagingToken,functions:sendPushForNotification,functions:approveListing,functions:declineListing
   ```
 - [ ] After deployment, log in with an admin account and trigger a test notification:
   - [ ] Push permission prompt appears, token saved in `notification_tokens`.
