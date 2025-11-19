@@ -124,6 +124,14 @@ export interface NotificationToken extends BaseDocument {
   last_seen_at?: string | null;
 }
 
+export interface NotificationPreference extends BaseDocument {
+  user_id: string;
+  email_general?: boolean;
+  push_general?: boolean;
+  email_listing?: boolean;
+  email_payout?: boolean;
+}
+
 export interface Message extends BaseDocument {
   sender_id: string;
   recipient_id: string;
@@ -315,6 +323,7 @@ export type CollectionRecordMap = {
   platformCommissions: Commission;
   notifications: Notification;
   notificationTokens: NotificationToken;
+  notificationPreferences: NotificationPreference;
   messages: Message;
   savedSearches: SavedSearch;
   reviews: Review;

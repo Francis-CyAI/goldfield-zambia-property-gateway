@@ -73,6 +73,7 @@ type BookingPaymentStatusPayload = {
 
 const BOOKING_PAYMENTS_COLLECTION = "booking_payments";
 const NOTIFICATION_TOKENS_COLLECTION = "notification_tokens";
+const NOTIFICATION_PREFERENCES_COLLECTION = "notification_preferences";
 const messaging = getMessaging();
 
 const validateNetwork = (network: string): MobileMoneyNetwork => {
@@ -214,6 +215,11 @@ export const sendPushForNotification = onDocumentCreated("notifications/{notific
     return;
   }
 
+  const preferencesSnap = await db.collection(NOTIFICATION_PREFERENCES_COLLECTION).doc(userId).get();
+  const preferences = preferencesSnap.exists ? preferencesSnap.data() : {};
+  const pushEnabled = preferences?.push_general !== false;
+  const emailEnabled = preferences?.email_general === true;
+
   const tokensSnapshot = await db
     .collection(NOTIFICATION_TOKENS_COLLECTION)
     .where("user_id", "==", userId)
@@ -225,38 +231,56 @@ export const sendPushForNotification = onDocumentCreated("notifications/{notific
   }
 
   const tokens = tokensSnapshot.docs.map((docSnap) => docSnap.id || docSnap.get("token")).filter(Boolean) as string[];
-  if (tokens.length === 0) {
-    logger.info("No valid tokens for user", { userId });
-    return;
+  if (pushEnabled && tokens.length > 0) {
+    const message = {
+      tokens,
+      notification: {
+        title: notification.title ?? "New notification",
+        body: notification.message ?? "",
+      },
+      data: {
+        notificationId: snapshot.id,
+        type: notification.type ?? "info",
+        relatedId: notification.related_id ?? "",
+      },
+    };
+
+    const response = await messaging.sendEachForMulticast(message);
+    response.responses.forEach((res, index) => {
+      if (!res.success) {
+        const errorCode = res.error?.code;
+        if (errorCode === "messaging/registration-token-not-registered" || errorCode === "messaging/invalid-registration-token") {
+          const badToken = tokens[index];
+          db.collection(NOTIFICATION_TOKENS_COLLECTION).doc(badToken).delete().catch(() => {});
+        }
+        logger.warn("Failed to deliver push notification", {
+          tokenIndex: index,
+          error: res.error?.message,
+        });
+      }
+    });
   }
 
-  const message = {
-    tokens,
-    notification: {
-      title: notification.title ?? "New notification",
-      body: notification.message ?? "",
-    },
-    data: {
-      notificationId: snapshot.id,
-      type: notification.type ?? "info",
-      relatedId: notification.related_id ?? "",
-    },
-  };
-
-  const response = await messaging.sendEachForMulticast(message);
-  response.responses.forEach((res, index) => {
-    if (!res.success) {
-      const errorCode = res.error?.code;
-      if (errorCode === "messaging/registration-token-not-registered" || errorCode === "messaging/invalid-registration-token") {
-        const badToken = tokens[index];
-        db.collection(NOTIFICATION_TOKENS_COLLECTION).doc(badToken).delete().catch(() => {});
-      }
-      logger.warn("Failed to deliver push notification", {
-        tokenIndex: index,
-        error: res.error?.message,
+  if (emailEnabled) {
+    const profileSnap = await db.collection("profiles").doc(userId).get();
+    const targetEmail = profileSnap.exists ? profileSnap.get("email") : null;
+    if (targetEmail) {
+      await db.collection("notification_queue").add({
+        type: "user_notification_email",
+        to: targetEmail,
+        user_id: userId,
+        notification_id: snapshot.id,
+        payload: {
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          related_id: notification.related_id ?? null,
+        },
+        created_at: serverTimestamp(),
+        processed: false,
       });
     }
-  });
+  }
 });
 
 const createPaymentIntent = async (
