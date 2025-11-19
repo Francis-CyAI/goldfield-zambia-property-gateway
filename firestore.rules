@@ -2,9 +2,44 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.isAdmin == true;
+    }
+
+    match /properties/{propertyId} {
+      function isOwner() {
+        return isSignedIn() && resource.data.host_id == request.auth.uid;
+      }
+
+      allow read: if (resource.data.is_active == true && (resource.data.approval_status == 'approved' || resource.data.approval_status == null))
+                  || isOwner()
+                  || isAdmin();
+
+      allow create: if isSignedIn()
+                    && request.resource.data.host_id == request.auth.uid
+                    && request.resource.data.approval_status == 'pending'
+                    && request.resource.data.is_active == false;
+
+      allow update: if isAdmin()
+                    || (
+                      isOwner()
+                      && request.resource.data.host_id == resource.data.host_id
+                      && request.resource.data.approval_status == resource.data.approval_status
+                      && request.resource.data.is_active == resource.data.is_active
+                      && request.resource.data.reviewed_by == resource.data.reviewed_by
+                      && request.resource.data.approval_notes == resource.data.approval_notes
+                    );
+
+      allow delete: if isOwner() || isAdmin();
+    }
+
     match /{document=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isSignedIn();
     }
   }
 }

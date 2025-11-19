@@ -67,7 +67,16 @@ const PropertyListings = ({ properties, isLoading }: PropertyListingsProps) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {properties.map((property) => (
+        {properties.map((property) => {
+          const approvalStatus = property.approval_status ?? 'pending';
+          const approvalBadge =
+            approvalStatus === 'approved'
+              ? { variant: 'default' as const, label: 'Approved', className: 'bg-green-600 text-white' }
+              : approvalStatus === 'declined'
+                ? { variant: 'destructive' as const, label: 'Declined', className: '' }
+                : { variant: 'secondary' as const, label: 'Pending Review', className: 'bg-amber-100 text-amber-800' };
+
+          return (
           <Card key={property.id} className="overflow-hidden">
             <div className="aspect-video relative">
               <img
@@ -80,10 +89,15 @@ const PropertyListings = ({ properties, isLoading }: PropertyListingsProps) => {
                   {property.is_active ? "Active" : "Inactive"}
                 </Badge>
               </div>
+              <div className="absolute top-2 left-2">
+                <Badge variant={approvalBadge.variant} className={approvalBadge.className}>
+                  {approvalBadge.label}
+                </Badge>
+              </div>
             </div>
             
             <CardHeader className="pb-2">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between gap-2">
                 <CardTitle className="text-lg line-clamp-2">{property.title}</CardTitle>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -145,9 +159,14 @@ const PropertyListings = ({ properties, isLoading }: PropertyListingsProps) => {
                   </Button>
                 </div>
               </div>
+              {approvalStatus === 'declined' && property.approval_notes && (
+                <div className="bg-red-50 text-red-700 text-xs rounded-md p-2">
+                  {property.approval_notes}
+                </div>
+              )}
             </CardContent>
           </Card>
-        ))}
+        )})}
       </div>
 
       {properties.length === 0 && !isLoading && (

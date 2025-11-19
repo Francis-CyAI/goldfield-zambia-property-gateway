@@ -4,9 +4,9 @@
   - [x] Add role-based admin gate (e.g., `isAdmin` claim/field) and protect an Admin Dashboard route.  
   - [x] Build Admin Dashboard UI: listing submissions table, filtering/search, detail view, approve/decline actions (with decline message).
 
-- [ ] Listing submission flow  
-  - [ ] Ensure new listings are stored as “pending” with submitter info.  
-  - [ ] Add Firestore security rules to allow only admins to approve/decline and only owners to view their own pending/approved listings.
+- [x] Listing submission flow  
+  - [x] Ensure new listings are stored as “pending” with submitter info.  
+  - [x] Add Firestore security rules to allow only admins to approve/decline and only owners to view their own pending/approved listings.
 
 - [ ] Notifications model  
   - [ ] Define/extend `notifications` collection schema (type, userId, payload, read/unread, createdAt).  

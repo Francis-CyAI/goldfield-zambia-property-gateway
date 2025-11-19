@@ -23,6 +23,9 @@ export interface Property extends BaseDocument {
   approval_status?: 'pending' | 'approved' | 'declined';
   approval_notes?: string | null;
   reviewed_by?: string | null;
+  submitted_at?: string | null;
+  submitted_by_email?: string | null;
+  submitted_by_name?: string | null;
   price_per_night?: number | null;
   sale_price?: number | null;
   listing_type?: 'rental' | 'sale';

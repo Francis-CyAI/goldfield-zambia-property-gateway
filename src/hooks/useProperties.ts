@@ -72,6 +72,9 @@ export const useCreateProperty = () => {
       const payload = {
         ...propertyData,
         host_id: currentUser.uid,
+        submitted_by_email: currentUser.email ?? null,
+        submitted_by_name: currentUser.displayName ?? null,
+        submitted_at: serverTimestamp(),
         is_active: propertyData.is_active ?? false,
         approval_status: propertyData.approval_status ?? 'pending',
         created_at: serverTimestamp(),
