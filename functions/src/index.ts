@@ -1,5 +1,6 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { logger, setGlobalOptions } from "firebase-functions/v2";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { config } from "./config.js";
@@ -14,6 +15,7 @@ import {
   MobileMoneyOperator,
 } from "./lencoClient.js";
 import { db, serverTimestamp } from "./firestore.js";
+import { getMessaging } from "firebase-admin/messaging";
 setGlobalOptions({
   region: "africa-south1",
   memory: "256MiB",
@@ -70,6 +72,8 @@ type BookingPaymentStatusPayload = {
 };
 
 const BOOKING_PAYMENTS_COLLECTION = "booking_payments";
+const NOTIFICATION_TOKENS_COLLECTION = "notification_tokens";
+const messaging = getMessaging();
 
 const validateNetwork = (network: string): MobileMoneyNetwork => {
   const upper = network.toUpperCase();
@@ -166,6 +170,93 @@ export const sendContactEmail = onCall<ContactPayload>(async (request) => {
     success: true,
     contactId: docRef.id,
   };
+});
+
+export const saveUserMessagingToken = onCall<{ token?: string; platform?: string }>(async (request) => {
+  if (!request.auth?.uid) {
+    throw new HttpsError("unauthenticated", "Authentication required.");
+  }
+
+  const token = request.data?.token;
+  if (!token || typeof token !== "string") {
+    throw new HttpsError("invalid-argument", "Missing device token.");
+  }
+
+  const platform = request.data?.platform ?? "web";
+  const userAgent = request.rawRequest.headers["user-agent"] ?? null;
+
+  await db.collection(NOTIFICATION_TOKENS_COLLECTION).doc(token).set(
+    {
+      user_id: request.auth.uid,
+      token,
+      platform,
+      user_agent: userAgent,
+      last_seen_at: serverTimestamp(),
+      updated_at: serverTimestamp(),
+      created_at: serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  logger.info("Saved notification token", { uid: request.auth.uid, platform });
+  return { success: true };
+});
+
+export const sendPushForNotification = onDocumentCreated("notifications/{notificationId}", async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) {
+    return;
+  }
+
+  const notification = snapshot.data() as any;
+  const userId = notification.user_id;
+  if (!userId) {
+    return;
+  }
+
+  const tokensSnapshot = await db
+    .collection(NOTIFICATION_TOKENS_COLLECTION)
+    .where("user_id", "==", userId)
+    .get();
+
+  if (tokensSnapshot.empty) {
+    logger.info("No notification tokens for user", { userId });
+    return;
+  }
+
+  const tokens = tokensSnapshot.docs.map((docSnap) => docSnap.id || docSnap.get("token")).filter(Boolean) as string[];
+  if (tokens.length === 0) {
+    logger.info("No valid tokens for user", { userId });
+    return;
+  }
+
+  const message = {
+    tokens,
+    notification: {
+      title: notification.title ?? "New notification",
+      body: notification.message ?? "",
+    },
+    data: {
+      notificationId: snapshot.id,
+      type: notification.type ?? "info",
+      relatedId: notification.related_id ?? "",
+    },
+  };
+
+  const response = await messaging.sendEachForMulticast(message);
+  response.responses.forEach((res, index) => {
+    if (!res.success) {
+      const errorCode = res.error?.code;
+      if (errorCode === "messaging/registration-token-not-registered" || errorCode === "messaging/invalid-registration-token") {
+        const badToken = tokens[index];
+        db.collection(NOTIFICATION_TOKENS_COLLECTION).doc(badToken).delete().catch(() => {});
+      }
+      logger.warn("Failed to deliver push notification", {
+        tokenIndex: index,
+        error: res.error?.message,
+      });
+    }
+  });
 });
 
 const createPaymentIntent = async (

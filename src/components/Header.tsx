@@ -18,12 +18,15 @@ import AuthButton from './AuthButton';
 import CountrySelector from './CountrySelector';
 import { useLocalization } from '@/contexts/LocalizationContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/hooks/useNotifications';
 import { cn } from '@/lib/utils';
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { t } = useLocalization();
   const { user } = useAuth();
+  const { data: notifications = [] } = useNotifications(user?.uid);
+  const unreadCount = notifications.filter((notification) => !notification.is_read).length;
   const location = useLocation();
 
   useEffect(() => {
@@ -187,11 +190,15 @@ const Header = () => {
           <CountrySelector />
           {/* TODO: Fetch real notifications and get count */}
           {user && (
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-4 w-4" />
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
-                0
-              </Badge>
+            <Button variant="ghost" size="icon" className="relative" asChild>
+              <Link to="/notifications" aria-label="Notifications">
+                <Bell className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-5 min-w-[20px] rounded-full p-0 flex items-center justify-center text-xs">
+                    {unreadCount}
+                  </Badge>
+                )}
+              </Link>
             </Button>
           )}
 

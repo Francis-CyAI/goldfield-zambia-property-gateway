@@ -56,7 +56,7 @@ const clearEmulatorOverrides = (): void => {
 
 clearEmulatorOverrides();
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 export const analytics = typeof window !== "undefined" ? getAnalytics(app) : undefined;
 export const db = getFirestore(app);
 export const storage = getStorage(app);
@@ -129,6 +129,7 @@ export const COLLECTIONS = {
   bookingRequests: "booking_requests",
   platformCommissions: "platform_commissions",
   notifications: "notifications",
+  notificationTokens: "notification_tokens",
   messages: "messages",
   savedSearches: "saved_searches",
   reviews: "reviews",
@@ -167,6 +168,7 @@ const converters: { [K in CollectionKey]: FirestoreDataConverter<CollectionRecor
   bookingRequests: createConverter(),
   platformCommissions: createConverter(),
   notifications: createConverter(),
+  notificationTokens: createConverter(),
   messages: createConverter(),
   savedSearches: createConverter(),
   reviews: createConverter(),

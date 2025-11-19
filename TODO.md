@@ -9,7 +9,7 @@
   - [x] Add Firestore security rules to allow only admins to approve/decline and only owners to view their own pending/approved listings.
 
 - [ ] Notifications model  
-  - [ ] Define/extend `notifications` collection schema (type, userId, payload, read/unread, createdAt).  
+  - [x] Define/extend `notifications` collection schema (type, userId, payload, read/unread, createdAt).  
   - [ ] Add “web notification preferences” per user (opt-in/out for listing decisions, bookings, payouts).
 
 - [ ] Email notification opt-in  
