@@ -283,6 +283,94 @@ export const sendPushForNotification = onDocumentCreated("notifications/{notific
   }
 });
 
+export const approveListing = onCall<{ propertyId?: string; notes?: string }>(async (request) => {
+  const admin = await ensureAdmin(request.auth);
+  const propertyId = request.data?.propertyId;
+  if (!propertyId || typeof propertyId !== "string") {
+    throw new HttpsError("invalid-argument", "propertyId is required.");
+  }
+
+  const propertyRef = db.collection("properties").doc(propertyId);
+  const propertySnap = await propertyRef.get();
+  if (!propertySnap.exists) {
+    throw new HttpsError("not-found", "Property not found.");
+  }
+  const property = propertySnap.data() ?? {};
+
+  await propertyRef.set(
+    {
+      approval_status: "approved",
+      approval_notes: request.data?.notes ?? null,
+      reviewed_by: admin.uid,
+      is_active: true,
+      updated_at: serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  await createUserNotification({
+    userId: property.host_id,
+    title: "Listing approved",
+    message: `Your property "${property.title ?? ""}" is now live.`,
+    type: "success",
+    relatedId: propertyId,
+  });
+
+  await logAdminAction({
+    actorId: admin.uid,
+    action: "Approved property listing",
+    entityId: propertyId,
+    metadata: { notes: request.data?.notes ?? null },
+  });
+
+  return { success: true };
+});
+
+export const declineListing = onCall<{ propertyId?: string; reason?: string }>(async (request) => {
+  const admin = await ensureAdmin(request.auth);
+  const propertyId = request.data?.propertyId;
+  if (!propertyId || typeof propertyId !== "string") {
+    throw new HttpsError("invalid-argument", "propertyId is required.");
+  }
+
+  const propertyRef = db.collection("properties").doc(propertyId);
+  const propertySnap = await propertyRef.get();
+  if (!propertySnap.exists) {
+    throw new HttpsError("not-found", "Property not found.");
+  }
+  const property = propertySnap.data() ?? {};
+
+  await propertyRef.set(
+    {
+      approval_status: "declined",
+      approval_notes: request.data?.reason ?? null,
+      reviewed_by: admin.uid,
+      is_active: false,
+      updated_at: serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  await createUserNotification({
+    userId: property.host_id,
+    title: "Listing declined",
+    message: request.data?.reason
+      ? `Reason: ${request.data.reason}`
+      : `Your property "${property.title ?? ""}" was declined. Please review requirements.`,
+    type: "warning",
+    relatedId: propertyId,
+  });
+
+  await logAdminAction({
+    actorId: admin.uid,
+    action: "Declined property listing",
+    entityId: propertyId,
+    metadata: { reason: request.data?.reason ?? null },
+  });
+
+  return { success: true };
+});
+
 const createPaymentIntent = async (
   payload: Omit<SubscriptionCheckoutPayload, "subscriptionTierName"> & {
     kind: "user" | "partner";
@@ -782,3 +870,54 @@ export const processCommissionPayouts = onSchedule("every 24 hours", async () =>
     );
   }
 });
+const ensureAdmin = async (authCtx: any) => {
+  if (!authCtx?.uid) {
+    throw new HttpsError("unauthenticated", "Authentication required.");
+  }
+  if (authCtx.token?.isAdmin) {
+    return { uid: authCtx.uid };
+  }
+  const adminSnap = await db.collection("admin_users").doc(authCtx.uid).get();
+  if (!adminSnap.exists || adminSnap.get("is_active") !== true) {
+    throw new HttpsError("permission-denied", "Admin privileges required.");
+  }
+  return { uid: authCtx.uid, adminType: adminSnap.get("admin_type") ?? null };
+};
+
+const logAdminAction = async (payload: {
+  actorId: string;
+  action: string;
+  entityId: string;
+  metadata?: Record<string, unknown> | null;
+}) => {
+  await db.collection("admin_activity_logs").add({
+    actor_id: payload.actorId,
+    action: payload.action,
+    entity_id: payload.entityId,
+    entity_type: "property",
+    severity: "info",
+    metadata: payload.metadata ?? null,
+    created_at: serverTimestamp(),
+    updated_at: serverTimestamp(),
+  });
+};
+
+const createUserNotification = async (payload: {
+  userId?: string | null;
+  title: string;
+  message: string;
+  type?: string;
+  relatedId?: string | null;
+}) => {
+  if (!payload.userId) return;
+  await db.collection("notifications").add({
+    user_id: payload.userId,
+    title: payload.title,
+    message: payload.message,
+    type: payload.type ?? "info",
+    related_id: payload.relatedId ?? null,
+    is_read: false,
+    created_at: serverTimestamp(),
+    updated_at: serverTimestamp(),
+  });
+};
