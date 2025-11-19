@@ -24,10 +24,10 @@
   - [x] Each updates listing status, writes notifications for admin/lister, triggers email if opted in.  
   - [x] Add Firestore triggers (or within callables) to ensure atomic status + notification writes.
 
-- [ ] Revenue tracking per lister  
-  - [ ] Schema: per-lister earnings aggregate (e.g., `lister_earnings` doc) and per-booking ledger entries (gross, platform_fee, lenco_fee, net).  
-  - [ ] On booking completion: compute platform deduction (from env %) and lenco service charge (from constants tiers), store ledger entry, update lister’s available balance.  
-  - [ ] UI: Lister earnings page showing total earned, available balance, fees breakdown per booking, and summary cards.
+- [x] Revenue tracking per lister  
+  - [x] Schema: per-lister earnings aggregate (e.g., `lister_earnings` doc) and per-booking ledger entries (gross, platform_fee, lenco_fee, net).  
+  - [x] On booking completion: compute platform deduction (from env %) and lenco service charge (from constants tiers), store ledger entry, update lister’s available balance.  
+  - [x] UI: Lister earnings page showing total earned, available balance, fees breakdown per booking, and summary cards.
 
 - [ ] Withdrawal flow  
   - [ ] UI: withdrawal screen showing available balance, platform deductions already applied, and lenco fee for the chosen amount; highlight “you’ll receive X, fees Y”.  

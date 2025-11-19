@@ -17,6 +17,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProperties } from '@/hooks/useProperties';
 import { useHostBookings } from '@/hooks/useBookings';
+import { useListerEarnings, useListerEarningEntries } from '@/hooks/useListerEarnings';
 import PropertyListings from '@/components/PropertyListings';
 import BookingManagement from '@/components/BookingManagement';
 import EarningsOverview from '@/components/EarningsOverview';
@@ -30,6 +31,8 @@ const PropertyOwnerDashboard = () => {
   
   const { data: properties = [], isLoading: propertiesLoading } = useUserProperties(user?.uid);
   const { data: bookings = [], isLoading: bookingsLoading } = useHostBookings(user?.uid);
+  const { data: listerEarnings } = useListerEarnings(user?.uid);
+  const { data: earningEntries = [], isLoading: earningEntriesLoading } = useListerEarningEntries(user?.uid);
 
   const activeProperties = properties.filter(
     (p) => p.is_active && (p.approval_status ?? 'pending') === 'approved',
@@ -45,6 +48,9 @@ const PropertyOwnerDashboard = () => {
   const totalEarnings = bookings
     .filter(b => b.status === 'completed')
     .reduce((sum, booking) => sum + booking.total_price, 0);
+  const availableBalance = listerEarnings?.available_balance ?? 0;
+  const totalGross = listerEarnings?.total_gross ?? 0;
+  const totalFees = (listerEarnings?.total_platform_fee ?? 0) + (listerEarnings?.total_lenco_fee ?? 0);
 
   if (!user) {
     return (
@@ -125,7 +131,7 @@ const PropertyOwnerDashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="lg:col-span-2">
+              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Quick Actions</CardTitle>
                   <Plus className="h-4 w-4 text-muted-foreground" />
@@ -170,6 +176,65 @@ const PropertyOwnerDashboard = () => {
                     <p className="text-xs text-muted-foreground">See feedback on each listing card.</p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Earnings Summary</CardTitle>
+                <CardDescription>Your current payout snapshot.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-lg border p-4">
+                  <p className="text-sm text-muted-foreground">Available Balance</p>
+                  <p className="text-2xl font-semibold">ZMW {availableBalance.toLocaleString()}</p>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <p className="text-sm text-muted-foreground">Total Gross</p>
+                  <p className="text-2xl font-semibold">ZMW {totalGross.toLocaleString()}</p>
+                </div>
+                <div className="rounded-lg border p-4">
+                  <p className="text-sm text-muted-foreground">Total Fees</p>
+                  <p className="text-2xl font-semibold">ZMW {totalFees.toLocaleString()}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Earnings</CardTitle>
+                <CardDescription>Latest payouts recorded per booking</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {earningEntriesLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="animate-pulse h-12 bg-gray-100 rounded" />
+                    ))}
+                  </div>
+                ) : earningEntries.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">No earnings yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {earningEntries.slice(0, 5).map((entry) => (
+                      <div key={entry.id} className="flex items-center justify-between border rounded-lg p-3">
+                        <div>
+                          <p className="font-medium text-sm">Booking #{entry.booking_id}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Earned{' '}
+                            {entry.earned_at ? new Date(entry.earned_at).toLocaleDateString() : ''}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">ZMW {entry.net_amount.toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Fees: ZMW {(entry.platform_fee + entry.lenco_fee).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 

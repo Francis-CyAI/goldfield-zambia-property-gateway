@@ -132,6 +132,28 @@ export interface NotificationPreference extends BaseDocument {
   email_payout?: boolean;
 }
 
+export interface ListerEarning extends BaseDocument {
+  user_id: string;
+  total_gross: number;
+  total_platform_fee: number;
+  total_lenco_fee: number;
+  available_balance: number;
+  currency: string;
+}
+
+export interface ListerEarningEntry extends BaseDocument {
+  booking_id: string;
+  host_id: string;
+  property_id?: string | null;
+  gross_amount: number;
+  platform_fee: number;
+  lenco_fee: number;
+  net_amount: number;
+  status: 'pending' | 'available' | 'withdrawing';
+  currency: string;
+  earned_at: string | null;
+}
+
 export interface Message extends BaseDocument {
   sender_id: string;
   recipient_id: string;
@@ -324,6 +346,8 @@ export type CollectionRecordMap = {
   notifications: Notification;
   notificationTokens: NotificationToken;
   notificationPreferences: NotificationPreference;
+  listerEarnings: ListerEarning;
+  listerEarningEntries: ListerEarningEntry;
   messages: Message;
   savedSearches: SavedSearch;
   reviews: Review;

@@ -161,6 +161,7 @@ Frontend (Vite) values:
 - `VITE_USE_FIREBASE_FUNCTIONS_EMULATOR=true` (use local Functions)
 - `VITE_FUNCTIONS_EMULATOR_HOST=127.0.0.1` (WSL/Windows friendly; defaults to localhost if omitted)
 - `VITE_FIREBASE_MESSAGING_VAPID_KEY` (Web Push certificate key from Firebase Console > Cloud Messaging)
+- `PLATFORM_FEE_PERCENT` (percentage, e.g., `10` for 10%, used to calculate host earnings)
 
 Functions / shared backend values:
 - `LENCO_API_KEY`
