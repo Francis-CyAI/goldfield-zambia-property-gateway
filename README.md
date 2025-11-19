@@ -215,6 +215,36 @@ Notes:
 - On WSL/Windows, `VITE_FUNCTIONS_EMULATOR_HOST=127.0.0.1` avoids host resolution quirks; removing `VITE_FUNCTIONS_ORIGIN` prevents mismatched hosts.
 - If the emulator warns about Node version mismatch (expects 20, host is 22), switch to Node 20 for a quieter startup.
 
+### Initial admin bootstrap (CLI script)
+To grant the first admin without using the UI, run the Node helper located at `scripts/create-admin.js`. This script:
+- Prompts for email, password, and optional names.
+- Creates/updates the Firebase Auth user.
+- Sets an `isAdmin` custom claim.
+- Upserts the user’s profile (`profiles/{uid}`) with `role: super_admin`.
+- Upserts the admin record (`admin_users/{uid}`) with `admin_type: super_admin` and default permissions.
+
+Prerequisites:
+1. A Firebase service account JSON (download from Firebase Console > Project Settings > Service accounts). Save it outside version control, e.g. `secrets/goldfield-8180d-firebase-adminsdk-xxxx.json`, and add the folder to `.gitignore`.
+2. Grant the service account IAM roles so it can call Firebase Auth:
+   - `roles/serviceusage.serviceUsageConsumer`
+   - `roles/firebase.admin` (or equivalent)
+   Commands (PowerShell, replace email with the JSON’s `client_email`):
+   ```powershell
+   gcloud auth login           # ensure you’re authenticated
+   gcloud config set project goldfield-8180d
+   gcloud projects add-iam-policy-binding goldfield-8180d --member="serviceAccount:firebase-adminsdk-fbsvc@goldfield-8180d.iam.gserviceaccount.com" --role="roles/serviceusage.serviceUsageConsumer"
+   gcloud projects add-iam-policy-binding goldfield-8180d --member="serviceAccount:firebase-adminsdk-fbsvc@goldfield-8180d.iam.gserviceaccount.com" --role="roles/firebase.admin"
+   ```
+   If running `gcloud` inside WSL, make sure it’s installed/configured there and has permission to write to `~/.config/gcloud`; otherwise run commands from Windows PowerShell.
+3. Export the service account path before running the script:
+   ```powershell
+   $env:GOOGLE_APPLICATION_CREDENTIALS = "C:\path\to\secrets\service-account.json"
+   node scripts/create-admin.js
+   ```
+   (You can use `$env:FIREBASE_SERVICE_ACCOUNT` instead; the script checks both.)
+
+After the script prints `✅ Admin account ready`, log in with that email/password and navigate to `/admin`.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/572aeb3d-2fb2-4f5d-aaf2-34c485c03cfa) and click on Share -> Publish.
