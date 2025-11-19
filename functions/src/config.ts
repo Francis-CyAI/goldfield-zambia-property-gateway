@@ -41,4 +41,7 @@ export const config = {
   notifications: {
     contactRecipient: required("CONTACT_RECIPIENT"),
   },
+  platform: {
+    feePercent: readPositiveNumber("PLATFORM_FEE_PERCENT", 10),
+  },
 };

@@ -16,6 +16,7 @@ import {
 } from "./lencoClient.js";
 import { db, serverTimestamp } from "./firestore.js";
 import { getMessaging } from "firebase-admin/messaging";
+import { calculateLencoFee } from "./lencoFees.js";
 setGlobalOptions({
   region: "africa-south1",
   memory: "256MiB",
@@ -74,6 +75,8 @@ type BookingPaymentStatusPayload = {
 const BOOKING_PAYMENTS_COLLECTION = "booking_payments";
 const NOTIFICATION_TOKENS_COLLECTION = "notification_tokens";
 const NOTIFICATION_PREFERENCES_COLLECTION = "notification_preferences";
+const LISTER_EARNINGS_COLLECTION = "lister_earnings";
+const LISTER_EARNING_ENTRIES_COLLECTION = "lister_earning_entries";
 const messaging = getMessaging();
 
 const validateNetwork = (network: string): MobileMoneyNetwork => {
@@ -281,6 +284,91 @@ export const sendPushForNotification = onDocumentCreated("notifications/{notific
       });
     }
   }
+});
+
+export const recordBookingEarnings = onDocumentCreated("bookings/{bookingId}", async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) return;
+
+  const booking = snapshot.data() as any;
+  if (!booking?.host_id || !booking?.total_price) {
+    return;
+  }
+
+  const status = (booking.status ?? "").toLowerCase();
+  if (status !== "confirmed" && status !== "completed") {
+    return;
+  }
+
+  const entryRef = db.collection(LISTER_EARNING_ENTRIES_COLLECTION).doc(snapshot.id);
+  const existingEntry = await entryRef.get();
+  if (existingEntry.exists) {
+    return;
+  }
+
+  const grossAmount = Number(booking.total_price) || 0;
+  if (!Number.isFinite(grossAmount) || grossAmount <= 0) {
+    return;
+  }
+
+  const platformFee = (grossAmount * config.platform.feePercent) / 100;
+  const lencoFee = calculateLencoFee(grossAmount);
+  const netAmount = Math.max(grossAmount - platformFee - lencoFee, 0);
+  const currency = booking.currency ?? booking.payment_metadata?.currency ?? "ZMW";
+  const earnedTimestamp =
+    booking.completed_at instanceof Timestamp
+      ? booking.completed_at
+      : booking.updated_at instanceof Timestamp
+        ? booking.updated_at
+        : booking.created_at instanceof Timestamp
+          ? booking.created_at
+          : Timestamp.now();
+
+  await db.runTransaction(async (transaction) => {
+    const currentEntry = await transaction.get(entryRef);
+    if (currentEntry.exists) {
+      return;
+    }
+
+    transaction.set(entryRef, {
+      booking_id: snapshot.id,
+      host_id: booking.host_id,
+      property_id: booking.property_id ?? null,
+      gross_amount: grossAmount,
+      platform_fee: platformFee,
+      lenco_fee: lencoFee,
+      net_amount: netAmount,
+      currency,
+      status: "available",
+      earned_at: earnedTimestamp,
+      created_at: serverTimestamp(),
+      updated_at: serverTimestamp(),
+    });
+
+    const earningsRef = db.collection(LISTER_EARNINGS_COLLECTION).doc(booking.host_id);
+    transaction.set(
+      earningsRef,
+      {
+        user_id: booking.host_id,
+        total_gross: FieldValue.increment(grossAmount),
+        total_platform_fee: FieldValue.increment(platformFee),
+        total_lenco_fee: FieldValue.increment(lencoFee),
+        available_balance: FieldValue.increment(netAmount),
+        currency,
+        updated_at: serverTimestamp(),
+        created_at: serverTimestamp(),
+      },
+      { merge: true },
+    );
+  });
+
+  await createUserNotification({
+    userId: booking.host_id,
+    title: "Booking earnings updated",
+    message: `Net earnings of ZMW ${netAmount.toFixed(2)} recorded for booking ${snapshot.id}.`,
+    type: "success",
+    relatedId: snapshot.id,
+  });
 });
 
 export const approveListing = onCall<{ propertyId?: string; notes?: string }>(async (request) => {
