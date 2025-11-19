@@ -8,14 +8,14 @@
   - [x] Ensure new listings are stored as “pending” with submitter info.  
   - [x] Add Firestore security rules to allow only admins to approve/decline and only owners to view their own pending/approved listings.
 
-- [ ] Notifications model  
+- [x] Notifications model  
   - [x] Define/extend `notifications` collection schema (type, userId, payload, read/unread, createdAt).  
-  - [ ] Add “web notification preferences” per user (opt-in/out for listing decisions, bookings, payouts).
+  - [x] Add “web notification preferences” per user (opt-in/out for listing decisions, bookings, payouts).
 
-- [ ] Email notification opt-in  
-  - [ ] Add user profile prefs for email notifications.  
-  - [ ] Build functions to send email for: listing submitted (to admin), listing approved/declined (to lister, with feedback on decline), booking payout updates.  
-  - [ ] Add a simple UI toggle in user settings for email/web notifications.
+- [x] Email notification opt-in  
+  - [x] Add user profile prefs for email notifications.  
+  - [x] Build functions to send email for: listing submitted (to admin), listing approved/declined (to lister, with feedback on decline), booking payout updates.  
+  - [x] Add a simple UI toggle in user settings for email/web notifications.
 
 - [ ] Admin actions backend  
   - [ ] Create callable HTTPS functions:  

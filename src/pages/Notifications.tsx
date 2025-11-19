@@ -3,8 +3,11 @@ import { Bell, CheckCircle, Info, AlertTriangle, AlertCircle } from 'lucide-reac
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications, useMarkNotificationAsRead } from '@/hooks/useNotifications';
+import { useNotificationPreferences, useUpdateNotificationPreferences } from '@/hooks/useNotificationPreferences';
 
 const iconMap = {
   success: CheckCircle,
@@ -16,6 +19,8 @@ const iconMap = {
 const NotificationsPage = () => {
   const { user } = useAuth();
   const { data: notifications = [], isLoading } = useNotifications(user?.uid);
+  const { data: preferences } = useNotificationPreferences(user?.uid);
+  const updatePrefs = useUpdateNotificationPreferences();
   const markAsRead = useMarkNotificationAsRead();
 
   if (!user) {
@@ -46,6 +51,43 @@ const NotificationsPage = () => {
           </h1>
           <p className="text-gray-600">All updates about your account and listings.</p>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Notification Preferences</CardTitle>
+            <CardDescription>Control how we reach you.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="emailNotifications">Email notifications</Label>
+                <p className="text-sm text-muted-foreground">Receive a copy via email.</p>
+              </div>
+              <Switch
+                id="emailNotifications"
+                checked={Boolean(preferences?.email_general)}
+                onCheckedChange={(checked) => {
+                  if (!user) return;
+                  updatePrefs.mutate({ userId: user.uid, updates: { email_general: checked } });
+                }}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="pushNotifications">Web push notifications</Label>
+                <p className="text-sm text-muted-foreground">Show alerts on this device.</p>
+              </div>
+              <Switch
+                id="pushNotifications"
+                checked={preferences?.push_general !== false}
+                onCheckedChange={(checked) => {
+                  if (!user) return;
+                  updatePrefs.mutate({ userId: user.uid, updates: { push_general: checked } });
+                }}
+              />
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
