@@ -15,7 +15,6 @@ import About from "./pages/About";
 import Services from "./pages/Services";
 import Contact from "./pages/Contact";
 import Auth from "./pages/Auth";
-import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import PropertyOwnerDashboard from "./pages/PropertyOwnerDashboard";
@@ -52,7 +51,6 @@ const App = () => (
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/faq" element={<FAQSection />} />
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/login" element={<Login />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route
                   path="/admin"
