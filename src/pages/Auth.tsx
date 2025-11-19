@@ -46,6 +46,16 @@ const Auth = () => {
       });
 
       try {
+        const token = await credentials.user.getIdTokenResult(true);
+        if (token.claims?.isAdmin) {
+          navigate('/admin');
+          return;
+        }
+      } catch (tokenError) {
+        console.warn('Failed to read admin claim after login:', tokenError);
+      }
+
+      try {
         const adminSnapshot = await getDoc(doc(db, 'admin_users', credentials.user.uid));
         if (adminSnapshot.exists()) {
           navigate('/admin');
