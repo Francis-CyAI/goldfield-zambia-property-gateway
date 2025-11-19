@@ -35,12 +35,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
       setLoading(false);
-
-      if (firebaseUser && window.location.pathname === '/auth') {
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 100);
-      }
     });
 
     return () => unsubscribe();

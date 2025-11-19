@@ -22,17 +22,27 @@ export interface AdminStatus {
 export const useAdminStatus = () => {
   const { user } = useAuth();
 
+  const defaultStatus: AdminStatus = {
+    isAdmin: false,
+    adminType: null,
+    branchLocation: null,
+    permissions: [],
+    isActive: false,
+  };
+
   return useQuery({
     queryKey: ['admin-status', user?.uid],
     queryFn: async (): Promise<AdminStatus> => {
       if (!user) {
-        return {
-          isAdmin: false,
-          adminType: null,
-          branchLocation: null,
-          permissions: [],
-          isActive: false,
-        };
+        return defaultStatus;
+      }
+
+      let hasAdminClaim = false;
+      try {
+        const token = await user.getIdTokenResult(true);
+        hasAdminClaim = token.claims?.isAdmin === true;
+      } catch (claimError) {
+        console.warn('Failed to read admin claim:', claimError);
       }
 
       const adminDocRef = doc(db, COLLECTIONS.adminUsers, user.uid);
@@ -49,13 +59,16 @@ export const useAdminStatus = () => {
       }
 
       if (!adminSnapshot || !adminSnapshot.exists()) {
-        return {
-          isAdmin: false,
-          adminType: null,
-          branchLocation: null,
-          permissions: [],
-          isActive: false,
-        };
+        if (hasAdminClaim) {
+          return {
+            isAdmin: true,
+            adminType: 'super_admin',
+            branchLocation: null,
+            permissions: [],
+            isActive: true,
+          };
+        }
+        return defaultStatus;
       }
 
       const data = serializeDoc<{
@@ -76,4 +89,3 @@ export const useAdminStatus = () => {
     enabled: !!user,
   });
 };
-
