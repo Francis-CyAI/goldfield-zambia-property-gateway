@@ -17,7 +17,7 @@ import {
   sendEmailVerification,
 } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
-import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { doc, serverTimestamp, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/lib/constants/firebase';
 
 const Auth = () => {
@@ -38,12 +38,22 @@ const Auth = () => {
     setError('');
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const credentials = await signInWithEmailAndPassword(auth, email, password);
 
       toast({
         title: 'Welcome back!',
         description: 'You have successfully logged in.',
       });
+
+      try {
+        const adminSnapshot = await getDoc(doc(db, 'admin_users', credentials.user.uid));
+        if (adminSnapshot.exists()) {
+          navigate('/admin');
+          return;
+        }
+      } catch (adminError) {
+        console.warn('Failed to check admin status after login:', adminError);
+      }
 
       navigate('/');
     } catch (err) {
