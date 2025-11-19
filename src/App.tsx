@@ -29,6 +29,7 @@ import FAQSection from "./components/FAQSection";
 import Setup from "./pages/Setup";
 import NotFound from "./pages/NotFound";
 import AdminRoute from "./components/routes/AdminRoute";
+import Notifications from "./pages/Notifications";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => (
                 <Route path="/subscription" element={<Subscription />} />
                 <Route path="/news" element={<News />} />
                 <Route path="/setup" element={<Setup />} />
+                <Route path="/notifications" element={<Notifications />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Layout>

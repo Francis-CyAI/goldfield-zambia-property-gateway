@@ -116,6 +116,14 @@ export interface Notification extends BaseDocument {
   related_id?: string | null;
 }
 
+export interface NotificationToken extends BaseDocument {
+  user_id: string;
+  token: string;
+  platform?: string | null;
+  user_agent?: string | null;
+  last_seen_at?: string | null;
+}
+
 export interface Message extends BaseDocument {
   sender_id: string;
   recipient_id: string;
@@ -282,6 +290,7 @@ export type CollectionKey =
   | 'bookingRequests'
   | 'platformCommissions'
   | 'notifications'
+  | 'notificationTokens'
   | 'messages'
   | 'savedSearches'
   | 'reviews'
@@ -305,6 +314,7 @@ export type CollectionRecordMap = {
   bookingRequests: BookingRequest;
   platformCommissions: Commission;
   notifications: Notification;
+  notificationTokens: NotificationToken;
   messages: Message;
   savedSearches: SavedSearch;
   reviews: Review;

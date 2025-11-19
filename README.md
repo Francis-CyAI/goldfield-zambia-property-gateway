@@ -160,6 +160,7 @@ Frontend (Vite) values:
 - `VITE_USE_FIREBASE_EMULATOR` (optional flag for local emulators)
 - `VITE_USE_FIREBASE_FUNCTIONS_EMULATOR=true` (use local Functions)
 - `VITE_FUNCTIONS_EMULATOR_HOST=127.0.0.1` (WSL/Windows friendly; defaults to localhost if omitted)
+- `VITE_FIREBASE_MESSAGING_VAPID_KEY` (Web Push certificate key from Firebase Console > Cloud Messaging)
 
 Functions / shared backend values:
 - `LENCO_API_KEY`
@@ -244,6 +245,16 @@ Prerequisites:
    (You can use `$env:FIREBASE_SERVICE_ACCOUNT` instead; the script checks both.)
 
 After the script prints `✅ Admin account ready`, log in with that email/password and navigate to `/admin`.
+
+### Web push notifications (FCM)
+1. In Firebase Console → Cloud Messaging, generate a Web Push certificate and copy the VAPID key into `VITE_FIREBASE_MESSAGING_VAPID_KEY`.
+2. Ensure `firebase-messaging-sw.js` is deployed from the `public/` folder (Vite copies it automatically). The Firebase config inside the service worker must match your project.
+3. Users must grant notification permission; the app automatically requests and registers the token via Functions (`saveUserMessagingToken`). Tokens are stored in `notification_tokens` and used by the `sendPushForNotification` trigger whenever a Firestore notification document is created.
+4. Deploy the new functions:
+   ```sh
+   firebase deploy --only functions:saveUserMessagingToken,functions:sendPushForNotification
+   ```
+5. Use the Notifications page (`/notifications`) to view and mark messages as read. The bell icon in the header reflects the unread count.
 
 ## How can I deploy this project?
 
