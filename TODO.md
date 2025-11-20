@@ -53,10 +53,10 @@
     - [x] Users can read/write only their own notifications and earnings/withdrawal records.  
   - [x] Protect callables with auth checks and role checks.
 
-- [ ] Testing & verification  
-  - [ ] Add function tests for approve/decline, earnings calc, withdrawal, fee computation.  
-  - [ ] Manual test scripts for Lenco API calls in emulator/stub mode if available.  
-  - [ ] Check CORS for new callables via emulator curl/Invoke-WebRequest.
+- [x] Testing & verification  
+  - [x] Add function tests for approve/decline, earnings calc, withdrawal, fee computation.  
+  - [x] Manual test scripts for Lenco API calls in emulator/stub mode if available.  
+  - [x] Check CORS for new callables via emulator curl/Invoke-WebRequest.
 
 - [ ] Docs  
   - [ ] Update README with new env vars, emulator steps for new functions, and brief usage notes for admin/lister flows.

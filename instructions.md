@@ -58,6 +58,17 @@
 - [ ] Test as both host and admin to confirm restricted collections (`properties`, `notifications`, `lister_earnings`, `lister_withdrawals`) behave correctly (owners only see their data; admins see all).
 - [ ] Verify callables enforce auth/role checks by attempting disallowed actions.
 
+## Testing & verification
+- [ ] Run available unit/lint checks (e.g., `npm run lint`). Add tests where gaps exist.
+- [ ] Use the Firebase emulator to exercise callables (`approveListing`, `declineListing`, `initiateWithdrawal`, `recordBookingEarnings`) and verify Firestore writes + notifications.
+- [ ] Execute callable smoke tests with helper scripts (e.g., `node functions/tests/runCallable.mjs approveListing '{"propertyId":"..."}'`).
+- [ ] Manual tests:
+  - [ ] Submit/approve/decline a listing (check push/email + admin log).
+  - [ ] Complete a booking (ensure earnings entry and balance update).
+  - [ ] Request a withdrawal (inspect `lister_withdrawals`, notifications).
+- [ ] CORS: call each callable via `curl`/`Invoke-WebRequest` to confirm headers.
+- [ ] Document any known gaps and add them to TODO.
+
 ## Post-task checklist
 - [ ] `.env` includes any new keys/secrets (e.g., `VITE_FIREBASE_MESSAGING_VAPID_KEY`).
 - [ ] Firestore rules deployed (`firebase deploy --only firestore:rules`).
