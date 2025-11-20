@@ -29,10 +29,10 @@
   - [x] On booking completion: compute platform deduction (from env %) and lenco service charge (from constants tiers), store ledger entry, update lister’s available balance.  
   - [x] UI: Lister earnings page showing total earned, available balance, fees breakdown per booking, and summary cards.
 
-- [ ] Withdrawal flow  
-  - [ ] UI: withdrawal screen showing available balance, platform deductions already applied, and lenco fee for the chosen amount; highlight “you’ll receive X, fees Y”.  
-  - [ ] Backend callable: `initiateWithdrawal(listerId, amount)` that validates balance, applies fees, records withdrawal request, calls Lenco payout API, and updates balance/ledger.  
-  - [ ] Add webhook/polling handler for Lenco payout status to update withdrawal record and notify user.
+- [x] Withdrawal flow  
+  - [x] UI: withdrawal screen showing available balance, platform deductions already applied, and lenco fee for the chosen amount; highlight “you’ll receive X, fees Y”.  
+  - [x] Backend callable: `initiateWithdrawal(listerId, amount)` that validates balance, applies fees, records withdrawal request, calls Lenco payout API, and updates balance/ledger.  
+  - [x] Add webhook/polling handler for Lenco payout status to update withdrawal record and notify user.
 
 - [ ] Constants & env  
   - [ ] Add env for platform fee percentage (e.g., `PLATFORM_FEE_PERCENT`).  

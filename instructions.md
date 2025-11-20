@@ -27,10 +27,14 @@
 - [ ] Set `PLATFORM_FEE_PERCENT` in `.env` (default 10% if omitted).
 - [ ] After implementing revenue logic, redeploy rules/functions:
   ```sh
-  firebase deploy --only firestore:rules,functions:recordBookingEarnings,functions:saveUserMessagingToken,functions:sendPushForNotification,functions:approveListing,functions:declineListing
+  firebase deploy --only firestore:rules,functions:recordBookingEarnings,functions:saveUserMessagingToken,functions:sendPushForNotification,functions:approveListing,functions:declineListing,functions:initiateWithdrawal,functions:reconcileWithdrawals
   ```
   (Include other functions from previous steps if they changed.)
 - [ ] Create a test booking (status confirmed) to ensure `lister_earnings` and `lister_earning_entries` populate, and verify the Property Owner dashboard reflects balances.
+- [ ] Submit a test withdrawal from the Property Owner dashboard (use a sandbox MSISDN). Confirm:
+  - [ ] A document is created in `lister_withdrawals`.
+  - [ ] Available balance decreases by the withdrawal amount plus fee.
+  - [ ] The withdrawal history card and notifications show the new record/status.
 
 ## Web push notifications & email opt-in
 - [ ] Generate a Web Push certificate (Firebase Console → Cloud Messaging) and set `VITE_FIREBASE_MESSAGING_VAPID_KEY` in `.env`.

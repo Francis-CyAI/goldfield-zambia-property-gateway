@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { 
   Building, 
   Calendar, 
@@ -23,14 +24,32 @@ import BookingManagement from '@/components/BookingManagement';
 import EarningsOverview from '@/components/EarningsOverview';
 import CommissionTracker from '@/components/CommissionTracker';
 import { useNavigate } from 'react-router-dom';
+import { useListerEarnings, useListerEarningEntries } from '@/hooks/useListerEarnings';
+import { useListerWithdrawals } from '@/hooks/useListerWithdrawals';
+import { useInitiateWithdrawal } from '@/hooks/useWithdrawal';
+
+const calculateLencoFeeUi = (amount: number) => {
+  if (!Number.isFinite(amount) || amount <= 0) return 0;
+  if (amount < 1000) return 5;
+  if (amount < 5000) return 15;
+  if (amount < 10000) return 25;
+  return 35;
+};
 
 const PropertyOwnerDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawPhone, setWithdrawPhone] = useState('');
+  const [withdrawOperator, setWithdrawOperator] = useState('airtel');
   
   const { data: properties = [], isLoading: propertiesLoading } = useUserProperties(user?.uid);
   const { data: bookings = [], isLoading: bookingsLoading } = useHostBookings(user?.uid);
+  const { data: listerEarnings } = useListerEarnings(user?.uid);
+  const { data: earningEntries = [], isLoading: earningEntriesLoading } = useListerEarningEntries(user?.uid);
+  const { data: withdrawals = [], isLoading: withdrawalsLoading } = useListerWithdrawals(user?.uid);
+  const initiateWithdrawal = useInitiateWithdrawal();
   const { data: listerEarnings } = useListerEarnings(user?.uid);
   const { data: earningEntries = [], isLoading: earningEntriesLoading } = useListerEarningEntries(user?.uid);
 
@@ -48,6 +67,32 @@ const PropertyOwnerDashboard = () => {
   const totalEarnings = bookings
     .filter(b => b.status === 'completed')
     .reduce((sum, booking) => sum + booking.total_price, 0);
+  const availableBalance = listerEarnings?.available_balance ?? 0;
+  const totalGross = listerEarnings?.total_gross ?? 0;
+  const totalFees = (listerEarnings?.total_platform_fee ?? 0) + (listerEarnings?.total_lenco_fee ?? 0);
+
+  const parsedWithdrawAmount = Number(withdrawAmount) || 0;
+  const estimatedLencoFee = calculateLencoFeeUi(parsedWithdrawAmount);
+  const totalDeducted = parsedWithdrawAmount + estimatedLencoFee;
+  const canSubmitWithdrawal =
+    parsedWithdrawAmount > 0 &&
+    totalDeducted <= availableBalance &&
+    /^\d{9,15}$/.test(withdrawPhone) &&
+    !initiateWithdrawal.isPending;
+
+  const handleWithdrawalSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!canSubmitWithdrawal) return;
+    initiateWithdrawal.mutate(
+      { amount: parsedWithdrawAmount, msisdn: withdrawPhone, operator: withdrawOperator },
+      {
+        onSuccess: () => {
+          setWithdrawAmount('');
+          setWithdrawPhone('');
+        },
+      },
+    );
+  };
   const availableBalance = listerEarnings?.available_balance ?? 0;
   const totalGross = listerEarnings?.total_gross ?? 0;
   const totalFees = (listerEarnings?.total_platform_fee ?? 0) + (listerEarnings?.total_lenco_fee ?? 0);
@@ -333,8 +378,107 @@ const PropertyOwnerDashboard = () => {
             <BookingManagement />
           </TabsContent>
 
-          <TabsContent value="earnings">
+          <TabsContent value="earnings" className="space-y-6">
             <EarningsOverview />
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Request Withdrawal</CardTitle>
+                <CardDescription>Available balance: ZMW {availableBalance.toLocaleString()}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form className="space-y-4" onSubmit={handleWithdrawalSubmit}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Amount (ZMW)</label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={withdrawAmount}
+                        onChange={(event) => setWithdrawAmount(event.target.value)}
+                        placeholder="e.g. 500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Mobile number</label>
+                      <Input
+                        value={withdrawPhone}
+                        onChange={(event) => setWithdrawPhone(event.target.value)}
+                        placeholder="0972123456"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700">Operator</label>
+                    <select
+                      className="w-full border rounded-md px-3 py-2"
+                      value={withdrawOperator}
+                      onChange={(event) => setWithdrawOperator(event.target.value)}
+                    >
+                      <option value="airtel">Airtel</option>
+                      <option value="mtn">MTN</option>
+                      <option value="zamtel">Zamtel</option>
+                    </select>
+                  </div>
+
+                  <div className="rounded-lg border p-4 bg-gray-50">
+                    <p className="text-sm text-gray-600">Summary</p>
+                    <div className="flex justify-between text-sm pt-2">
+                      <span>You will receive</span>
+                      <span className="font-semibold">ZMW {parsedWithdrawAmount.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Lenco fee</span>
+                      <span>ZMW {estimatedLencoFee.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-muted-foreground">
+                      <span>Total deducted</span>
+                      <span>ZMW {totalDeducted.toFixed(2)}</span>
+                    </div>
+                  </div>
+
+                  <Button type="submit" disabled={!canSubmitWithdrawal} className="w-full md:w-auto">
+                    {initiateWithdrawal.isPending ? 'Submitting...' : 'Withdraw'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Withdrawal History</CardTitle>
+                <CardDescription>Your recent payout requests.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {withdrawalsLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="animate-pulse h-12 bg-gray-100 rounded" />
+                    ))}
+                  </div>
+                ) : withdrawals.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-4">No withdrawals yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {withdrawals.map((withdrawal) => (
+                      <div key={withdrawal.id} className="border rounded-lg p-3 flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-sm">
+                            {withdrawal.reference} · ZMW {withdrawal.amount_requested.toLocaleString()}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {withdrawal.created_at ? new Date(withdrawal.created_at).toLocaleString() : ''}
+                          </p>
+                        </div>
+                        <Badge variant={withdrawal.status === 'failed' ? 'destructive' : withdrawal.status === 'completed' ? 'secondary' : 'outline'}>
+                          {withdrawal.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="commissions">

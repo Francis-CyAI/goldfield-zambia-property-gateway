@@ -172,6 +172,59 @@ export const getCollectionById = async (id: string): Promise<LencoCollection> =>
   return mapCollection(data?.data ?? data);
 };
 
+export interface LencoPayout {
+  id: string;
+  reference: string;
+  status: string;
+  amount: number;
+  currency: string;
+  raw?: unknown;
+}
+
+const mapPayout = (payload: Record<string, any>): LencoPayout => ({
+  id: payload.id ?? payload.reference ?? "",
+  reference: payload.reference ?? payload.id ?? "",
+  status: (payload.status ?? "pending").toLowerCase(),
+  amount: normalizeAmount(payload.amount),
+  currency: payload.currency ?? "ZMW",
+  raw: payload,
+});
+
+export const initiateMobileMoneyPayout = async (payload: {
+  amount: number;
+  currency?: string;
+  reference: string;
+  phone: string;
+  operator: MobileMoneyOperator;
+}) => {
+  const endpoint = `${config.lenco.baseUrl}/payouts/mobile-money`;
+  const body = {
+    amount: payload.amount,
+    currency: payload.currency ?? "ZMW",
+    reference: payload.reference,
+    phone: payload.phone,
+    operator: payload.operator,
+  };
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify(body),
+  });
+  const data = await handleResponse(response);
+  return mapPayout(data?.data ?? data);
+};
+
+export const getPayoutStatusByReference = async (reference: string): Promise<LencoPayout> => {
+  const endpoint = `${config.lenco.baseUrl}/payouts/status/${reference}`;
+  const response = await fetch(endpoint, {
+    method: "GET",
+    headers: headers(),
+  });
+  const data = await handleResponse(response);
+  return mapPayout(data?.data ?? data);
+};
+
 export const acceptPayment = async (
   payload: AcceptPaymentPayload,
 ): Promise<LencoPaymentResponse> => {

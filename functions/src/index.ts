@@ -11,6 +11,8 @@ import {
   getCollectionStatusByReference,
   getPaymentStatus,
   initiateMobileMoneyCollection,
+  initiateMobileMoneyPayout,
+  getPayoutStatusByReference,
   MobileMoneyNetwork,
   MobileMoneyOperator,
 } from "./lencoClient.js";
@@ -77,6 +79,7 @@ const NOTIFICATION_TOKENS_COLLECTION = "notification_tokens";
 const NOTIFICATION_PREFERENCES_COLLECTION = "notification_preferences";
 const LISTER_EARNINGS_COLLECTION = "lister_earnings";
 const LISTER_EARNING_ENTRIES_COLLECTION = "lister_earning_entries";
+const LISTER_WITHDRAWALS_COLLECTION = "lister_withdrawals";
 const messaging = getMessaging();
 
 const validateNetwork = (network: string): MobileMoneyNetwork => {
@@ -369,6 +372,191 @@ export const recordBookingEarnings = onDocumentCreated("bookings/{bookingId}", a
     type: "success",
     relatedId: snapshot.id,
   });
+});
+
+export const initiateWithdrawal = onCall<{
+  amount?: number;
+  msisdn?: string;
+  operator?: string;
+}>(async (request) => {
+  const authCtx = request.auth;
+  if (!authCtx?.uid) {
+    throw new HttpsError("unauthenticated", "Authentication required.");
+  }
+
+  const rawAmount = Number(request.data?.amount);
+  if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
+    throw new HttpsError("invalid-argument", "Amount must be a positive number.");
+  }
+
+  const msisdn = (request.data?.msisdn ?? "").trim();
+  if (!/^\d{9,15}$/.test(msisdn)) {
+    throw new HttpsError("invalid-argument", "Enter a valid phone number.");
+  }
+
+  if (typeof request.data?.operator !== "string") {
+    throw new HttpsError("invalid-argument", "Operator is required.");
+  }
+  const operator = normalizeOperator(request.data.operator);
+
+  const lencoFee = calculateLencoFee(rawAmount);
+  const totalDeducted = rawAmount + lencoFee;
+
+  const earningsRef = db.collection(LISTER_EARNINGS_COLLECTION).doc(authCtx.uid);
+  const reference = `withdraw_${authCtx.uid}_${Date.now()}`;
+
+  let currency = "ZMW";
+
+  await db.runTransaction(async (transaction) => {
+    const earningsSnap = await transaction.get(earningsRef);
+    const currentBalance = earningsSnap.exists ? earningsSnap.get("available_balance") ?? 0 : 0;
+    currency = earningsSnap.exists ? earningsSnap.get("currency") ?? "ZMW" : "ZMW";
+
+    if (currentBalance < totalDeducted) {
+      throw new HttpsError("failed-precondition", "Insufficient balance for this withdrawal.");
+    }
+
+    transaction.set(
+      db.collection(LISTER_WITHDRAWALS_COLLECTION).doc(reference),
+      {
+        user_id: authCtx.uid,
+        reference,
+        amount_requested: rawAmount,
+        lenco_fee: lencoFee,
+        total_deducted: totalDeducted,
+        currency,
+        target_msisdn: msisdn,
+        operator,
+        status: "pending",
+        created_at: serverTimestamp(),
+        updated_at: serverTimestamp(),
+      },
+      { merge: false },
+    );
+
+    transaction.set(
+      earningsRef,
+      {
+        user_id: authCtx.uid,
+        available_balance: FieldValue.increment(-totalDeducted),
+        currency,
+        updated_at: serverTimestamp(),
+      },
+      { merge: true },
+    );
+  });
+
+  const payout = await initiateMobileMoneyPayout({
+    amount: rawAmount,
+    currency,
+    reference,
+    phone: msisdn,
+    operator,
+  });
+
+  await db
+    .collection(LISTER_WITHDRAWALS_COLLECTION)
+    .doc(reference)
+    .set(
+      {
+        payout_reference: payout.reference ?? payout.id ?? null,
+        status: payout.status ?? "processing",
+        updated_at: serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+  await createUserNotification({
+    userId: authCtx.uid,
+    title: "Withdrawal requested",
+    message: `We started processing your withdrawal of ZMW ${rawAmount.toFixed(2)}.`,
+    type: "info",
+    relatedId: reference,
+  });
+
+  return { success: true, reference };
+});
+
+export const reconcileWithdrawals = onSchedule("every 5 minutes", async () => {
+  const pendingSnapshot = await db
+    .collection(LISTER_WITHDRAWALS_COLLECTION)
+    .where("status", "in", ["pending", "processing"])
+    .orderBy("created_at", "asc")
+    .limit(50)
+    .get();
+
+  if (pendingSnapshot.empty) {
+    return;
+  }
+
+  for (const docSnap of pendingSnapshot.docs) {
+    const withdrawal = docSnap.data();
+    const reference = withdrawal.reference;
+    if (!reference) continue;
+
+    try {
+      const payout = await getPayoutStatusByReference(reference);
+      const normalizedStatus = (payout.status ?? "").toLowerCase();
+
+      if (normalizedStatus === "pending" || normalizedStatus === "processing") {
+        continue;
+      }
+
+      const isSuccess = normalizedStatus === "success" || normalizedStatus === "completed";
+      const withdrawalRef = docSnap.ref;
+
+      if (isSuccess) {
+        await withdrawalRef.set(
+          {
+            status: "completed",
+            processed_at: serverTimestamp(),
+            updated_at: serverTimestamp(),
+          },
+          { merge: true },
+        );
+
+        await createUserNotification({
+          userId: withdrawal.user_id,
+          title: "Withdrawal completed",
+          message: `We sent ZMW ${withdrawal.amount_requested?.toFixed?.(2) ?? withdrawal.amount_requested} to ${withdrawal.target_msisdn}.`,
+          type: "success",
+          relatedId: withdrawal.reference,
+        });
+      } else {
+        await db.runTransaction(async (transaction) => {
+          transaction.set(
+            withdrawalRef,
+            {
+              status: "failed",
+              failure_reason: payout.raw?.message ?? payout.status,
+              updated_at: serverTimestamp(),
+            },
+            { merge: true },
+          );
+
+          transaction.set(
+            db.collection(LISTER_EARNINGS_COLLECTION).doc(withdrawal.user_id),
+            {
+              user_id: withdrawal.user_id,
+              available_balance: FieldValue.increment(withdrawal.total_deducted ?? 0),
+              updated_at: serverTimestamp(),
+            },
+            { merge: true },
+          );
+        });
+
+        await createUserNotification({
+          userId: withdrawal.user_id,
+          title: "Withdrawal failed",
+          message: "We were unable to process your withdrawal. The funds were returned to your balance.",
+          type: "error",
+          relatedId: withdrawal.reference,
+        });
+      }
+    } catch (error) {
+      logger.warn("Failed to reconcile withdrawal", { reference, error });
+    }
+  }
 });
 
 export const approveListing = onCall<{ propertyId?: string; notes?: string }>(async (request) => {

@@ -154,6 +154,22 @@ export interface ListerEarningEntry extends BaseDocument {
   earned_at: string | null;
 }
 
+export interface ListerWithdrawal extends BaseDocument {
+  user_id: string;
+  reference: string;
+  amount_requested: number;
+  lenco_fee: number;
+  total_deducted: number;
+  currency: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  target_msisdn: string;
+  operator: string;
+  payout_reference?: string | null;
+  failure_reason?: string | null;
+  metadata?: Record<string, unknown> | null;
+  processed_at?: string | null;
+}
+
 export interface Message extends BaseDocument {
   sender_id: string;
   recipient_id: string;
@@ -321,6 +337,10 @@ export type CollectionKey =
   | 'platformCommissions'
   | 'notifications'
   | 'notificationTokens'
+  | 'notificationPreferences'
+  | 'listerEarnings'
+  | 'listerEarningEntries'
+  | 'listerWithdrawals'
   | 'messages'
   | 'savedSearches'
   | 'reviews'
@@ -348,6 +368,7 @@ export type CollectionRecordMap = {
   notificationPreferences: NotificationPreference;
   listerEarnings: ListerEarning;
   listerEarningEntries: ListerEarningEntry;
+  listerWithdrawals: ListerWithdrawal;
   messages: Message;
   savedSearches: SavedSearch;
   reviews: Review;
