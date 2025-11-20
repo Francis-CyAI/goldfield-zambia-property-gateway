@@ -518,7 +518,10 @@ export const reconcileWithdrawals = onSchedule("every 5 minutes", async () => {
             withdrawalRef,
             {
               status: "failed",
-              failure_reason: payout.raw?.message ?? payout.status,
+              failure_reason:
+                typeof payout.raw === "object" && payout.raw && "message" in payout.raw
+                  ? (payout.raw as Record<string, unknown>).message ?? payout.status
+                  : payout.status,
               updated_at: serverTimestamp(),
             },
             { merge: true },
