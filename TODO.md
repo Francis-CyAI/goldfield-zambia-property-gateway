@@ -47,11 +47,11 @@
   - [x] Admin dashboard actions call new callables; optimistic updates and toasts.  
   - [x] Lister dashboard shows notifications, earnings, withdrawals, balances; consistent UI styling with existing components.
 
-- [ ] Security & rules  
-  - [ ] Update Firestore rules to enforce:  
-    - [ ] Only admins can approve/decline listings.  
-    - [ ] Users can read/write only their own notifications and earnings/withdrawal records.  
-  - [ ] Protect callables with auth checks and role checks.
+- [x] Security & rules  
+  - [x] Update Firestore rules to enforce:  
+    - [x] Only admins can approve/decline listings.  
+    - [x] Users can read/write only their own notifications and earnings/withdrawal records.  
+  - [x] Protect callables with auth checks and role checks.
 
 - [ ] Testing & verification  
   - [ ] Add function tests for approve/decline, earnings calc, withdrawal, fee computation.  

@@ -53,6 +53,11 @@
 - [ ] Approve/decline the sample property in the admin dashboard to verify toast messaging and host notifications.
 - [ ] Submit/complete a test withdrawal to see push/email notifications at each stage.
 
+## Security & rules
+- [ ] After editing `firestore.rules`, redeploy them with `firebase deploy --only firestore:rules`.
+- [ ] Test as both host and admin to confirm restricted collections (`properties`, `notifications`, `lister_earnings`, `lister_withdrawals`) behave correctly (owners only see their data; admins see all).
+- [ ] Verify callables enforce auth/role checks by attempting disallowed actions.
+
 ## Post-task checklist
 - [ ] `.env` includes any new keys/secrets (e.g., `VITE_FIREBASE_MESSAGING_VAPID_KEY`).
 - [ ] Firestore rules deployed (`firebase deploy --only firestore:rules`).
