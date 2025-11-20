@@ -43,9 +43,9 @@
   - [x] Web: ensure notifications are created on all key events (submission received, approval, decline, withdrawal initiated/completed/failed).  
   - [x] Email: respect user opt-in; reuse existing email sender or add a mail provider config.
 
-- [ ] Frontend wiring  
-  - [ ] Admin dashboard actions call new callables; optimistic updates and toasts.  
-  - [ ] Lister dashboard shows notifications, earnings, withdrawals, balances; consistent UI styling with existing components.
+- [x] Frontend wiring  
+  - [x] Admin dashboard actions call new callables; optimistic updates and toasts.  
+  - [x] Lister dashboard shows notifications, earnings, withdrawals, balances; consistent UI styling with existing components.
 
 - [ ] Security & rules  
   - [ ] Update Firestore rules to enforce:  

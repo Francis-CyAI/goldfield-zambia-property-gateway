@@ -188,7 +188,6 @@ const Header = () => {
         {/* Right side actions */}
         <div className="flex items-center space-x-4">
           <CountrySelector />
-          {/* TODO: Fetch real notifications and get count */}
           {user && (
             <Button variant="ghost" size="icon" className="relative" asChild>
               <Link to="/notifications" aria-label="Notifications">

@@ -50,6 +50,8 @@
   - [ ] Email is enqueued (check `notification_queue` or your mail provider).
 - [ ] Use `/notifications` to manage email/push preferences during testing; ensure opt-ins are respected.
 - [ ] Submit a sample property to confirm the listing submission notification/email.
+- [ ] Approve/decline the sample property in the admin dashboard to verify toast messaging and host notifications.
+- [ ] Submit/complete a test withdrawal to see push/email notifications at each stage.
 
 ## Post-task checklist
 - [ ] `.env` includes any new keys/secrets (e.g., `VITE_FIREBASE_MESSAGING_VAPID_KEY`).
