@@ -39,9 +39,9 @@
   - [x] Add Lenco fee tiers in a constants file.  
   - [x] Verify LENCO API keys already in env; add any needed payout endpoints configuration.
 
-- [ ] Notifications delivery  
-  - [ ] Web: ensure notifications are created on all key events (submission received, approval, decline, withdrawal initiated/completed/failed).  
-  - [ ] Email: respect user opt-in; reuse existing email sender or add a mail provider config.
+- [x] Notifications delivery  
+  - [x] Web: ensure notifications are created on all key events (submission received, approval, decline, withdrawal initiated/completed/failed).  
+  - [x] Email: respect user opt-in; reuse existing email sender or add a mail provider config.
 
 - [ ] Frontend wiring  
   - [ ] Admin dashboard actions call new callables; optimistic updates and toasts.  
