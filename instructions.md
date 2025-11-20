@@ -35,6 +35,7 @@
   - [ ] A document is created in `lister_withdrawals`.
   - [ ] Available balance decreases by the withdrawal amount plus fee.
   - [ ] The withdrawal history card and notifications show the new record/status.
+- [ ] If Lenco fee tiers change, update `functions/src/lencoFees.ts` to match their latest schedule and redeploy the functions command above.
 
 ## Web push notifications & email opt-in
 - [ ] Generate a Web Push certificate (Firebase Console → Cloud Messaging) and set `VITE_FIREBASE_MESSAGING_VAPID_KEY` in `.env`.

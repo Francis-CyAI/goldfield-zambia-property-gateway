@@ -34,10 +34,10 @@
   - [x] Backend callable: `initiateWithdrawal(listerId, amount)` that validates balance, applies fees, records withdrawal request, calls Lenco payout API, and updates balance/ledger.  
   - [x] Add webhook/polling handler for Lenco payout status to update withdrawal record and notify user.
 
-- [ ] Constants & env  
-  - [ ] Add env for platform fee percentage (e.g., `PLATFORM_FEE_PERCENT`).  
-  - [ ] Add Lenco fee tiers in a constants file.  
-  - [ ] Verify LENCO API keys already in env; add any needed payout endpoints configuration.
+- [x] Constants & env  
+  - [x] Add env for platform fee percentage (e.g., `PLATFORM_FEE_PERCENT`).  
+  - [x] Add Lenco fee tiers in a constants file.  
+  - [x] Verify LENCO API keys already in env; add any needed payout endpoints configuration.
 
 - [ ] Notifications delivery  
   - [ ] Web: ensure notifications are created on all key events (submission received, approval, decline, withdrawal initiated/completed/failed).  
