@@ -1,8 +1,8 @@
 # Configuration & Deployment Instructions
 
 ## Initial setup
-- [ ] Install dependencies: `npm install` (root) and `npm install --prefix functions`.
-- [ ] Copy `.env` template and set all Firebase values plus project-specific secrets (LENCO, `PLATFORM_FEE_PERCENT`, etc.).
+- [x] Install dependencies: `npm install` (root) and `npm install --prefix functions`.
+- [x] Copy `.env` template and set all Firebase values plus project-specific secrets (LENCO, `PLATFORM_FEE_PERCENT`, etc.).
 
 ## Local workflow
 - [ ] Run Vite dev server: `npm run dev`.
