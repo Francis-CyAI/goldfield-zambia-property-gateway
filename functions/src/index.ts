@@ -268,24 +268,14 @@ export const sendPushForNotification = onDocumentCreated("notifications/{notific
   }
 
   if (emailEnabled) {
-    const profileSnap = await db.collection("profiles").doc(userId).get();
-    const targetEmail = profileSnap.exists ? profileSnap.get("email") : null;
-    if (targetEmail) {
-      await db.collection("notification_queue").add({
-        type: "user_notification_email",
-        to: targetEmail,
-        user_id: userId,
-        notification_id: snapshot.id,
-        payload: {
-          title: notification.title,
-          message: notification.message,
-          type: notification.type,
-          related_id: notification.related_id ?? null,
-        },
-        created_at: serverTimestamp(),
-        processed: false,
-      });
-    }
+    await sendNotificationEmail({
+      userId,
+      notificationId: snapshot.id,
+      title: notification.title ?? "New notification",
+      message: notification.message ?? "",
+      type: notification.type ?? "info",
+      relatedId: notification.related_id ?? null,
+    });
   }
 });
 
@@ -557,6 +547,44 @@ export const reconcileWithdrawals = onSchedule("every 5 minutes", async () => {
       logger.warn("Failed to reconcile withdrawal", { reference, error });
     }
   }
+});
+
+export const notifyListingSubmission = onDocumentCreated("properties/{propertyId}", async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) return;
+
+  const property = snapshot.data() as any;
+  const hostId = property?.host_id;
+  if (!hostId) {
+    return;
+  }
+
+  const status = (property.approval_status ?? "pending").toLowerCase();
+  if (status !== "pending") {
+    return;
+  }
+
+  await createUserNotification({
+    userId: hostId,
+    title: "Listing submitted",
+    message: `We received "${property.title ?? "your property"}". We'll notify you once it's reviewed.`,
+    type: "info",
+    relatedId: snapshot.id,
+  });
+
+  await db.collection("notification_queue").add({
+    type: "listing_submission",
+    user_id: hostId,
+    to: config.notifications.contactRecipient,
+    payload: {
+      propertyId: snapshot.id,
+      hostId,
+      title: property.title ?? "",
+      location: property.location ?? "",
+    },
+    created_at: serverTimestamp(),
+    processed: false,
+  });
 });
 
 export const approveListing = onCall<{ propertyId?: string; notes?: string }>(async (request) => {
@@ -1195,5 +1223,55 @@ const createUserNotification = async (payload: {
     is_read: false,
     created_at: serverTimestamp(),
     updated_at: serverTimestamp(),
+  });
+  await db.collection("notification_queue").add({
+    type: "user_notification_email",
+    user_id: payload.userId,
+    notification_id: null,
+    payload: {
+      title: payload.title,
+      message: payload.message,
+      type: payload.type ?? "info",
+      related_id: payload.relatedId ?? null,
+    },
+    created_at: serverTimestamp(),
+    processed: false,
+  });
+};
+const sendNotificationEmail = async (payload: {
+  userId?: string | null;
+  notificationId: string;
+  title: string;
+  message: string;
+  type?: string;
+  relatedId?: string | null;
+}) => {
+  if (!payload.userId) return;
+
+  const preferencesSnap = await db.collection(NOTIFICATION_PREFERENCES_COLLECTION).doc(payload.userId).get();
+  const preferences = preferencesSnap.exists ? preferencesSnap.data() : {};
+  if (preferences?.email_general !== true) {
+    return;
+  }
+
+  const profileSnap = await db.collection("profiles").doc(payload.userId).get();
+  const email = profileSnap.exists ? profileSnap.get("email") : null;
+  if (!email) {
+    return;
+  }
+
+  await db.collection("notification_queue").add({
+    type: "user_notification_email",
+    user_id: payload.userId,
+    notification_id: payload.notificationId,
+    to: email,
+    payload: {
+      title: payload.title,
+      message: payload.message,
+      type: payload.type ?? "info",
+      related_id: payload.relatedId ?? null,
+    },
+    created_at: serverTimestamp(),
+    processed: false,
   });
 };

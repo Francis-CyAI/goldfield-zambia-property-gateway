@@ -42,13 +42,14 @@
 - [ ] Confirm `public/firebase-messaging-sw.js` is served (Vite copies files from `public/`).
 - [ ] Deploy security rules and messaging functions together:
   ```sh
-  firebase deploy --only firestore:rules,functions:saveUserMessagingToken,functions:sendPushForNotification,functions:approveListing,functions:declineListing
+  firebase deploy --only firestore:rules,functions:recordBookingEarnings,functions:notifyListingSubmission,functions:saveUserMessagingToken,functions:sendPushForNotification,functions:approveListing,functions:declineListing,functions:initiateWithdrawal,functions:reconcileWithdrawals
   ```
 - [ ] After deployment, log in with an admin account and trigger a test notification:
   - [ ] Push permission prompt appears, token saved in `notification_tokens`.
   - [ ] Bell count updates and `/notifications` lists the message.
   - [ ] Email is enqueued (check `notification_queue` or your mail provider).
 - [ ] Use `/notifications` to manage email/push preferences during testing; ensure opt-ins are respected.
+- [ ] Submit a sample property to confirm the listing submission notification/email.
 
 ## Post-task checklist
 - [ ] `.env` includes any new keys/secrets (e.g., `VITE_FIREBASE_MESSAGING_VAPID_KEY`).
