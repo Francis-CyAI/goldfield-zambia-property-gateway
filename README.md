@@ -185,7 +185,7 @@ firebase deploy --only functions
 ```
 Deploy callable and scheduled functions:
 ```sh
-firebase deploy --only functions
+firebase deploy --only firestore:rules,functions:recordBookingEarnings,functions:notifyListingSubmission,functions:saveUserMessagingToken,functions:sendPushForNotification,functions:approveListing,functions:declineListing,functions:initiateWithdrawal,functions:reconcileWithdrawals
 ```
 
 ### Local development loop
@@ -251,10 +251,7 @@ After the script prints `✅ Admin account ready`, log in with that email/passwo
 1. In Firebase Console → Cloud Messaging, generate a Web Push certificate and copy the VAPID key into `VITE_FIREBASE_MESSAGING_VAPID_KEY`.
 2. Ensure `firebase-messaging-sw.js` is deployed from the `public/` folder (Vite copies it automatically). The Firebase config inside the service worker must match your project.
 3. Users must grant notification permission; the app automatically requests and registers the token via Functions (`saveUserMessagingToken`). Tokens are stored in `notification_tokens` and used by the `sendPushForNotification` trigger whenever a Firestore notification document is created.
-4. Deploy the new functions:
-   ```sh
-   firebase deploy --only functions:saveUserMessagingToken,functions:sendPushForNotification
-   ```
+4. Deploy the new functions (see command above).
 5. Use the Notifications page (`/notifications`) to view and mark messages as read. The bell icon in the header reflects the unread count.
 
 ## How can I deploy this project?

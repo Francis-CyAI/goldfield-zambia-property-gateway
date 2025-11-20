@@ -58,5 +58,5 @@
   - [x] Manual test scripts for Lenco API calls in emulator/stub mode if available.  
   - [x] Check CORS for new callables via emulator curl/Invoke-WebRequest.
 
-- [ ] Docs  
-  - [ ] Update README with new env vars, emulator steps for new functions, and brief usage notes for admin/lister flows.
+- [x] Docs  
+  - [x] Update README with new env vars, emulator steps for new functions, and brief usage notes for admin/lister flows.
