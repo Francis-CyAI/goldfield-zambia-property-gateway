@@ -76,7 +76,7 @@ const AdminPropertyManagement = () => {
       console.error('Error approving property:', error);
       toast({
         title: 'Approval failed',
-        description: 'Could not approve the property. Please try again.',
+        description: error instanceof Error ? error.message : 'Could not approve the property. Please try again.',
         variant: 'destructive',
       });
     },
@@ -94,7 +94,7 @@ const AdminPropertyManagement = () => {
       console.error('Error declining property:', error);
       toast({
         title: 'Decline failed',
-        description: 'Could not decline the property. Please try again.',
+        description: error instanceof Error ? error.message : 'Could not decline the property. Please try again.',
         variant: 'destructive',
       });
     },
