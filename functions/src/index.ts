@@ -81,6 +81,7 @@ const LISTER_EARNINGS_COLLECTION = "lister_earnings";
 const LISTER_EARNING_ENTRIES_COLLECTION = "lister_earning_entries";
 const LISTER_WITHDRAWALS_COLLECTION = "lister_withdrawals";
 const messaging = getMessaging();
+const callableOptions = { cors: true } as const;
 
 const validateNetwork = (network: string): MobileMoneyNetwork => {
   const upper = network.toUpperCase();
@@ -131,7 +132,7 @@ const computeExpiry = (initiatedAt?: Timestamp | null) => {
   return Timestamp.fromMillis(base.toMillis() + config.lenco.collectionStatusCheckDurationMs);
 };
 
-export const sendContactEmail = onCall<ContactPayload>(async (request) => {
+export const sendContactEmail = onCall<ContactPayload>(callableOptions, async (request) => {
   const { data } = request;
   if (!data?.name || !data?.email || !data?.message) {
     throw new HttpsError("invalid-argument", "Missing required contact fields.");
@@ -179,7 +180,7 @@ export const sendContactEmail = onCall<ContactPayload>(async (request) => {
   };
 });
 
-export const saveUserMessagingToken = onCall<{ token?: string; platform?: string }>(async (request) => {
+export const saveUserMessagingToken = onCall<{ token?: string; platform?: string }>(callableOptions, async (request) => {
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "Authentication required.");
   }
@@ -368,7 +369,7 @@ export const initiateWithdrawal = onCall<{
   amount?: number;
   msisdn?: string;
   operator?: string;
-}>(async (request) => {
+}>(callableOptions, async (request) => {
   const authCtx = request.auth;
   if (!authCtx?.uid) {
     throw new HttpsError("unauthenticated", "Authentication required.");
@@ -590,7 +591,7 @@ export const notifyListingSubmission = onDocumentCreated("properties/{propertyId
   });
 });
 
-export const approveListing = onCall<{ propertyId?: string; notes?: string }>(async (request) => {
+export const approveListing = onCall<{ propertyId?: string; notes?: string }>(callableOptions, async (request) => {
   const admin = await ensureAdmin(request.auth);
   const propertyId = request.data?.propertyId;
   if (!propertyId || typeof propertyId !== "string") {
@@ -633,7 +634,7 @@ export const approveListing = onCall<{ propertyId?: string; notes?: string }>(as
   return { success: true };
 });
 
-export const declineListing = onCall<{ propertyId?: string; reason?: string }>(async (request) => {
+export const declineListing = onCall<{ propertyId?: string; reason?: string }>(callableOptions, async (request) => {
   const admin = await ensureAdmin(request.auth);
   const propertyId = request.data?.propertyId;
   if (!propertyId || typeof propertyId !== "string") {
@@ -736,7 +737,7 @@ const createPaymentIntent = async (
   };
 };
 
-export const initiateBookingMobileMoneyPayment = onCall<BookingPaymentPayload>(async (request) => {
+export const initiateBookingMobileMoneyPayment = onCall<BookingPaymentPayload>(callableOptions, async (request) => {
   const data = request.data ?? {};
   if (!data.bookingId || typeof data.bookingId !== "string") {
     throw new HttpsError("invalid-argument", "bookingId is required.");
@@ -824,6 +825,7 @@ export const initiateBookingMobileMoneyPayment = onCall<BookingPaymentPayload>(a
 });
 
 export const checkBookingMobileMoneyPaymentStatus = onCall<BookingPaymentStatusPayload>(
+  callableOptions,
   async (request) => {
     const payload = request.data ?? {};
     if (!payload.reference && !payload.bookingId) {
@@ -912,7 +914,7 @@ export const checkBookingMobileMoneyPaymentStatus = onCall<BookingPaymentStatusP
   },
 );
 
-export const createSubscriptionCheckout = onCall<SubscriptionCheckoutPayload>(async (request) => {
+export const createSubscriptionCheckout = onCall<SubscriptionCheckoutPayload>(callableOptions, async (request) => {
   const data = request.data;
   if (
     !data?.userId ||
@@ -968,7 +970,7 @@ export const createSubscriptionCheckout = onCall<SubscriptionCheckoutPayload>(as
   };
 });
 
-export const createPartnerCheckout = onCall<PartnerCheckoutPayload>(async (request) => {
+export const createPartnerCheckout = onCall<PartnerCheckoutPayload>(callableOptions, async (request) => {
   const data = request.data;
   if (
     !data?.userId ||
@@ -1027,7 +1029,7 @@ export const createPartnerCheckout = onCall<PartnerCheckoutPayload>(async (reque
   };
 });
 
-export const checkPartnerSubscription = onCall(async (request) => {
+export const checkPartnerSubscription = onCall(callableOptions, async (request) => {
   const { userId } = request.data ?? {};
   if (!userId) {
     throw new HttpsError("invalid-argument", "userId is required.");
