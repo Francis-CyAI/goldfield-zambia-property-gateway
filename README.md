@@ -254,14 +254,24 @@ After the script prints `✅ Admin account ready`, log in with that email/passwo
 4. Deploy the new functions (see command above).
 5. Use the Notifications page (`/notifications`) to view and mark messages as read. The bell icon in the header reflects the unread count.
 
-## How can I deploy this project?
+## Deployment checklist
 
-Simply open [Lovable](https://lovable.dev/projects/572aeb3d-2fb2-4f5d-aaf2-34c485c03cfa) and click on Share -> Publish.
+1. **Build the frontend**
+   ```sh
+   npm run build
+   ```
 
-## Can I connect a custom domain to my Lovable project?
+2. **Deploy Firestore rules and Cloud Functions**
+   ```sh
+   firebase deploy --only firestore:rules,functions:recordBookingEarnings,functions:notifyListingSubmission,functions:saveUserMessagingToken,functions:sendPushForNotification,functions:approveListing,functions:declineListing,functions:initiateWithdrawal,functions:reconcileWithdrawals
+   ```
 
-Yes, you can!
+3. **Deploy Hosting**
+   ```sh
+   firebase deploy --only hosting:goldfield-zambia-property-gateway
+   ```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+4. **Post-deploy smoke tests** (recommended)
+   - Submit/approve/decline a listing and verify notifications.
+   - Complete a booking and check lister earnings.
+   - Initiate a withdrawal (sandbox MSISDN) and confirm status updates.
