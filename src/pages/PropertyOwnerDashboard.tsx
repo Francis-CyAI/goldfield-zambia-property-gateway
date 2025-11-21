@@ -50,8 +50,6 @@ const PropertyOwnerDashboard = () => {
   const { data: earningEntries = [], isLoading: earningEntriesLoading } = useListerEarningEntries(user?.uid);
   const { data: withdrawals = [], isLoading: withdrawalsLoading } = useListerWithdrawals(user?.uid);
   const initiateWithdrawal = useInitiateWithdrawal();
-  const { data: listerEarnings } = useListerEarnings(user?.uid);
-  const { data: earningEntries = [], isLoading: earningEntriesLoading } = useListerEarningEntries(user?.uid);
 
   const activeProperties = properties.filter(
     (p) => p.is_active && (p.approval_status ?? 'pending') === 'approved',
@@ -67,10 +65,6 @@ const PropertyOwnerDashboard = () => {
   const totalEarnings = bookings
     .filter(b => b.status === 'completed')
     .reduce((sum, booking) => sum + booking.total_price, 0);
-  const availableBalance = listerEarnings?.available_balance ?? 0;
-  const totalGross = listerEarnings?.total_gross ?? 0;
-  const totalFees = (listerEarnings?.total_platform_fee ?? 0) + (listerEarnings?.total_lenco_fee ?? 0);
-
   const parsedWithdrawAmount = Number(withdrawAmount) || 0;
   const estimatedLencoFee = calculateLencoFeeUi(parsedWithdrawAmount);
   const totalDeducted = parsedWithdrawAmount + estimatedLencoFee;
@@ -93,10 +87,6 @@ const PropertyOwnerDashboard = () => {
       },
     );
   };
-  const availableBalance = listerEarnings?.available_balance ?? 0;
-  const totalGross = listerEarnings?.total_gross ?? 0;
-  const totalFees = (listerEarnings?.total_platform_fee ?? 0) + (listerEarnings?.total_lenco_fee ?? 0);
-
   if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
