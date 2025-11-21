@@ -60,3 +60,11 @@
 
 - [x] Docs  
   - [x] Update README with new env vars, emulator steps for new functions, and brief usage notes for admin/lister flows.
+
+- [ ] Suggestions box
+  - [ ] Add user-facing form to submit feedback/feature requests.
+  - [ ] Store submissions in Firestore and surface them in the admin dashboard.
+
+- [ ] AI chatbot integration
+  - [ ] Integrate a conversational AI that answers questions about the platform.
+  - [ ] Index Firestore data (listings, FAQs, etc.) so the bot can reference current information.
