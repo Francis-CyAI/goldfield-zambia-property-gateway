@@ -1,8 +1,8 @@
 # Configuration & Deployment Instructions
 
 ## Initial setup
-- [x] Install dependencies: `npm install` (root) and `npm install --prefix functions`.
-- [x] Copy `.env` template and set all Firebase values plus project-specific secrets (LENCO, `PLATFORM_FEE_PERCENT`, etc.).
+- [ ] Install dependencies: `npm install` (root) and `npm install --prefix functions`.
+- [ ] Copy `.env` template and set all Firebase values plus project-specific secrets (LENCO, `PLATFORM_FEE_PERCENT`, etc.).
 
 ## Local workflow
 - [ ] Run Vite dev server: `npm run dev`.
@@ -24,8 +24,8 @@
 - [ ] After rule changes, deploy: `firebase deploy --only firestore:rules`.
 
 ## Revenue tracking & payouts
-- [ ] Set `PLATFORM_FEE_PERCENT` in `.env` (default 10% if omitted).
-- [ ] After implementing revenue logic, redeploy rules/functions:
+- [x] Set `PLATFORM_FEE_PERCENT` in `.env` (default 10% if omitted).
+- [x] After implementing revenue logic, redeploy rules/functions:
   ```sh
   firebase deploy --only firestore:rules,functions:recordBookingEarnings,functions:saveUserMessagingToken,functions:sendPushForNotification,functions:approveListing,functions:declineListing,functions:initiateWithdrawal,functions:reconcileWithdrawals
   ```
@@ -38,8 +38,8 @@
 - [ ] If Lenco fee tiers change, update `functions/src/lencoFees.ts` to match their latest schedule and redeploy the functions command above.
 
 ## Web push notifications & email opt-in
-- [ ] Generate a Web Push certificate (Firebase Console → Cloud Messaging) and set `VITE_FIREBASE_MESSAGING_VAPID_KEY` in `.env`.
-- [ ] Confirm `public/firebase-messaging-sw.js` is served (Vite copies files from `public/`).
+- [x] Generate a Web Push certificate (Firebase Console → Cloud Messaging) and set `VITE_FIREBASE_MESSAGING_VAPID_KEY` in `.env`.
+- [x] Confirm `public/firebase-messaging-sw.js` is served (Vite copies files from `public/`).
 - [ ] Deploy security rules and messaging functions together:
   ```sh
   firebase deploy --only firestore:rules,functions:recordBookingEarnings,functions:notifyListingSubmission,functions:saveUserMessagingToken,functions:sendPushForNotification,functions:approveListing,functions:declineListing,functions:initiateWithdrawal,functions:reconcileWithdrawals
