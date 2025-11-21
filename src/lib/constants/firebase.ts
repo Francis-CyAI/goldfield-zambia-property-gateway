@@ -82,7 +82,7 @@ const useAuthEmulator =
 
 const useFunctionsEmulator =
   legacyUseAllEmulators ||
-  import.meta.env.VITE_USE_FIREBASE_FUNCTIONS_EMULATOR === "true";
+  (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_FUNCTIONS_EMULATOR === "true");
 
 const resolveFunctionsHostPort = () => {
   if (functionsOrigin) {
