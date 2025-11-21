@@ -187,6 +187,10 @@ Deploy callable and scheduled functions:
 ```sh
 firebase deploy --only firestore:rules,functions:recordBookingEarnings,functions:notifyListingSubmission,functions:saveUserMessagingToken,functions:sendPushForNotification,functions:approveListing,functions:declineListing,functions:initiateWithdrawal,functions:reconcileWithdrawals
 ```
+To deploy all functions without enumerating them:
+```sh
+firebase deploy --only functions
+```
 
 ### Local development loop
 - **After every code change inside `functions/src`, rebuild the TypeScript output** so the emulator picks up the latest JavaScript:
