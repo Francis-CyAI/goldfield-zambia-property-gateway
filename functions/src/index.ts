@@ -468,7 +468,9 @@ export const initiateWithdrawal = onCall<{
   return { success: true, reference };
 });
 
-export const reconcileWithdrawals = onSchedule("every 5 minutes", async () => {
+export const reconcileWithdrawals = onSchedule(
+  { schedule: "every 5 minutes", region: "us-central1" },
+  async () => {
   const pendingSnapshot = await db
     .collection(LISTER_WITHDRAWALS_COLLECTION)
     .where("status", "in", ["pending", "processing"])
@@ -1075,9 +1077,12 @@ export const checkPartnerSubscription = onCall(callableOptions, async (request) 
     subscription: { ...data, ...updates },
     paymentStatus: status,
   };
-});
+  },
+);
 
-export const reconcileLencoPayments = onSchedule("every 15 minutes", async () => {
+export const reconcileLencoPayments = onSchedule(
+  { schedule: "every 15 minutes", region: "us-central1" },
+  async () => {
   const collections = [
     { name: "subscription_payments", target: "user_subscriptions", userField: "user_id" },
     { name: "partner_payments", target: "partner_subscriptions", userField: "user_id" },
@@ -1150,9 +1155,12 @@ export const reconcileLencoPayments = onSchedule("every 15 minutes", async () =>
       }
     }
   }
-});
+  },
+);
 
-export const processCommissionPayouts = onSchedule("every 24 hours", async () => {
+export const processCommissionPayouts = onSchedule(
+  { schedule: "every 24 hours", region: "us-central1" },
+  async () => {
   const commissionsSnapshot = await db
     .collection("platform_commissions")
     .where("status", "==", "pending")
@@ -1178,7 +1186,8 @@ export const processCommissionPayouts = onSchedule("every 24 hours", async () =>
       { merge: true },
     );
   }
-});
+  },
+);
 const ensureAdmin = async (authCtx: any) => {
   if (!authCtx?.uid) {
     throw new HttpsError("unauthenticated", "Authentication required.");
