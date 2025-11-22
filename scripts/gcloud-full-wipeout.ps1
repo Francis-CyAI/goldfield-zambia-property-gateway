@@ -79,18 +79,18 @@ if ($runServices.Count -eq 0) {
 }
 
 # 2) Delete all Cloud Functions (Gen 1)
-Write-Host "`n[2/4] Deleting Cloud Functions (Gen 1)..." -ForegroundColor Cyan
-$cfGen1 = Get-GcloudListValues 'gcloud functions list --format="csv[no-heading](name,region)" --quiet'
+# Write-Host "`n[2/4] Deleting Cloud Functions (Gen 1)..." -ForegroundColor Cyan
+# $cfGen1 = Get-GcloudListValues 'gcloud functions list --format="csv[no-heading](name,region)" --quiet'
 
-if ($cfGen1.Count -eq 0) {
-    Write-Host "  No Gen 1 Cloud Functions found."
-} else {
-    foreach ($fn in $cfGen1) {
-        $parsed = Parse-NameRegion $fn
-        Write-Host "  Deleting Gen 1 Cloud Function: $($parsed.Name) [$($parsed.Region)]"
-        Run-GcloudCommand "gcloud functions delete $($parsed.Name) --quiet" $parsed.Region "--region"
-    }
-}
+# if ($cfGen1.Count -eq 0) {
+#    Write-Host "  No Gen 1 Cloud Functions found."
+# } else {
+#    foreach ($fn in $cfGen1) {
+#        $parsed = Parse-NameRegion $fn
+#        Write-Host "  Deleting Gen 1 Cloud Function: $($parsed.Name) [$($parsed.Region)]"
+#        Run-GcloudCommand "gcloud functions delete $($parsed.Name) --quiet" $parsed.Region "--region"
+#    }
+# }
 
 # 3) Delete all Cloud Functions (Gen 2)
 Write-Host "`n[3/4] Deleting Cloud Functions (Gen 2)..." -ForegroundColor Cyan
