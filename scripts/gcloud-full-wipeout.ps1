@@ -94,7 +94,7 @@ if ($runServices.Count -eq 0) {
 
 # 3) Delete all Cloud Functions (Gen 2)
 Write-Host "`n[3/4] Deleting Cloud Functions (Gen 2)..." -ForegroundColor Cyan
-$cfGen2 = Get-GcloudListValues 'gcloud functions list --gen2 --format="csv[no-heading](name,region)" --quiet'
+$cfGen2 = Get-GcloudListValues 'gcloud functions list --v2 --format="csv[no-heading](name,region)" --quiet'
 
 if ($cfGen2.Count -eq 0) {
     Write-Host "  No Gen 2 Cloud Functions found."
