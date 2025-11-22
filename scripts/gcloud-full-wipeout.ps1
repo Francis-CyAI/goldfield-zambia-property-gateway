@@ -27,55 +27,96 @@ function Get-GcloudListValues {
     return $output -split "`n" | Where-Object { $_.Trim() -ne "" }
 }
 
+function Parse-NameRegion {
+    param(
+        [string]$Line
+    )
+    $parts = $Line -split ","
+    $name = $parts[0].Trim()
+    $region = $null
+    if ($parts.Count -gt 1 -and $parts[1].Trim().Length -gt 0) {
+        $region = $parts[1].Trim()
+    }
+    return @{ Name = $name; Region = $region }
+}
+
+# Helper to delete with --region/--location if provided
+function Run-GcloudCommand {
+    param(
+        [string]$BaseCommand,
+        [string]$Region,
+        [string]$LocationFlag = "--region"
+    )
+    if (-not $Region) {
+        if ($LocationFlag -eq "--region") {
+            $Region = (gcloud config get-value run/region 2>$null).Trim()
+            if (-not $Region) {
+                $Region = (gcloud config get-value functions/region 2>$null).Trim()
+            }
+        } elseif ($LocationFlag -eq "--location") {
+            $Region = (gcloud config get-value scheduler/location 2>$null).Trim()
+        }
+    }
+    if ($Region) {
+        Invoke-Expression "$BaseCommand $LocationFlag=$Region"
+    } else {
+        Write-Warning "    Skipping because region/location missing for: $BaseCommand"
+    }
+}
+
 # 1) Delete all Cloud Run services
 Write-Host "`n[1/4] Deleting Cloud Run services..." -ForegroundColor Cyan
-$runServices = Get-GcloudListValues 'gcloud run services list --platform=managed --format="value(name)" --quiet'
+$runServices = Get-GcloudListValues 'gcloud run services list --platform=managed --format="csv[no-heading](name,region)" --quiet'
 
 if ($runServices.Count -eq 0) {
     Write-Host "  No Cloud Run services found."
 } else {
     foreach ($service in $runServices) {
-        Write-Host "  Deleting Cloud Run service: $service"
-        gcloud run services delete $service --platform=managed --quiet
+        $parsed = Parse-NameRegion $service
+        Write-Host "  Deleting Cloud Run service: $($parsed.Name) [$($parsed.Region)]"
+        Run-GcloudCommand "gcloud run services delete $($parsed.Name) --platform=managed --quiet" $parsed.Region "--region"
     }
 }
 
 # 2) Delete all Cloud Functions (Gen 1)
 Write-Host "`n[2/4] Deleting Cloud Functions (Gen 1)..." -ForegroundColor Cyan
-$cfGen1 = Get-GcloudListValues 'gcloud functions list --format="value(name)" --quiet'
+$cfGen1 = Get-GcloudListValues 'gcloud functions list --format="csv[no-heading](name,region)" --quiet'
 
 if ($cfGen1.Count -eq 0) {
     Write-Host "  No Gen 1 Cloud Functions found."
 } else {
     foreach ($fn in $cfGen1) {
-        Write-Host "  Deleting Gen 1 Cloud Function: $fn"
-        gcloud functions delete $fn --quiet
+        $parsed = Parse-NameRegion $fn
+        Write-Host "  Deleting Gen 1 Cloud Function: $($parsed.Name) [$($parsed.Region)]"
+        Run-GcloudCommand "gcloud functions delete $($parsed.Name) --quiet" $parsed.Region "--region"
     }
 }
 
 # 3) Delete all Cloud Functions (Gen 2)
 Write-Host "`n[3/4] Deleting Cloud Functions (Gen 2)..." -ForegroundColor Cyan
-$cfGen2 = Get-GcloudListValues 'gcloud functions list --gen2 --format="value(name)" --quiet'
+$cfGen2 = Get-GcloudListValues 'gcloud functions list --gen2 --format="csv[no-heading](name,region)" --quiet'
 
 if ($cfGen2.Count -eq 0) {
     Write-Host "  No Gen 2 Cloud Functions found."
 } else {
     foreach ($fn in $cfGen2) {
-        Write-Host "  Deleting Gen 2 Cloud Function: $fn"
-        gcloud functions delete $fn --gen2 --quiet
+        $parsed = Parse-NameRegion $fn
+        Write-Host "  Deleting Gen 2 Cloud Function: $($parsed.Name) [$($parsed.Region)]"
+        Run-GcloudCommand "gcloud functions delete $($parsed.Name) --gen2 --quiet" $parsed.Region "--region"
     }
 }
 
 # 4) Delete all Cloud Scheduler jobs
 Write-Host "`n[4/4] Deleting Cloud Scheduler jobs..." -ForegroundColor Cyan
-$schedJobs = Get-GcloudListValues 'gcloud scheduler jobs list --format="value(name)" --quiet'
+$schedJobs = Get-GcloudListValues 'gcloud scheduler jobs list --format="csv[no-heading](name,locationId)" --quiet'
 
 if ($schedJobs.Count -eq 0) {
     Write-Host "  No Cloud Scheduler jobs found."
 } else {
     foreach ($job in $schedJobs) {
-        Write-Host "  Deleting Cloud Scheduler job: $job"
-        gcloud scheduler jobs delete $job --quiet
+        $parsed = Parse-NameRegion $job
+        Write-Host "  Deleting Cloud Scheduler job: $($parsed.Name) [$($parsed.Region)]"
+        Run-GcloudCommand "gcloud scheduler jobs delete $($parsed.Name) --quiet" $parsed.Region "--location"
     }
 }
 
