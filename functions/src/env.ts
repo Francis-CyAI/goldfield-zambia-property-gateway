@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const candidates = [
+  resolve(__dirname, "../.env.deploy"),
   resolve(__dirname, "../.env.local"),
   resolve(__dirname, "../.env"),
   resolve(__dirname, "../../.env.local"),
