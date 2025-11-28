@@ -8,6 +8,9 @@
 
 $ErrorActionPreference = "Stop"
 
+# Optional: set a default region to use if gcloud configs are unset
+# $DefaultRegion = "us-central1"
+
 Write-Host "===== Google Cloud Full Wipeout Starting =====" -ForegroundColor Yellow
 
 # Optional: uncomment and set your project explicitly
@@ -27,6 +30,20 @@ function Get-GcloudListValues {
     return $output -split "`n" | Where-Object { $_.Trim() -ne "" }
 }
 
+function Normalize-Region {
+    param(
+        [string]$Region
+    )
+    $trimmed = $Region
+    if ($trimmed) {
+        $trimmed = $trimmed.Trim()
+    }
+    if (-not $trimmed -or $trimmed -eq "(unset)") {
+        return $null
+    }
+    return $trimmed
+}
+
 function Parse-NameRegion {
     param(
         [string]$Line
@@ -35,7 +52,7 @@ function Parse-NameRegion {
     $name = $parts[0].Trim()
     $region = $null
     if ($parts.Count -gt 1 -and $parts[1].Trim().Length -gt 0) {
-        $region = $parts[1].Trim()
+        $region = Normalize-Region $parts[1]
     }
     return @{ Name = $name; Region = $region }
 }
@@ -47,14 +64,24 @@ function Run-GcloudCommand {
         [string]$Region,
         [string]$LocationFlag = "--region"
     )
+    $Region = Normalize-Region $Region
     if (-not $Region) {
         if ($LocationFlag -eq "--region") {
-            $Region = (gcloud config get-value run/region 2>$null).Trim()
+            $Region = Normalize-Region $DefaultRegion
             if (-not $Region) {
-                $Region = (gcloud config get-value functions/region 2>$null).Trim()
+                $Region = Normalize-Region (gcloud config get-value run/region 2>$null)
+            }
+            if (-not $Region) {
+                $Region = Normalize-Region (gcloud config get-value functions/region 2>$null)
+            }
+            if (-not $Region) {
+                $Region = Normalize-Region (gcloud config get-value compute/region 2>$null)
             }
         } elseif ($LocationFlag -eq "--location") {
-            $Region = (gcloud config get-value scheduler/location 2>$null).Trim()
+            $Region = Normalize-Region $DefaultRegion
+            if (-not $Region) {
+                $Region = Normalize-Region (gcloud config get-value scheduler/location 2>$null)
+            }
         }
     }
     if ($Region) {
@@ -94,7 +121,7 @@ if ($runServices.Count -eq 0) {
 
 # 3) Delete all Cloud Functions (Gen 2)
 Write-Host "`n[3/4] Deleting Cloud Functions (Gen 2)..." -ForegroundColor Cyan
-$cfGen2 = Get-GcloudListValues 'gcloud functions list --v2 --format="csv[no-heading](name,region)" --quiet'
+$cfGen2 = Get-GcloudListValues 'gcloud functions list --v2 --format="csv[no-heading](name,location)" --quiet'
 
 if ($cfGen2.Count -eq 0) {
     Write-Host "  No Gen 2 Cloud Functions found."
