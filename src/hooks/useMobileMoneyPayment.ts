@@ -15,7 +15,7 @@ export const useMobileMoneyPayment = () => {
   const buildCallableUrl = (functionName: string) => {
     if (env.VITE_FUNCTIONS_ORIGIN) {
       const projectId = env.VITE_FIREBASE_PROJECT_ID ?? 'goldfield-8180d';
-      const region = env.VITE_FIREBASE_REGION ?? 'africa-south1';
+      const region = env.VITE_FIREBASE_REGION ?? 'us-central1';
       return `${env.VITE_FUNCTIONS_ORIGIN}/${projectId}/${region}/${functionName}`;
     }
 
@@ -23,7 +23,7 @@ export const useMobileMoneyPayment = () => {
     const host = env.VITE_FUNCTIONS_EMULATOR_HOST ?? 'localhost';
     const port = env.VITE_FUNCTIONS_EMULATOR_PORT ?? '5001';
     const projectId = env.VITE_FIREBASE_PROJECT_ID ?? 'goldfield-8180d';
-    const region = env.VITE_FIREBASE_REGION ?? 'africa-south1';
+    const region = env.VITE_FIREBASE_REGION ?? 'us-central1';
     return `${protocol}://${host}:${port}/${projectId}/${region}/${functionName}`;
   };
 

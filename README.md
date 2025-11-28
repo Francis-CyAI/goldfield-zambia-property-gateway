@@ -24,7 +24,7 @@ VITE_FIREBASE_STORAGE_BUCKET=
 VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_FIREBASE_APP_ID=
 VITE_FIREBASE_MEASUREMENT_ID=
-VITE_FIREBASE_REGION=africa-south1
+VITE_FIREBASE_REGION=us-central1
 VITE_USE_FIREBASE_FUNCTIONS_EMULATOR=true
 VITE_FUNCTIONS_EMULATOR_HOST=127.0.0.1
 VITE_FIREBASE_MESSAGING_VAPID_KEY=
@@ -49,7 +49,7 @@ CONTACT_RECIPIENT=
    ```
 4. Health-check callable endpoints:
    ```bash
-   curl -i http://127.0.0.1:5001/goldfield-8180d/africa-south1/initiateBookingMobileMoneyPayment \
+   curl -i http://127.0.0.1:5001/goldfield-8180d/us-central1/initiateBookingMobileMoneyPayment \
      -X POST -H "Content-Type: application/json" \
      -d '{"data":{"bookingId":"probe","amount":10,"msisdn":"0976000000","operator":"airtel"}}'
    ```
