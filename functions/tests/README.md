@@ -31,7 +31,7 @@ Environment variables let you point to a non-default emulator host:
 | Variable | Default |
 | --- | --- |
 | `FIREBASE_PROJECT_ID` | `goldfield-8180d` |
-| `FIREBASE_REGION` | `africa-south1` |
+| `FIREBASE_REGION` | `us-central1` |
 | `FUNCTIONS_EMULATOR_PROTOCOL` | `http` |
 | `FUNCTIONS_EMULATOR_HOST` | `localhost` |
 | `FUNCTIONS_EMULATOR_PORT` | `5001` |
