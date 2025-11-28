@@ -37,7 +37,7 @@ const firebaseConfig: FirebaseOptions = {
 };
 
 const EMULATOR_COOKIE_KEY = "__FIREBASE_DEFAULTS__";
-const firebaseRegion = import.meta.env.VITE_FIREBASE_REGION ?? "africa-south1";
+const firebaseRegion = import.meta.env.VITE_FIREBASE_REGION ?? "us-central1";
 
 const clearEmulatorOverrides = (): void => {
   if (typeof window === "undefined") {
@@ -62,7 +62,7 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const auth = getAuth(app);
 // Use the same region as the deployed Cloud Functions (see functions/src/index.ts setGlobalOptions)
-const functionsRegion = import.meta.env.VITE_FIREBASE_REGION ?? "africa-south1";
+const functionsRegion = import.meta.env.VITE_FIREBASE_REGION ?? "us-central1";
 const functionsOrigin = import.meta.env.VITE_FUNCTIONS_ORIGIN;
 export const functions = getFunctions(app, functionsRegion);
 export const googleProvider = new GoogleAuthProvider();
