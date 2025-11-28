@@ -18,7 +18,6 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProperties } from '@/hooks/useProperties';
 import { useHostBookings } from '@/hooks/useBookings';
-import { useListerEarnings, useListerEarningEntries } from '@/hooks/useListerEarnings';
 import PropertyListings from '@/components/PropertyListings';
 import BookingManagement from '@/components/BookingManagement';
 import EarningsOverview from '@/components/EarningsOverview';
