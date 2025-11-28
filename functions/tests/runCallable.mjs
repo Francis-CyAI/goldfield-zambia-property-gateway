@@ -16,7 +16,7 @@ const usage = `Usage:
 
 Environment overrides:
   FIREBASE_PROJECT_ID      (default: goldfield-8180d)
-  FIREBASE_REGION          (default: africa-south1)
+  FIREBASE_REGION          (default: us-central1)
   FUNCTIONS_EMULATOR_HOST  (default: localhost)
   FUNCTIONS_EMULATOR_PORT  (default: 5001)
   FUNCTIONS_EMULATOR_PROTOCOL (default: http)
@@ -47,7 +47,7 @@ const baseConfig = {
     process.env.GCLOUD_PROJECT ??
     process.env.PROJECT_ID ??
     "goldfield-8180d",
-  region: process.env.FIREBASE_REGION ?? "africa-south1",
+  region: process.env.FIREBASE_REGION ?? "us-central1",
   protocol: process.env.FUNCTIONS_EMULATOR_PROTOCOL ?? "http",
   host: process.env.FUNCTIONS_EMULATOR_HOST ?? "localhost",
   port: toNumber(process.env.FUNCTIONS_EMULATOR_PORT, 5001),

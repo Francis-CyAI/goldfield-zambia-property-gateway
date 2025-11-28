@@ -25,7 +25,7 @@ const baseConfig = {
     process.env.GCLOUD_PROJECT ??
     process.env.PROJECT_ID ??
     "goldfield-8180d",
-  region: process.env.FIREBASE_REGION ?? "africa-south1",
+  region: process.env.FIREBASE_REGION ?? "us-central1",
   protocol: process.env.FUNCTIONS_EMULATOR_PROTOCOL ?? "http",
   host: process.env.FUNCTIONS_EMULATOR_HOST ?? "localhost",
   port: toNumber(process.env.FUNCTIONS_EMULATOR_PORT, 5001),

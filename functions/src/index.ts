@@ -20,7 +20,7 @@ import { db, serverTimestamp } from "./firestore.js";
 import { getMessaging } from "firebase-admin/messaging";
 import { calculateLencoFee } from "./lencoFees.js";
 setGlobalOptions({
-  region: "africa-south1",
+  region: "us-central1",
   memory: "256MiB",
   enforceAppCheck: false,
 });
