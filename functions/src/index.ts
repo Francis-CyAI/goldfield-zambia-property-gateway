@@ -194,12 +194,14 @@ export const chatWithGoogleAi = onCall<AiChatPayload>(callableOptions, async (re
     throw new HttpsError("invalid-argument", "Send at least one message.");
   }
 
-  const messages = rawMessages
+  const messages: AiMessage[] = rawMessages
     .slice(-12)
-    .map((message) => ({
-      role: message?.role === "assistant" ? "assistant" : "user",
-      content: typeof message?.content === "string" ? message.content : "",
-    }))
+    .map(
+      (message): AiMessage => ({
+        role: message?.role === "assistant" ? "assistant" : "user",
+        content: typeof message?.content === "string" ? message.content : "",
+      }),
+    )
     .filter((message) => message.content.trim().length > 0);
 
   if (messages.length === 0) {
