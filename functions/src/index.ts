@@ -19,6 +19,7 @@ import {
 import { db, serverTimestamp } from "./firestore.js";
 import { getMessaging } from "firebase-admin/messaging";
 import { calculateLencoFee } from "./lencoFees.js";
+import { generateAiResponse } from "./googleAi.js";
 setGlobalOptions({
   region: "us-central1",
   memory: "256MiB",
@@ -72,6 +73,13 @@ type BookingPaymentStatusPayload = {
   reference?: string;
   bookingId?: string;
   forceCheck?: boolean;
+};
+
+type AiChatPayload = {
+  messages?: Array<{ role: "user" | "assistant"; content: string }>;
+  context?: {
+    topic?: string;
+  };
 };
 
 const BOOKING_PAYMENTS_COLLECTION = "booking_payments";
@@ -178,6 +186,28 @@ export const sendContactEmail = onCall<ContactPayload>(callableOptions, async (r
     success: true,
     contactId: docRef.id,
   };
+});
+
+export const chatWithGoogleAi = onCall<AiChatPayload>(callableOptions, async (request) => {
+  const rawMessages = request.data?.messages ?? [];
+  if (!Array.isArray(rawMessages) || rawMessages.length === 0) {
+    throw new HttpsError("invalid-argument", "Send at least one message.");
+  }
+
+  const messages = rawMessages
+    .slice(-12)
+    .map((message) => ({
+      role: message?.role === "assistant" ? "assistant" : "user",
+      content: typeof message?.content === "string" ? message.content : "",
+    }))
+    .filter((message) => message.content.trim().length > 0);
+
+  if (messages.length === 0) {
+    throw new HttpsError("invalid-argument", "Message content is required.");
+  }
+
+  const reply = await generateAiResponse(messages);
+  return { reply };
 });
 
 export const saveUserMessagingToken = onCall<{ token?: string; platform?: string }>(callableOptions, async (request) => {
