@@ -1,3 +1,5 @@
+import { GoogleGenAI } from "@google/genai";
+
 export type ChatMessage = {
   role: "user" | "assistant";
   content: string;
@@ -12,60 +14,43 @@ const systemInstruction = [
 ].join(" ");
 
 const apiKey = import.meta.env.VITE_GOOGLE_AI_API_KEY;
-const apiBase =
-  import.meta.env.VITE_GOOGLE_AI_API_BASE ?? "https://generativelanguage.googleapis.com";
-const model = import.meta.env.VITE_GOOGLE_AI_MODEL ?? "gemini-1.5-flash";
+const modelName = import.meta.env.VITE_GOOGLE_AI_MODEL ?? "gemini-2.5-flash";
+
+const genAI = apiKey ? new GoogleGenAI({ apiKey }) : null;
+
+if (import.meta.env.DEV) {
+  console.debug("Gemini env", {
+    hasKey: Boolean(apiKey),
+    model: modelName,
+  });
+}
 
 export const generateGeminiReply = async (messages: ChatMessage[]): Promise<string> => {
-  if (!apiKey) {
+  if (!apiKey || !genAI) {
     throw new Error("Google AI API key is missing. Set VITE_GOOGLE_AI_API_KEY in your .env.");
   }
 
-  const payload = {
-    system_instruction: {
-      role: "system",
-      parts: [{ text: systemInstruction }],
-    },
-    contents: messages.slice(-12).map((message) => ({
-      role: message.role === "assistant" ? "model" : "user",
-      parts: [{ text: message.content.slice(0, 2000) }],
-    })),
-    generationConfig: {
-      temperature: 0.6,
-      topP: 0.9,
-      topK: 40,
-      maxOutputTokens: 512,
-    },
-  };
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 20_000);
+  const model = genAI.getGenerativeModel({
+    model: modelName,
+    systemInstruction,
+  });
 
   try {
-    const response = await fetch(
-      `${apiBase}/v1beta/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
+    const response = await model.generateContent({
+      contents: messages.slice(-12).map((message) => ({
+        role: message.role === "assistant" ? "model" : "user",
+        parts: [{ text: message.content.slice(0, 2000) }],
+      })),
+      generationConfig: {
+        temperature: 0.6,
+        topP: 0.9,
+        topK: 40,
+        maxOutputTokens: 512,
       },
-    );
+    });
 
-    if (!response.ok) {
-      const body = await response.text();
-      console.error("Gemini request failed", {
-        status: response.status,
-        statusText: response.statusText,
-        body,
-        endpoint: `${apiBase}/v1beta/models/${model}:generateContent`,
-      });
-      throw new Error(`AI request failed (${response.status}): ${body}`);
-    }
-
-    const data = (await response.json()) as any;
     const reply =
-      data?.candidates?.[0]?.content?.parts
+      response?.response?.candidates?.[0]?.content?.parts
         ?.map((part: { text?: string }) => part?.text ?? "")
         .join("\n")
         ?.trim() ?? "";
@@ -75,7 +60,13 @@ export const generateGeminiReply = async (messages: ChatMessage[]): Promise<stri
     }
 
     return reply;
-  } finally {
-    clearTimeout(timeout);
+  } catch (error: any) {
+    console.error("Gemini request failed", {
+      name: error?.name,
+      message: error?.message,
+      status: error?.status,
+      details: error,
+    });
+    throw error instanceof Error ? error : new Error("AI request failed");
   }
 };
