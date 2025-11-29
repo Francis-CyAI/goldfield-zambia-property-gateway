@@ -16,6 +16,7 @@ const systemInstruction = [
 const apiKey = import.meta.env.VITE_GOOGLE_AI_API_KEY;
 const modelName = import.meta.env.VITE_GOOGLE_AI_MODEL ?? "gemini-2.5-flash";
 
+// New SDK client
 const genAI = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 if (import.meta.env.DEV) {
@@ -25,23 +26,34 @@ if (import.meta.env.DEV) {
   });
 }
 
-export const generateGeminiReply = async (messages: ChatMessage[]): Promise<string> => {
+export const generateGeminiReply = async (
+  messages: ChatMessage[]
+): Promise<string> => {
   if (!apiKey || !genAI) {
-    throw new Error("Google AI API key is missing. Set VITE_GOOGLE_AI_API_KEY in your .env.");
+    throw new Error(
+      "Google AI API key is missing. Set VITE_GOOGLE_AI_API_KEY in your .env."
+    );
   }
 
-  const model = genAI.getGenerativeModel({
-    model: modelName,
-    systemInstruction,
-  });
+  // Map your chat messages into Gemini "Content" objects
+  const contents = messages.slice(-12).map((message) => ({
+    role: message.role === "assistant" ? "model" : "user",
+    parts: [
+      {
+        text: message.content.slice(0, 2000),
+      },
+    ],
+  }));
 
   try {
-    const response = await model.generateContent({
-      contents: messages.slice(-12).map((message) => ({
-        role: message.role === "assistant" ? "model" : "user",
-        parts: [{ text: message.content.slice(0, 2000) }],
-      })),
-      generationConfig: {
+    const response = await genAI.models.generateContent({
+      model: modelName,
+      contents,
+      config: {
+        // System instruction now lives in config.systemInstruction
+        systemInstruction: {
+          parts: [{ text: systemInstruction }],
+        },
         temperature: 0.6,
         topP: 0.9,
         topK: 40,
@@ -49,11 +61,16 @@ export const generateGeminiReply = async (messages: ChatMessage[]): Promise<stri
       },
     });
 
-    const reply =
-      response?.response?.candidates?.[0]?.content?.parts
+    // New SDK gives you response.text directly
+    const replyFromText = response.text?.trim();
+
+    const replyFromCandidates =
+      response.candidates?.[0]?.content?.parts
         ?.map((part: { text?: string }) => part?.text ?? "")
         .join("\n")
-        ?.trim() ?? "";
+        .trim() ?? "";
+
+    const reply = replyFromText || replyFromCandidates;
 
     if (!reply) {
       throw new Error("AI response was empty.");
