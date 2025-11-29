@@ -41,11 +41,6 @@ export const config = {
   notifications: {
     contactRecipient: required("CONTACT_RECIPIENT"),
   },
-  googleAi: {
-    apiKey: readEnvValue("GOOGLE_AI_API_KEY"),
-    model: readEnvValue("GOOGLE_AI_MODEL") ?? "gemini-1.5-flash",
-    apiBase: readEnvValue("GOOGLE_AI_API_BASE") ?? "https://generativelanguage.googleapis.com",
-  },
   platform: {
     feePercent: readPositiveNumber("PLATFORM_FEE_PERCENT", 10),
   },
