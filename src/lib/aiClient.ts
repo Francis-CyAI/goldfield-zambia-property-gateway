@@ -53,8 +53,14 @@ export const generateGeminiReply = async (messages: ChatMessage[]): Promise<stri
     );
 
     if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`AI request failed (${response.status}): ${text}`);
+      const body = await response.text();
+      console.error("Gemini request failed", {
+        status: response.status,
+        statusText: response.statusText,
+        body,
+        endpoint: `${apiBase}/v1beta/models/${model}:generateContent`,
+      });
+      throw new Error(`AI request failed (${response.status}): ${body}`);
     }
 
     const data = (await response.json()) as any;
