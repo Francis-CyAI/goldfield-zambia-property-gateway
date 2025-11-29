@@ -30,6 +30,7 @@ import Setup from "./pages/Setup";
 import NotFound from "./pages/NotFound";
 import AdminRoute from "./components/routes/AdminRoute";
 import Notifications from "./pages/Notifications";
+import Suggestions from "./pages/Suggestions";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => (
                 <Route path="/partners" element={<Partners />} />
                 <Route path="/subscription" element={<Subscription />} />
                 <Route path="/news" element={<News />} />
+                <Route path="/suggestions" element={<Suggestions />} />
                 <Route path="/setup" element={<Setup />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="*" element={<NotFound />} />

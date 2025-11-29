@@ -132,6 +132,19 @@ export interface NotificationPreference extends BaseDocument {
   email_payout?: boolean;
 }
 
+export interface Suggestion extends BaseDocument {
+  user_id: string;
+  title: string;
+  message: string;
+  type: 'feedback' | 'feature' | 'bug';
+  category?: 'bookings' | 'listings' | 'payouts' | 'support' | 'other';
+  status: 'new' | 'in_review' | 'resolved';
+  priority?: 'low' | 'medium' | 'high';
+  contact_email?: string | null;
+  contact_phone?: string | null;
+  resolution_notes?: string | null;
+}
+
 export interface ListerEarning extends BaseDocument {
   user_id: string;
   total_gross: number;
@@ -338,6 +351,7 @@ export type CollectionKey =
   | 'notifications'
   | 'notificationTokens'
   | 'notificationPreferences'
+  | 'suggestions'
   | 'listerEarnings'
   | 'listerEarningEntries'
   | 'listerWithdrawals'
@@ -366,6 +380,7 @@ export type CollectionRecordMap = {
   notifications: Notification;
   notificationTokens: NotificationToken;
   notificationPreferences: NotificationPreference;
+  suggestions: Suggestion;
   listerEarnings: ListerEarning;
   listerEarningEntries: ListerEarningEntry;
   listerWithdrawals: ListerWithdrawal;

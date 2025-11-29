@@ -154,6 +154,12 @@ const Header = () => {
                 </NavigationMenuLink>
               </NavigationMenuItem>
 
+              <NavigationMenuItem>
+                <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+                  <Link to="/suggestions">Feedback</Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+
               {user && (
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>Dashboard</NavigationMenuTrigger>
@@ -226,6 +232,9 @@ const Header = () => {
                 </Link>
                 <Link to="/contact" className="block px-2 py-1 text-lg font-medium hover:text-primary">
                   {t('contact')}
+                </Link>
+                <Link to="/suggestions" className="block px-2 py-1 text-lg font-medium hover:text-primary">
+                  Feedback
                 </Link>
                 {user && (
                   <>
