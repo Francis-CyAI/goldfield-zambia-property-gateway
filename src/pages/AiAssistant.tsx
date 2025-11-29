@@ -1,24 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '@/lib/constants/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Send, ShieldCheck, Clock3 } from 'lucide-react';
+import { generateGeminiReply, type ChatMessage } from '@/lib/aiClient';
 
-type ChatMessage = {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-};
+type UiMessage = ChatMessage & { id: string };
 
-const chatWithGoogleAi = httpsCallable(functions, 'chatWithGoogleAi');
-
-const starterMessages: ChatMessage[] = [
+const starterMessages: UiMessage[] = [
   {
     id: 'intro',
     role: 'assistant',
@@ -37,7 +29,7 @@ const quickPrompts = [
 const AiAssistant = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [messages, setMessages] = useState<ChatMessage[]>(starterMessages);
+  const [messages, setMessages] = useState<UiMessage[]>(starterMessages);
   const [input, setInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
@@ -50,7 +42,7 @@ const AiAssistant = () => {
     const text = (prompt ?? input).trim();
     if (!text || isSending) return;
 
-    const userMessage: ChatMessage = {
+    const userMessage: UiMessage = {
       id: `user-${Date.now()}`,
       role: 'user',
       content: text,
@@ -62,19 +54,20 @@ const AiAssistant = () => {
     setIsSending(true);
 
     try {
-      const response = await chatWithGoogleAi({
-        messages: history.map(({ role, content }) => ({ role, content })),
-        context: { topic: 'property-gateway' },
-      });
-      const replyText = (response.data as any)?.reply || 'Sorry, I did not catch that.';
-      const reply: ChatMessage = {
+      const replyText = await generateGeminiReply(
+        history.map(({ role, content }) => ({ role, content })),
+      );
+      const reply: UiMessage = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
         content: replyText,
       };
       setMessages((prev) => [...prev, reply]);
     } catch (error: any) {
-      const description = error?.message ?? 'Unable to reach the assistant right now.';
+      const description =
+        error?.message === 'Failed to fetch'
+          ? 'Unable to reach Google AI. Check your network connection.'
+          : error?.message ?? 'Unable to reach the assistant right now.';
       toast({
         title: 'AI chat failed',
         description,
