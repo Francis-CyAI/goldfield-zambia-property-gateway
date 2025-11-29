@@ -19,7 +19,7 @@ import {
 import { db, serverTimestamp } from "./firestore.js";
 import { getMessaging } from "firebase-admin/messaging";
 import { calculateLencoFee } from "./lencoFees.js";
-import { generateAiResponse } from "./googleAi.js";
+import { generateAiResponse, type AiMessage } from "./googleAi.js";
 setGlobalOptions({
   region: "us-central1",
   memory: "256MiB",
