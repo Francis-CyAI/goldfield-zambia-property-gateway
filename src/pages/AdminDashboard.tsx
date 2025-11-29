@@ -12,7 +12,8 @@ import {
   MapPin,
   Shield,
   Activity,
-  Settings
+  Settings,
+  MessageSquare
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
@@ -23,6 +24,7 @@ import AdminAnalytics from '@/components/admin/AdminAnalytics';
 import AdminBranchManagement from '@/components/admin/AdminBranchManagement';
 import AdminActivityLogs from '@/components/admin/AdminActivityLogs';
 import { useAdminStatus } from '@/hooks/useAdminStatus';
+import AdminSuggestions from '@/components/admin/AdminSuggestions';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -86,7 +88,7 @@ const AdminDashboard = () => {
         {/* Dashboard Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 sm:space-y-6">
           <div className="overflow-x-auto">
-            <TabsList className="grid w-full min-w-[600px] grid-cols-6 lg:grid-cols-7 h-auto p-1">
+            <TabsList className="grid w-full min-w-[680px] grid-cols-7 lg:grid-cols-8 h-auto p-1">
               <TabsTrigger value="overview" className="flex flex-col items-center space-y-1 p-2 text-xs">
                 <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span>Overview</span>
@@ -106,6 +108,10 @@ const AdminDashboard = () => {
               <TabsTrigger value="analytics" className="flex flex-col items-center space-y-1 p-2 text-xs">
                 <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span>Analytics</span>
+              </TabsTrigger>
+              <TabsTrigger value="suggestions" className="flex flex-col items-center space-y-1 p-2 text-xs">
+                <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>Suggestions</span>
               </TabsTrigger>
               {isHQAdmin && (
                 <TabsTrigger value="branches" className="flex flex-col items-center space-y-1 p-2 text-xs">
@@ -138,6 +144,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="analytics">
             <AdminAnalytics />
+          </TabsContent>
+
+          <TabsContent value="suggestions">
+            <AdminSuggestions />
           </TabsContent>
 
           {isHQAdmin && (
