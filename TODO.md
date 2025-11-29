@@ -66,5 +66,5 @@
   - [x] Store submissions in Firestore and surface them in the admin dashboard.
 
 - [ ] AI chatbot integration
-  - [ ] Integrate a conversational AI that answers questions about the platform.
+  - [x] Integrate a conversational AI that answers questions about the platform.
   - [ ] Index Firestore data (listings, FAQs, etc.) so the bot can reference current information.
