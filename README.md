@@ -33,9 +33,9 @@ PLATFORM_FEE_PERCENT=10
 LENCO_API_KEY=
 LENCO_BASE_URL=https://api.lenco.co/access/v2
 CONTACT_RECIPIENT=
-GOOGLE_AI_API_KEY=
-GOOGLE_AI_MODEL=gemini-1.5-flash
-GOOGLE_AI_API_BASE=https://generativelanguage.googleapis.com
+VITE_GOOGLE_AI_API_KEY=
+VITE_GOOGLE_AI_MODEL=gemini-1.5-flash
+VITE_GOOGLE_AI_API_BASE=https://generativelanguage.googleapis.com
 ```
 *For CI deployments export the same variables before running `firebase deploy`.*
 
