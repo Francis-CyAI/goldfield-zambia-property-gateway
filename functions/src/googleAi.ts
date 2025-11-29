@@ -2,7 +2,7 @@ import { HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
 import { config } from "./config.js";
 
-type AiMessage = {
+export type AiMessage = {
   role: "user" | "assistant";
   content: string;
 };
