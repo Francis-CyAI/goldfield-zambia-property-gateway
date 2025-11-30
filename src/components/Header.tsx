@@ -96,9 +96,9 @@ const Header = () => {
         <div className="flex items-center space-x-6">
           <Link to="/" className="flex items-center space-x-2">
             <div className="h-8 w-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">KS</span>
+              <span className="text-white font-bold text-sm">AP</span>
             </div>
-            <span className="font-bold text-xl hidden sm:inline-block">Kamanga Stays</span>
+            <span className="font-bold text-xl hidden sm:inline-block">ABS Properties</span>
           </Link>
 
           {/* Desktop Navigation */}
