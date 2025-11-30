@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Sparkles, Send, ShieldCheck, Clock3 } from 'lucide-react';
 import { generateGeminiReply, type ChatMessage } from '@/lib/aiClient';
+import { buildAiContext } from '@/lib/aiContextBuilder';
 
 type UiMessage = ChatMessage & { id: string };
 
@@ -41,6 +42,14 @@ const AiAssistant = () => {
   const sendMessage = async (prompt?: string) => {
     const text = (prompt ?? input).trim();
     if (!text || isSending) return;
+    if (!user?.uid) {
+      toast({
+        title: 'Please sign in',
+        description: 'You need to be signed in to use the assistant.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     const userMessage: UiMessage = {
       id: `user-${Date.now()}`,
@@ -54,9 +63,23 @@ const AiAssistant = () => {
     setIsSending(true);
 
     try {
-      const replyText = await generateGeminiReply(
-        history.map(({ role, content }) => ({ role, content })),
-      );
+      const { schemaText, contextData } = await buildAiContext(user.uid);
+      const contextMessage: ChatMessage = {
+        role: 'user',
+        content: [
+          'Context - Firestore schema:',
+          schemaText,
+          'Context - Retrieved data:',
+          JSON.stringify(contextData, null, 2),
+          'Instruction: Only answer using the context above. If something is missing, say you do not know.',
+        ].join('\n'),
+      };
+
+      const replyText = await generateGeminiReply([
+        contextMessage,
+        ...history.map(({ role, content }) => ({ role, content })),
+        { role: 'user', content: text },
+      ]);
       const reply: UiMessage = {
         id: `assistant-${Date.now()}`,
         role: 'assistant',
