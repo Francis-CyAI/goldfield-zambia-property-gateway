@@ -1,4 +1,4 @@
-# Zambia Property Gateway
+# ABS Properties
 
 Step-by-step instructions for working with this project.
 

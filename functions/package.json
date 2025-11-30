@@ -1,6 +1,6 @@
 {
   "name": "goldfield-cloud-functions",
-  "description": "Firebase Functions for Goldfield Zambia Property Gateway",
+  "description": "Firebase Functions for ABS Properties",
   "type": "module",
   "engines": {
     "node": "20"

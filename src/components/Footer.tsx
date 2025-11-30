@@ -36,7 +36,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand Section */}
           <div className="space-y-4">
-            <h3 className="text-xl font-bold">Kamanga Stays</h3>
+            <h3 className="text-xl font-bold">ABS Properties</h3>
             <p className="text-gray-300 text-sm">
               {t('luxury_excellence_trust')}
             </p>
@@ -102,7 +102,7 @@ const Footer = () => {
         {/* Bottom Section */}
         <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
           <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-4 text-sm text-gray-400">
-            <span>© {currentYear} Kamanga Stays. {t('all_rights_reserved')}</span>
+            <span>© {currentYear} ABS Properties. {t('all_rights_reserved')}</span>
             <span className="hidden md:inline">•</span>
             <span>{t('licensed_by')}</span>
           </div>
