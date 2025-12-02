@@ -3,4 +3,5 @@ node_modules
 .env
 *.local
 *.deploy
+.env.deploy
 .firebase
