@@ -43,11 +43,11 @@ const propertySchema = z.object({
   images: z.array(z.string())
     .min(10, 'Minimum 10 photos required for property listing')
     .max(15, 'Maximum 15 photos allowed for property listing'),
-  hasElectricity: z.boolean().refine(val => val === true, 'Reliable electricity is required'),
-  hasWater: z.boolean().refine(val => val === true, 'Running water is required'),
-  hasInternet: z.boolean(),
-  isSecure: z.boolean().refine(val => val === true, 'Security measures are required'),
-  hasValidLicense: z.boolean().refine(val => val === true, 'Valid business license required'),
+  hasElectricity: z.boolean().optional(),
+  hasWater: z.boolean().optional(),
+  hasInternet: z.boolean().optional(),
+  isSecure: z.boolean().optional(),
+  hasValidLicense: z.boolean().optional(),
   sellerContactName: z.string().min(2, 'Please provide the primary seller name'),
   sellerContactEmail: z.string().email('Enter a valid email for buyer and admin contact'),
   sellerContactPhone: z.string().min(9, 'Enter a valid phone number'),
@@ -76,6 +76,34 @@ const propertySchema = z.object({
         code: z.ZodIssueCode.custom,
         path: ['amenities'],
         message: 'Add at least 3 amenities for rentals.',
+      });
+    }
+    if (!data.hasElectricity) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['hasElectricity'],
+        message: 'Confirm electricity for rentals.',
+      });
+    }
+    if (!data.hasWater) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['hasWater'],
+        message: 'Confirm running water for rentals.',
+      });
+    }
+    if (!data.isSecure) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['isSecure'],
+        message: 'Confirm security measures for rentals.',
+      });
+    }
+    if (!data.hasValidLicense) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['hasValidLicense'],
+        message: 'Confirm a valid business license for rentals.',
       });
     }
   }
@@ -135,11 +163,11 @@ const PropertyListingForm = ({ initialType = 'sale' }: PropertyListingFormProps)
       bathrooms: 1,
       amenities: [],
       images: [],
-      hasElectricity: false,
-      hasWater: false,
-      hasInternet: false,
-      isSecure: false,
-      hasValidLicense: false,
+      hasElectricity: undefined,
+      hasWater: undefined,
+      hasInternet: undefined,
+      isSecure: undefined,
+      hasValidLicense: undefined,
       sellerContactEmail: '',
       sellerContactName: '',
       sellerContactPhone: '',
@@ -274,7 +302,7 @@ const PropertyListingForm = ({ initialType = 'sale' }: PropertyListingFormProps)
           {listingType === 'rental' && <AmenitiesSection form={form} />}
 
           {/* Essential Requirements */}
-          <RequirementsSection form={form} />
+          {listingType === 'rental' && <RequirementsSection form={form} />}
 
           {/* Seller verification & ownership docs */}
           <SellerVerificationSection form={form} />
