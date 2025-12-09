@@ -43,6 +43,8 @@ const PropertyInfoSection = ({ form }: PropertyInfoSectionProps) => {
 
   const listingType = form.watch('listingType');
 
+  const gridCols = listingType === 'sale' ? 'grid md:grid-cols-3 gap-4' : 'grid md:grid-cols-4 gap-4';
+
   return (
     <Card>
       <CardHeader>
@@ -165,7 +167,7 @@ const PropertyInfoSection = ({ form }: PropertyInfoSectionProps) => {
           />
         </div>
 
-        <div className="grid md:grid-cols-4 gap-4">
+        <div className={gridCols}>
           {listingType === 'sale' ? (
             <FormField
               control={form.control}
@@ -210,28 +212,30 @@ const PropertyInfoSection = ({ form }: PropertyInfoSectionProps) => {
             />
           )}
 
-          <FormField
-            control={form.control}
-            name="maxGuests"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  Max Guests *
-                </FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    min={1}
-                    max={20}
-                    {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {listingType === 'rental' && (
+            <FormField
+              control={form.control}
+              name="maxGuests"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    Max Guests
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      min={1}
+                      max={20}
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <FormField
             control={form.control}

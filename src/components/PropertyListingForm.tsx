@@ -36,10 +36,10 @@ const propertySchema = z.object({
   listingType: z.enum(['rental', 'sale']),
   pricePerNight: z.number().nullable().optional(),
   salePrice: z.number().nullable().optional(),
-  maxGuests: z.number().min(1).max(20, 'Maximum 20 guests allowed'),
+  maxGuests: z.number().nullable().optional(),
   bedrooms: z.number().min(1, 'At least 1 bedroom required'),
   bathrooms: z.number().min(1, 'At least 1 bathroom required'),
-  amenities: z.array(z.string()).min(3, 'At least 3 amenities required'),
+  amenities: z.array(z.string()).optional(),
   images: z.array(z.string())
     .min(10, 'Minimum 10 photos required for property listing')
     .max(15, 'Maximum 15 photos allowed for property listing'),
@@ -62,6 +62,20 @@ const propertySchema = z.object({
         code: z.ZodIssueCode.custom,
         path: ['pricePerNight'],
         message: 'Please enter a nightly rate of at least K50.',
+      });
+    }
+    if (!data.maxGuests || data.maxGuests < 1) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['maxGuests'],
+        message: 'Enter the maximum guests for rentals.',
+      });
+    }
+    if (!data.amenities || data.amenities.length < 3) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['amenities'],
+        message: 'Add at least 3 amenities for rentals.',
       });
     }
   }
@@ -116,7 +130,7 @@ const PropertyListingForm = ({ initialType = 'sale' }: PropertyListingFormProps)
       listingType: initialType,
       pricePerNight: initialType === 'rental' ? 100 : undefined,
       salePrice: initialType === 'sale' ? 250000 : undefined,
-      maxGuests: 2,
+      maxGuests: initialType === 'rental' ? 2 : undefined,
       bedrooms: 1,
       bathrooms: 1,
       amenities: [],
@@ -164,11 +178,11 @@ const PropertyListingForm = ({ initialType = 'sale' }: PropertyListingFormProps)
         listing_type: data.listingType,
         sale_status: isSaleListing ? 'available' : undefined,
         sale_price: isSaleListing ? salePriceValue : null,
-        price_per_night: isSaleListing ? null : data.pricePerNight,
-        max_guests: data.maxGuests,
+        price_per_night: isSaleListing ? null : data.pricePerNight ?? null,
+        max_guests: isSaleListing ? null : data.maxGuests ?? null,
         bedrooms: data.bedrooms,
         bathrooms: data.bathrooms,
-        amenities: data.amenities,
+        amenities: data.listingType === 'rental' ? data.amenities ?? [] : [],
         images: data.images,
         buyer_markup_percent: isSaleListing ? BUYER_MARKUP_PERCENT : null,
         platform_fee_percent: isSaleListing ? PLATFORM_FEE_PERCENT : null,
@@ -257,7 +271,7 @@ const PropertyListingForm = ({ initialType = 'sale' }: PropertyListingFormProps)
           )}
 
           {/* Amenities and Features */}
-          <AmenitiesSection form={form} />
+          {listingType === 'rental' && <AmenitiesSection form={form} />}
 
           {/* Essential Requirements */}
           <RequirementsSection form={form} />
