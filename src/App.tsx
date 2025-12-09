@@ -24,6 +24,8 @@ import RealEstateServicesDashboard from "./pages/RealEstateServicesDashboard";
 import UserDashboard from "./components/UserDashboard";
 import Bookings from "./pages/Bookings";
 import ListProperty from "./pages/ListProperty";
+import ListPropertyRent from "./pages/ListPropertyRent";
+import ListPropertySale from "./pages/ListPropertySale";
 import Partners from "./pages/Partners";
 import Subscription from "./pages/Subscription";
 import News from "./pages/News";
@@ -72,6 +74,8 @@ const App = () => (
                 <Route path="/user-dashboard" element={<UserDashboard />} />
                 <Route path="/bookings" element={<Bookings />} />
                 <Route path="/list-property" element={<ListProperty />} />
+                <Route path="/list-property/rent" element={<ListPropertyRent />} />
+                <Route path="/list-property/sale" element={<ListPropertySale />} />
                 <Route path="/partners" element={<Partners />} />
                 <Route path="/subscription" element={<Subscription />} />
                 <Route path="/news" element={<News />} />

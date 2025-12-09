@@ -24,6 +24,10 @@ import SalePricingNotice from './property-listing/SalePricingNotice';
 const PLATFORM_FEE_PERCENT = Number(import.meta.env.VITE_PLATFORM_FEE_PERCENT ?? 10);
 const BUYER_MARKUP_PERCENT = 5;
 
+type PropertyListingFormProps = {
+  initialType?: 'rental' | 'sale';
+};
+
 const propertySchema = z.object({
   title: z.string().min(10, 'Title must be at least 10 characters'),
   description: z.string().min(50, 'Description must be at least 50 characters'),
@@ -96,7 +100,7 @@ const propertySchema = z.object({
 
 type PropertyFormData = z.infer<typeof propertySchema>;
 
-const PropertyListingForm = () => {
+const PropertyListingForm = ({ initialType = 'sale' }: PropertyListingFormProps) => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -109,9 +113,9 @@ const PropertyListingForm = () => {
       description: '',
       propertyType: '',
       location: '',
-      listingType: 'sale',
-      pricePerNight: 100,
-      salePrice: 250000,
+      listingType: initialType,
+      pricePerNight: initialType === 'rental' ? 100 : undefined,
+      salePrice: initialType === 'sale' ? 250000 : undefined,
       maxGuests: 2,
       bedrooms: 1,
       bathrooms: 1,
