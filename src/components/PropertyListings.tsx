@@ -69,6 +69,13 @@ const PropertyListings = ({ properties, isLoading }: PropertyListingsProps) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {properties.map((property) => {
           const approvalStatus = property.approval_status ?? 'pending';
+          const listingType = property.listing_type ?? (property.sale_price ? 'sale' : 'rental');
+          const platformFeePercent = property.platform_fee_percent ?? 10;
+          const salePrice = property.sale_price ?? 0;
+          const sellerNet =
+            listingType === 'sale'
+              ? Math.max(salePrice - salePrice * (platformFeePercent / 100), 0)
+              : null;
           const approvalBadge =
             approvalStatus === 'approved'
               ? { variant: 'default' as const, label: 'Approved', className: 'bg-green-600 text-white' }
@@ -143,10 +150,27 @@ const PropertyListings = ({ properties, isLoading }: PropertyListingsProps) => {
               </div>
               
               <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <DollarSign className="h-4 w-4 mr-1" />
-                  <span className="font-semibold">K{property.price_per_night}</span>
-                  <span className="text-sm text-muted-foreground ml-1">/ night</span>
+                <div>
+                  {listingType === 'sale' ? (
+                    <>
+                      <div className="flex items-center">
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        <span className="font-semibold">K{salePrice.toLocaleString()}</span>
+                        <span className="text-sm text-muted-foreground ml-1">sale price</span>
+                      </div>
+                      {sellerNet !== null && (
+                        <p className="text-xs text-muted-foreground">
+                          You keep K{sellerNet.toLocaleString(undefined, { maximumFractionDigits: 0 })} after 10% admin fee
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <div className="flex items-center">
+                      <DollarSign className="h-4 w-4 mr-1" />
+                      <span className="font-semibold">K{property.price_per_night}</span>
+                      <span className="text-sm text-muted-foreground ml-1">/ night</span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex space-x-2">
                   <Button size="sm" variant="outline">

@@ -6,6 +6,7 @@ import { Heart, Star, MapPin, Users, Bed, Bath, Home } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import BookingFlow from './BookingFlow';
 import type { Property } from '@/lib/models';
+import PurchaseRequestDialog from './PurchaseRequestDialog';
 
 interface PropertyCardProps {
   property: Property & { isWishlisted?: boolean };
@@ -14,6 +15,7 @@ interface PropertyCardProps {
 
 const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
   const [showBookingFlow, setShowBookingFlow] = useState(false);
+  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(property.isWishlisted || false);
   const listingType = property.listing_type ?? (property.sale_price ? 'sale' : 'rental');
   const mainImage = property.images?.[0] || '/placeholder.svg';
@@ -33,8 +35,9 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
 
   const handleInquiry = (e: React.MouseEvent) => {
     e.preventDefault();
-    // Handle inquiry for sale properties
-    console.log('Inquiry for property:', property.id);
+    if (listingType === 'sale') {
+      setShowPurchaseDialog(true);
+    }
   };
 
   return (
@@ -135,14 +138,14 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
                 )}
               </div>
               
-                  {listingType === 'sale' ? (
+              {listingType === 'sale' ? (
                 <Button 
                   onClick={handleInquiry}
                   size="sm"
                   variant="outline"
                   className="hover:bg-primary hover:text-white"
                 >
-                  Inquire
+                  Buy / Request
                 </Button>
               ) : (
                 <Button 
@@ -173,6 +176,13 @@ const PropertyCard = ({ property, onWishlistToggle }: PropertyCardProps) => {
             max_guests: property.max_guests || 1
           }}
           onClose={() => setShowBookingFlow(false)} 
+        />
+      )}
+      {listingType === 'sale' && (
+        <PurchaseRequestDialog
+          property={property}
+          open={showPurchaseDialog}
+          onOpenChange={setShowPurchaseDialog}
         />
       )}
     </>

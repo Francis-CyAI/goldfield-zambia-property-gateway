@@ -68,3 +68,11 @@
 - [ ] AI chatbot integration
   - [x] Integrate a conversational AI that answers questions about the platform.
   - [ ] Index Firestore data (listings, FAQs, etc.) so the bot can reference current information.
+
+- [x] For-sale listings & offline purchases
+  - [x] Add sale listing flow with real-time 5% buyer markup + 10% seller platform fee preview.
+  - [x] Require seller contact, national ID (front/back), and ownership document uploads when listing.
+  - [x] Buyer “buy property” request form (contact + ID uploads) with admin + seller notifications.
+  - [x] Admin dashboard tab to review purchase requests and mark listings as sold.
+  - [x] Seller dashboard panel to confirm payout and delete uploaded sale data after payment.
+  - [x] Separate property pages for rentals and properties for sale.

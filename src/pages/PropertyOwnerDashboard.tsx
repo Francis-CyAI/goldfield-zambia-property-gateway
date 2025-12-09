@@ -26,6 +26,7 @@ import { useNavigate } from 'react-router-dom';
 import { useListerEarnings, useListerEarningEntries } from '@/hooks/useListerEarnings';
 import { useListerWithdrawals } from '@/hooks/useListerWithdrawals';
 import { useInitiateWithdrawal } from '@/hooks/useWithdrawal';
+import SellerSaleRequests from '@/components/SellerSaleRequests';
 
 const calculateLencoFeeUi = (amount: number) => {
   if (!Number.isFinite(amount) || amount <= 0) return 0;
@@ -360,7 +361,10 @@ const PropertyOwnerDashboard = () => {
           </TabsContent>
 
           <TabsContent value="properties">
-            <PropertyListings properties={properties} isLoading={propertiesLoading} />
+            <div className="space-y-6">
+              <PropertyListings properties={properties} isLoading={propertiesLoading} />
+              <SellerSaleRequests />
+            </div>
           </TabsContent>
 
           <TabsContent value="bookings">

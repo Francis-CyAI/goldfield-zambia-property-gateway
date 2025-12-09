@@ -13,6 +13,7 @@ import ReviewSubmissionForm from '@/components/reviews/ReviewSubmissionForm';
 import SafetyGuidelinesCard from '@/components/reviews/SafetyGuidelinesCard';
 import MessagingSystem from '@/components/MessagingSystem';
 import { useProperty } from '@/hooks/useProperties';
+import PurchaseRequestDialog from '@/components/PurchaseRequestDialog';
 import { usePropertyReviews, useHostResponse } from '@/hooks/useReviews';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -44,6 +45,7 @@ const PropertyDetail = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -78,9 +80,16 @@ const PropertyDetail = () => {
     );
   }
 
-  const images = property.images.length > 0 ? property.images : [
+  const images = property.images && property.images.length > 0 ? property.images : [
     'https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=1200&h=800&fit=crop'
   ];
+  const listingType = property.listing_type ?? (property.sale_price ? 'sale' : 'rental');
+  const buyerMarkupPercent = property.buyer_markup_percent ?? 5;
+  const platformFeePercent = property.platform_fee_percent ?? 10;
+  const salePrice = property.sale_price ?? 0;
+  const buyerMarkup = salePrice * (buyerMarkupPercent / 100);
+  const buyerTotal = salePrice + buyerMarkup;
+  const sellerNet = Math.max(salePrice - salePrice * (platformFeePercent / 100), 0);
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => 
@@ -117,7 +126,7 @@ const PropertyDetail = () => {
     'default': Home
   };
 
-  const amenitiesWithIcons = property.amenities.map(amenity => ({
+  const amenitiesWithIcons = (property.amenities ?? []).map(amenity => ({
     name: amenity,
     icon: amenityIcons[amenity.toLowerCase()] || amenityIcons.default
   }));
@@ -367,12 +376,48 @@ const PropertyDetail = () => {
             )}
           </div>
 
-          {/* Booking Card */}
+          {/* Booking / Purchase Card */}
           <div className="lg:col-span-1">
-            <QuickBookingCard property={transformedProperty} />
+            {listingType === 'sale' ? (
+              <Card className="sticky top-24">
+                <CardContent className="p-6 space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Sale price</p>
+                    <p className="text-3xl font-bold">ZMW {salePrice.toLocaleString()}</p>
+                  </div>
+                  <div className="rounded-lg border bg-slate-50 p-3 space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span>Buyer markup ({buyerMarkupPercent}%)</span>
+                      <span className="font-semibold">+ZMW {buyerMarkup.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-emerald-700 font-medium">
+                      <span>Buyer total</span>
+                      <span>ZMW {buyerTotal.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
+                      <span>Your payout after 10% platform fee</span>
+                      <span>ZMW {sellerNet.toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    No mobile money or card payment is taken here. Submit your details and we will continue the sale offline.
+                  </p>
+                  <Button className="w-full" size="lg" onClick={() => setPurchaseDialogOpen(true)}>
+                    Buy this property
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <QuickBookingCard property={transformedProperty} />
+            )}
           </div>
         </div>
       </div>
+      <PurchaseRequestDialog
+        property={property}
+        open={purchaseDialogOpen}
+        onOpenChange={setPurchaseDialogOpen}
+      />
     </div>
   );
 };

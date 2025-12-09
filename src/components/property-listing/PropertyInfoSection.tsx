@@ -5,7 +5,7 @@ import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessa
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Home, MapPin, Users, Bed, Bath } from 'lucide-react';
+import { Home, MapPin, Users, Bed, Bath, Tag } from 'lucide-react';
 
 interface PropertyInfoSectionProps {
   form: UseFormReturn<any>;
@@ -40,6 +40,8 @@ const PropertyInfoSection = ({ form }: PropertyInfoSectionProps) => {
     'Duplex',
     'Flat',
   ];
+
+  const listingType = form.watch('listingType');
 
   return (
     <Card>
@@ -86,6 +88,29 @@ const PropertyInfoSection = ({ form }: PropertyInfoSectionProps) => {
         />
 
         <div className="grid md:grid-cols-2 gap-6">
+          <FormField
+            control={form.control}
+            name="listingType"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Listing Type *</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose if this is for rent or sale" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="sale">For Sale</SelectItem>
+                    <SelectItem value="rental">For Rent</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormDescription>Choose sale if you are selling this property outright.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="propertyType"
@@ -141,24 +166,49 @@ const PropertyInfoSection = ({ form }: PropertyInfoSectionProps) => {
         </div>
 
         <div className="grid md:grid-cols-4 gap-4">
-          <FormField
-            control={form.control}
-            name="pricePerNight"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Price per Night (ZMW) *</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    min={50}
-                    {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {listingType === 'sale' ? (
+            <FormField
+              control={form.control}
+              name="salePrice"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1">
+                    <Tag className="h-4 w-4" />
+                    Sale price (ZMW) *
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min={10000}
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormDescription>We will show buyers a 5% markup on top of this.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ) : (
+            <FormField
+              control={form.control}
+              name="pricePerNight"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Price per Night (ZMW) *</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      min={50}
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <FormField
             control={form.control}

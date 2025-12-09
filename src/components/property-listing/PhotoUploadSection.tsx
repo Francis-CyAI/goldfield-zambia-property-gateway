@@ -142,8 +142,8 @@ const PhotoUploadSection = ({ form }: PhotoUploadSectionProps) => {
           Property Photos
         </CardTitle>
         <CardDescription>
-          Upload high-quality images that highlight the property&apos;s best features. You can add up to {MAX_IMAGES}{' '}
-          photos.
+          Upload clear photos of every room (living areas, all bedrooms, kitchen, bathrooms) plus exterior shots. You can
+          add up to {MAX_IMAGES} photos.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -213,4 +213,3 @@ const PhotoUploadSection = ({ form }: PhotoUploadSectionProps) => {
 };
 
 export default PhotoUploadSection;
-

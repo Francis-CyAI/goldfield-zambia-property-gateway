@@ -1,5 +1,4 @@
 
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,13 +18,20 @@ import AmenitiesSection from './property-listing/AmenitiesSection';
 import RequirementsSection from './property-listing/RequirementsSection';
 import QualificationCard from './property-listing/QualificationCard';
 import ListingStandardsCard from './property-listing/ListingStandardsCard';
+import SellerVerificationSection from './property-listing/SellerVerificationSection';
+import SalePricingNotice from './property-listing/SalePricingNotice';
+
+const PLATFORM_FEE_PERCENT = Number(import.meta.env.VITE_PLATFORM_FEE_PERCENT ?? 10);
+const BUYER_MARKUP_PERCENT = 5;
 
 const propertySchema = z.object({
   title: z.string().min(10, 'Title must be at least 10 characters'),
   description: z.string().min(50, 'Description must be at least 50 characters'),
   propertyType: z.string().min(1, 'Please select a property type'),
   location: z.string().min(1, 'Please select a location in Lusaka'),
-  pricePerNight: z.number().min(50, 'Minimum price is K50 per night'),
+  listingType: z.enum(['rental', 'sale']),
+  pricePerNight: z.number().nullable().optional(),
+  salePrice: z.number().nullable().optional(),
   maxGuests: z.number().min(1).max(20, 'Maximum 20 guests allowed'),
   bedrooms: z.number().min(1, 'At least 1 bedroom required'),
   bathrooms: z.number().min(1, 'At least 1 bathroom required'),
@@ -38,7 +44,54 @@ const propertySchema = z.object({
   hasInternet: z.boolean(),
   isSecure: z.boolean().refine(val => val === true, 'Security measures are required'),
   hasValidLicense: z.boolean().refine(val => val === true, 'Valid business license required'),
+  sellerContactName: z.string().min(2, 'Please provide the primary seller name'),
+  sellerContactEmail: z.string().email('Enter a valid email for buyer and admin contact'),
+  sellerContactPhone: z.string().min(9, 'Enter a valid phone number'),
+  sellerIdFront: z.string().optional(),
+  sellerIdBack: z.string().optional(),
+  ownershipDocuments: z.array(z.string()).optional(),
   agreesToTerms: z.boolean().refine(val => val === true, 'You must agree to our terms'),
+}).superRefine((data, ctx) => {
+  if (data.listingType === 'rental') {
+    if (!data.pricePerNight || data.pricePerNight < 50) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['pricePerNight'],
+        message: 'Please enter a nightly rate of at least K50.',
+      });
+    }
+  }
+
+  if (data.listingType === 'sale') {
+    if (!data.salePrice || data.salePrice < 10000) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['salePrice'],
+        message: 'Sale price should be at least K10,000.',
+      });
+    }
+    if (!data.sellerIdFront) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['sellerIdFront'],
+        message: 'Upload the front of your national ID for sale listings.',
+      });
+    }
+    if (!data.sellerIdBack) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['sellerIdBack'],
+        message: 'Upload the back of your national ID for sale listings.',
+      });
+    }
+    if (!data.ownershipDocuments || data.ownershipDocuments.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['ownershipDocuments'],
+        message: 'Upload at least one ownership document for sale listings.',
+      });
+    }
+  }
 });
 
 type PropertyFormData = z.infer<typeof propertySchema>;
@@ -56,7 +109,9 @@ const PropertyListingForm = () => {
       description: '',
       propertyType: '',
       location: '',
+      listingType: 'sale',
       pricePerNight: 100,
+      salePrice: 250000,
       maxGuests: 2,
       bedrooms: 1,
       bathrooms: 1,
@@ -67,9 +122,18 @@ const PropertyListingForm = () => {
       hasInternet: false,
       isSecure: false,
       hasValidLicense: false,
+      sellerContactEmail: '',
+      sellerContactName: '',
+      sellerContactPhone: '',
+      sellerIdFront: '',
+      sellerIdBack: '',
+      ownershipDocuments: [],
       agreesToTerms: false,
     },
   });
+
+  const listingType = form.watch('listingType');
+  const salePriceValue = form.watch('salePrice') ?? 0;
 
   const onSubmit = async (data: PropertyFormData) => {
     if (!user) {
@@ -83,19 +147,33 @@ const PropertyListingForm = () => {
     }
 
     console.log('Submitting property listing data:', data);
-    
+
     try {
+      const isSaleListing = data.listingType === 'sale';
+      const salePriceValue = isSaleListing ? data.salePrice ?? 0 : null;
+
       await createProperty.mutateAsync({
         title: data.title,
         description: data.description,
         property_type: data.propertyType,
         location: data.location,
-        price_per_night: data.pricePerNight,
+        listing_type: data.listingType,
+        sale_status: isSaleListing ? 'available' : undefined,
+        sale_price: isSaleListing ? salePriceValue : null,
+        price_per_night: isSaleListing ? null : data.pricePerNight,
         max_guests: data.maxGuests,
         bedrooms: data.bedrooms,
         bathrooms: data.bathrooms,
         amenities: data.amenities,
         images: data.images,
+        buyer_markup_percent: isSaleListing ? BUYER_MARKUP_PERCENT : null,
+        platform_fee_percent: isSaleListing ? PLATFORM_FEE_PERCENT : null,
+        seller_contact_email: data.sellerContactEmail,
+        seller_contact_name: data.sellerContactName,
+        seller_contact_phone: data.sellerContactPhone,
+        seller_id_front_url: data.sellerIdFront,
+        seller_id_back_url: data.sellerIdBack,
+        ownership_documents: data.ownershipDocuments,
         is_active: false,
         approval_status: 'pending',
       });
@@ -165,11 +243,23 @@ const PropertyListingForm = () => {
           {/* Basic Information */}
           <PropertyInfoSection form={form} />
 
+          {/* Sale pricing transparency */}
+          {listingType === 'sale' && (
+            <SalePricingNotice
+              salePrice={typeof salePriceValue === 'number' ? salePriceValue : 0}
+              platformFeePercent={PLATFORM_FEE_PERCENT}
+              buyerMarkupPercent={BUYER_MARKUP_PERCENT}
+            />
+          )}
+
           {/* Amenities and Features */}
           <AmenitiesSection form={form} />
 
           {/* Essential Requirements */}
           <RequirementsSection form={form} />
+
+          {/* Seller verification & ownership docs */}
+          <SellerVerificationSection form={form} />
 
           {/* Terms and Agreement */}
           <Card>

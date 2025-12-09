@@ -25,6 +25,7 @@ import AdminBranchManagement from '@/components/admin/AdminBranchManagement';
 import AdminActivityLogs from '@/components/admin/AdminActivityLogs';
 import { useAdminStatus } from '@/hooks/useAdminStatus';
 import AdminSuggestions from '@/components/admin/AdminSuggestions';
+import AdminPurchaseRequests from '@/components/admin/AdminPurchaseRequests';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -88,7 +89,7 @@ const AdminDashboard = () => {
         {/* Dashboard Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-3 sm:space-y-6">
           <div className="overflow-x-auto">
-            <TabsList className="grid w-full min-w-[680px] grid-cols-7 lg:grid-cols-8 h-auto p-1">
+            <TabsList className="grid w-full min-w-[720px] grid-cols-8 lg:grid-cols-9 h-auto p-1">
               <TabsTrigger value="overview" className="flex flex-col items-center space-y-1 p-2 text-xs">
                 <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span>Overview</span>
@@ -100,6 +101,10 @@ const AdminDashboard = () => {
               <TabsTrigger value="properties" className="flex flex-col items-center space-y-1 p-2 text-xs">
                 <Building2 className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span>Properties</span>
+              </TabsTrigger>
+              <TabsTrigger value="purchases" className="flex flex-col items-center space-y-1 p-2 text-xs">
+                <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>Purchase Requests</span>
               </TabsTrigger>
               <TabsTrigger value="commissions" className="flex flex-col items-center space-y-1 p-2 text-xs">
                 <DollarSign className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -136,6 +141,10 @@ const AdminDashboard = () => {
 
           <TabsContent value="properties">
             <AdminPropertyManagement />
+          </TabsContent>
+
+          <TabsContent value="purchases">
+            <AdminPurchaseRequests />
           </TabsContent>
 
           <TabsContent value="commissions">

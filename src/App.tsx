@@ -10,6 +10,8 @@ import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
 import Properties from "./pages/Properties";
+import PropertiesForSale from "./pages/PropertiesForSale";
+import PropertiesForRent from "./pages/PropertiesForRent";
 import PropertyDetail from "./pages/PropertyDetail";
 import About from "./pages/About";
 import Services from "./pages/Services";
@@ -48,6 +50,8 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/home" element={<Home />} />
                 <Route path="/properties" element={<Properties />} />
+                <Route path="/properties/sale" element={<PropertiesForSale />} />
+                <Route path="/properties/rent" element={<PropertiesForRent />} />
                 <Route path="/property/:id" element={<PropertyDetail />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/services" element={<Services />} />

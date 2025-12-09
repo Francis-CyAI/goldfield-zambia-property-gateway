@@ -20,6 +20,8 @@ export interface Property extends BaseDocument {
   description?: string | null;
   location: string;
   property_type?: string | null;
+  listing_type?: 'rental' | 'sale';
+  sale_status?: 'available' | 'under_offer' | 'sold';
   approval_status?: 'pending' | 'approved' | 'declined';
   approval_notes?: string | null;
   reviewed_by?: string | null;
@@ -28,7 +30,8 @@ export interface Property extends BaseDocument {
   submitted_by_name?: string | null;
   price_per_night?: number | null;
   sale_price?: number | null;
-  listing_type?: 'rental' | 'sale';
+  platform_fee_percent?: number | null;
+  buyer_markup_percent?: number | null;
   max_guests?: number | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
@@ -36,6 +39,13 @@ export interface Property extends BaseDocument {
   images?: string[];
   is_active?: boolean;
   host_id?: string;
+  seller_contact_name?: string | null;
+  seller_contact_email?: string | null;
+  seller_contact_phone?: string | null;
+  seller_id_front_url?: string | null;
+  seller_id_back_url?: string | null;
+  ownership_documents?: string[];
+  data_deleted_at?: string | null;
   size_acres?: number | null;
   rating?: number | null;
   reviewCount?: number | null;
@@ -313,6 +323,23 @@ export interface WishlistEntry extends BaseDocument {
   property_id: string;
 }
 
+export interface PurchaseRequest extends BaseDocument {
+  property_id: string;
+  property_title?: string | null;
+  seller_id?: string | null;
+  buyer_user_id?: string | null;
+  buyer_name?: string | null;
+  buyer_email: string;
+  buyer_phone: string;
+  buyer_id_front_url: string;
+  buyer_id_back_url: string;
+  buyer_notes?: string | null;
+  status: 'pending' | 'contacted' | 'sold' | 'seller_paid' | 'cancelled';
+  sold_at?: string | null;
+  admin_notes?: string | null;
+  data_deleted_at?: string | null;
+}
+
 export interface AdminActivityLog extends BaseDocument {
   actor_id: string;
   actor_email?: string;
@@ -352,6 +379,7 @@ export type CollectionKey =
   | 'notificationTokens'
   | 'notificationPreferences'
   | 'suggestions'
+  | 'purchaseRequests'
   | 'listerEarnings'
   | 'listerEarningEntries'
   | 'listerWithdrawals'
@@ -381,6 +409,7 @@ export type CollectionRecordMap = {
   notificationTokens: NotificationToken;
   notificationPreferences: NotificationPreference;
   suggestions: Suggestion;
+  purchaseRequests: PurchaseRequest;
   listerEarnings: ListerEarning;
   listerEarningEntries: ListerEarningEntry;
   listerWithdrawals: ListerWithdrawal;

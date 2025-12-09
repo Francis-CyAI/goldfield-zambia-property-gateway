@@ -62,13 +62,13 @@ const Header = () => {
     {
       title: 'Buy Properties',
       description: 'Find and purchase your dream property',
-      href: '/properties?type=buy',
+      href: '/properties/sale',
       icon: Home,
     },
     {
       title: 'Rent Properties',
       description: 'Short and long-term rental properties',
-      href: '/properties?type=rent',
+      href: '/properties/rent',
       icon: Building,
     },
     {
