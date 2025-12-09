@@ -16,8 +16,6 @@ import PhotoUploadSection from './property-listing/PhotoUploadSection';
 import PropertyInfoSection from './property-listing/PropertyInfoSection';
 import AmenitiesSection from './property-listing/AmenitiesSection';
 import RequirementsSection from './property-listing/RequirementsSection';
-import QualificationCard from './property-listing/QualificationCard';
-import ListingStandardsCard from './property-listing/ListingStandardsCard';
 import SellerVerificationSection from './property-listing/SellerVerificationSection';
 import SalePricingNotice from './property-listing/SalePricingNotice';
 
@@ -32,7 +30,7 @@ const propertySchema = z.object({
   title: z.string().min(10, 'Title must be at least 10 characters'),
   description: z.string().min(50, 'Description must be at least 50 characters'),
   propertyType: z.string().min(1, 'Please select a property type'),
-  location: z.string().min(1, 'Please select a location in Lusaka'),
+  location: z.string().min(1, 'Please select a location'),
   listingType: z.enum(['rental', 'sale']),
   pricePerNight: z.number().nullable().optional(),
   salePrice: z.number().nullable().optional(),
@@ -260,10 +258,10 @@ const PropertyListingForm = ({ initialType = 'sale' }: PropertyListingFormProps)
       {/* Header */}
       <div className="text-center">
         <h1 className="text-3xl font-bold luxury-text-gradient mb-2">
-          List Your Property in Lusaka
+          List Your Property
         </h1>
         <p className="text-gray-600">
-          Join Zambia's premier accommodation platform in Obama, Lusaka
+          Join Zambia's premier accommodation and property marketplace
         </p>
       </div>
 
@@ -273,12 +271,6 @@ const PropertyListingForm = ({ initialType = 'sale' }: PropertyListingFormProps)
           <span className="font-semibold"> pending approval</span> until an admin verifies the details.
         </p>
       </div>
-
-      {/* Qualification Status */}
-      <QualificationCard form={form} />
-
-      {/* Property Listing Standards */}
-      <ListingStandardsCard />
 
       {/* Main Form */}
       <Form {...form}>
@@ -326,8 +318,7 @@ const PropertyListingForm = ({ initialType = 'sale' }: PropertyListingFormProps)
                         I agree to the Terms & Conditions *
                       </FormLabel>
                       <FormDescription>
-                        I confirm that all information provided is accurate and I agree to maintain 
-                        the quality standards required for listings in Lusaka, Obama.
+                        I confirm that all information provided is accurate and I agree to maintain our quality standards.
                       </FormDescription>
                     </div>
                   </FormItem>

@@ -13,7 +13,7 @@ interface PropertyInfoSectionProps {
 
 const PropertyInfoSection = ({ form }: PropertyInfoSectionProps) => {
   const lusakaAreas = [
-    'Obama (Central)',
+    'Central',
     'Kabulonga',
     'Avondale',
     'Rhodes Park',
@@ -58,11 +58,11 @@ const PropertyInfoSection = ({ form }: PropertyInfoSectionProps) => {
           control={form.control}
           name="title"
           render={({ field }) => (
-            <FormItem>
-              <FormLabel>Property Title *</FormLabel>
-              <FormControl>
-                <Input placeholder="Beautiful 2BR Apartment in Obama, Lusaka" {...field} />
-              </FormControl>
+              <FormItem>
+                <FormLabel>Property Title *</FormLabel>
+                <FormControl>
+                  <Input placeholder="Beautiful 2BR Apartment in Lusaka" {...field} />
+                </FormControl>
               <FormDescription>
                 Create an attractive title that highlights your property's best features
               </FormDescription>
@@ -145,12 +145,12 @@ const PropertyInfoSection = ({ form }: PropertyInfoSectionProps) => {
               <FormItem>
                 <FormLabel className="flex items-center gap-2">
                   <MapPin className="h-4 w-4" />
-                  Location in Lusaka *
+                  Location *
                 </FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select area in Lusaka" />
+                      <SelectValue placeholder="Select area" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
